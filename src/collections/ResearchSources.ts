@@ -7,7 +7,7 @@ export const ResearchSources: CollectionConfig = {
   access: {
     create: authenticated,
     delete: authenticated,
-    read: authenticated,
+    read: () => true,
     update: authenticated,
   },
   admin: {
