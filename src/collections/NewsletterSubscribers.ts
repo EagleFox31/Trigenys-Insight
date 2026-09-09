@@ -25,6 +25,7 @@ export const NewsletterSubscribers: CollectionConfig = {
         { label: 'English', value: 'en' },
       ],
       required: true,
+      index: true,
     },
     {
       name: 'status',
@@ -35,6 +36,7 @@ export const NewsletterSubscribers: CollectionConfig = {
         { label: 'Unsubscribed', value: 'unsubscribed' },
       ],
       required: true,
+      index: true,
     },
     { name: 'consentedAt', type: 'date', required: true },
   ],
