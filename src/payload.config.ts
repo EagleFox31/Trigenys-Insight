@@ -23,6 +23,9 @@ const dirname = path.dirname(filename)
 
 export default buildConfig({
   admin: {
+    // Browser extensions can mutate the root HTML before React hydrates the admin UI.
+    // Payload exposes this flag specifically to tolerate those root-level differences.
+    suppressHydrationWarning: true,
     components: {
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
@@ -67,7 +70,9 @@ export default buildConfig({
       connectionString:
         (process.env.PAYLOAD_MIGRATING === 'true'
           ? process.env.DATABASE_URL_UNPOOLED
-          : process.env.DATABASE_URL) || process.env.DATABASE_URL || '',
+          : process.env.DATABASE_URL) ||
+        process.env.DATABASE_URL ||
+        '',
       max: 5,
       idleTimeoutMillis: 10000,
       connectionTimeoutMillis: 20000,
