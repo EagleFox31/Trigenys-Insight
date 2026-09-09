@@ -6,7 +6,7 @@ Independent research and analysis on technology, cybersecurity, business and dig
 
 - Next.js 16 App Router and React 19
 - Payload CMS 3
-- PostgreSQL 16
+- PostgreSQL 17 on Neon (PostgreSQL 16 also supported locally)
 - TypeScript and Tailwind CSS 4
 - Vitest and Playwright
 
@@ -31,6 +31,7 @@ Requirements: Node.js 20+, pnpm 9+ and PostgreSQL 16 (or Docker).
 cp .env.example .env
 docker compose up -d
 pnpm install
+pnpm db:migrate
 pnpm dev
 ```
 
@@ -47,16 +48,17 @@ pnpm build
 
 ## Production
 
-Set `DATABASE_URL`, `PAYLOAD_SECRET`, `CRON_SECRET`, `PREVIEW_SECRET` and `NEXT_PUBLIC_SERVER_URL`. Create and commit a database migration before the first production release:
+Set `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct), `PAYLOAD_SECRET`, `CRON_SECRET`, `PREVIEW_SECRET` and `NEXT_PUBLIC_SERVER_URL`. The initial migration is committed in `src/migrations`. Apply pending migrations using the direct connection before deploying:
 
 ```bash
-pnpm payload migrate:create
-pnpm payload migrate
+pnpm db:migrate
 pnpm build
 pnpm start
 ```
 
-Never point local schema push at a production database.
+Automatic schema push is disabled in every environment. For future schema changes, run `pnpm db:migrate:create`, review the generated migration, and test it on a development branch before production. Never run rollback or reset commands on production without a backup and an explicit recovery plan.
+
+See the [database model](docs/database-model.md) for the logical ER model and design decisions, and [deployment notes](docs/deployment.md) for Neon environments and remaining launch setup.
 
 ## Origin
 

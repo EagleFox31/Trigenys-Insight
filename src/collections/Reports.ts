@@ -7,6 +7,7 @@ import { defaultLexical } from '../fields/defaultLexical'
 
 export const Reports: CollectionConfig = {
   slug: 'reports',
+  indexes: [{ fields: ['_status', 'reportDate'] }],
   access: {
     create: authenticated,
     delete: authenticated,
@@ -37,6 +38,13 @@ export const Reports: CollectionConfig = {
       type: 'relationship',
       hasMany: true,
       relationTo: 'research-sources',
+    },
+    {
+      name: 'authors',
+      type: 'relationship',
+      hasMany: true,
+      relationTo: 'users',
+      required: true,
     },
     { name: 'relatedPosts', type: 'relationship', hasMany: true, relationTo: 'posts' },
     slugField(),

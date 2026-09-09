@@ -17,9 +17,9 @@ export const ResearchSources: CollectionConfig = {
   fields: [
     { name: 'title', type: 'text', required: true },
     { name: 'publisher', type: 'text' },
-    { name: 'url', type: 'text', required: true },
+    { name: 'url', type: 'text', required: true, unique: true },
     { name: 'publishedAt', type: 'date' },
-    { name: 'accessedAt', type: 'date', required: true },
+    { name: 'accessedAt', type: 'date', required: true, index: true },
     {
       name: 'language',
       type: 'select',

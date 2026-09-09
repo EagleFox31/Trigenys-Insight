@@ -3,6 +3,9 @@ dist / media
 node_modules
 .DS_Store
 .env
+.env.*
+!.env.example
+.neon
 .next
 next-env.d.ts
 tsconfig.tsbuildinfo

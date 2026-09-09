@@ -11,7 +11,8 @@ export function NewsletterForm() {
 
   async function subscribe(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const form = new FormData(event.currentTarget)
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
 
     setState('loading')
     setMessage('')
@@ -28,7 +29,7 @@ export function NewsletterForm() {
 
       if (!response.ok) throw new Error('Subscription request failed')
 
-      event.currentTarget.reset()
+      formElement.reset()
       setState('success')
       setMessage('Inscription confirmée. La prochaine analyse arrive dans votre boîte mail.')
     } catch {

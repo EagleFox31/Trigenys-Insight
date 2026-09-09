@@ -251,7 +251,7 @@ export interface Post {
     [k: string]: unknown;
   };
   relatedPosts?: (number | Post)[] | null;
-  categories?: (number | Category)[] | null;
+  categories: (number | Category)[];
   meta?: {
     title?: string | null;
     /**
@@ -269,7 +269,7 @@ export interface Post {
   featured?: boolean | null;
   editorsPick?: boolean | null;
   sources?: (number | ResearchSource)[] | null;
-  authors?: (number | User)[] | null;
+  authors: (number | User)[];
   populatedAuthors?:
     | {
         id?: string | null;
@@ -834,6 +834,7 @@ export interface Report {
     [k: string]: unknown;
   } | null;
   sources?: (number | ResearchSource)[] | null;
+  authors: (number | User)[];
   relatedPosts?: (number | Post)[] | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -1324,6 +1325,7 @@ export interface ReportsSelect<T extends boolean = true> {
   accessLevel?: T;
   methodology?: T;
   sources?: T;
+  authors?: T;
   relatedPosts?: T;
   generateSlug?: T;
   slug?: T;

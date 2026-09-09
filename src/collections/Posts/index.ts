@@ -29,6 +29,7 @@ import { slugField } from 'payload'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
+  indexes: [{ fields: ['_status', 'publishedAt'] }],
   access: {
     create: authenticated,
     delete: authenticated,
@@ -136,6 +137,7 @@ export const Posts: CollectionConfig<'posts'> = {
                 position: 'sidebar',
               },
               hasMany: true,
+              required: true,
               relationTo: 'categories',
             },
           ],
@@ -234,6 +236,7 @@ export const Posts: CollectionConfig<'posts'> = {
         position: 'sidebar',
       },
       hasMany: true,
+      required: true,
       relationTo: 'users',
     },
     // This field is only used to populate the user data via the `populateAuthors` hook

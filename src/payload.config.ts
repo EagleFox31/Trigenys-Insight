@@ -61,8 +61,16 @@ export default buildConfig({
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: postgresAdapter({
+    push: false,
+    migrationDir: path.resolve(dirname, 'migrations'),
     pool: {
-      connectionString: process.env.DATABASE_URL || '',
+      connectionString:
+        (process.env.PAYLOAD_MIGRATING === 'true'
+          ? process.env.DATABASE_URL_UNPOOLED
+          : process.env.DATABASE_URL) || process.env.DATABASE_URL || '',
+      max: 5,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 20000,
     },
   }),
   collections: [
