@@ -1,22 +1,11 @@
-import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 import type { Post } from '@/payload-types'
-import { founderDraftMetadata, founderDraftSource } from './trigenys-founder-draft'
-
-const collections: CollectionSlug[] = [
-  'categories',
-  'media',
-  'newsletter-subscribers',
-  'pages',
-  'posts',
-  'reports',
-  'research-sources',
-  'forms',
-  'form-submissions',
-  'search',
-]
-
-const globals: GlobalSlug[] = ['header', 'footer']
+import {
+  founderDraftMetadata,
+  founderDraftSource,
+  founderDraftSources,
+} from './trigenys-founder-draft'
 
 const categories = [
   {
@@ -61,29 +50,20 @@ function textNode(text: string) {
 
 function createLexicalDocument(source: string): Post['content'] {
   const blocks = source
-    .replace(/═+/g, '')
-    .replace(/─+/g, '')
     .split(/\n\s*\n/g)
     .map((block) => block.replace(/\s*\n\s*/g, ' ').trim())
     .filter(Boolean)
-    .filter((block) => !block.startsWith('Brouillon ·'))
-    .filter((block) => !block.startsWith('À relire et publier'))
-    .filter((block) => !block.startsWith('Mots :'))
 
-  const children = blocks.map((block, index) => {
-    const isHeading =
-      index > 0 &&
-      block.length < 90 &&
-      block === block.toLocaleUpperCase('fr-FR') &&
-      /[A-ZÀ-Ÿ]/.test(block)
+  const children = blocks.map((block) => {
+    const heading = block.match(/^(#{2,4})\s+(.+)$/)
 
-    if (isHeading) {
+    if (heading) {
       return {
-        children: [textNode(block)],
+        children: [textNode(heading[2])],
         direction: 'ltr',
         format: '',
         indent: 0,
-        tag: 'h2',
+        tag: `h${heading[1].length}`,
         type: 'heading',
         version: 1,
       }
@@ -120,66 +100,99 @@ export const seed = async ({
   req: PayloadRequest
 }): Promise<void> => {
   if (!req.user) {
-    throw new Error('An authenticated editor is required to seed Trigenys Insights.')
+    throw new Error('An authenticated editor is required to import Trigenys Insight content.')
   }
 
-  payload.logger.info('Seeding Trigenys Insights editorial data...')
-
-  await Promise.all(
-    globals.map((global) =>
-      payload.updateGlobal({
-        context: { disableRevalidate: true },
-        data: { navItems: [] },
-        depth: 0,
-        slug: global,
-      }),
-    ),
-  )
-
-  await Promise.all(
-    collections.map((collection) => payload.db.deleteMany({ collection, req, where: {} })),
-  )
-
-  await Promise.all(
-    collections
-      .filter((collection) => Boolean(payload.collections[collection].config.versions))
-      .map((collection) => payload.db.deleteVersions({ collection, req, where: {} })),
-  )
+  payload.logger.info('Importing Trigenys Insight editorial starter content...')
 
   const categoryDocs = []
   for (const category of categories) {
+    const existing = await payload.find({
+      collection: 'categories',
+      depth: 0,
+      limit: 1,
+      overrideAccess: false,
+      req,
+      where: { slug: { equals: category.slug } },
+    })
+
     categoryDocs.push(
-      await payload.create({
-        collection: 'categories',
-        context: { disableRevalidate: true },
-        data: category,
-        depth: 0,
-      }),
+      existing.docs[0] ??
+        (await payload.create({
+          collection: 'categories',
+          context: { disableRevalidate: true },
+          data: category,
+          depth: 0,
+          overrideAccess: false,
+          req,
+        })),
     )
   }
 
-  await payload.create({
-    collection: 'posts',
-    context: { disableRevalidate: true },
-    data: {
-      _status: 'draft',
-      authors: [req.user.id],
-      categories: [categoryDocs[0].id, categoryDocs[1].id],
-      content: createLexicalDocument(founderDraftSource),
-      excerpt: founderDraftMetadata.excerpt,
-      featured: true,
-      kind: founderDraftMetadata.kind,
-      meta: {
-        description: founderDraftMetadata.excerpt,
-        title: founderDraftMetadata.title,
-      },
-      readingTime: founderDraftMetadata.readingTime,
-      slug: founderDraftMetadata.slug,
-      title: founderDraftMetadata.title,
+  const sourceDocs = []
+  for (const source of founderDraftSources) {
+    const existing = await payload.find({
+      collection: 'research-sources',
+      depth: 0,
+      limit: 1,
+      overrideAccess: false,
+      req,
+      where: { url: { equals: source.url } },
+    })
+
+    sourceDocs.push(
+      existing.docs[0] ??
+        (await payload.create({
+          collection: 'research-sources',
+          data: source,
+          depth: 0,
+          overrideAccess: false,
+          req,
+        })),
+    )
+  }
+
+  const postData = {
+    _status: 'draft' as const,
+    authors: [req.user.id],
+    categories: [categoryDocs[0].id, categoryDocs[1].id],
+    content: createLexicalDocument(founderDraftSource),
+    excerpt: founderDraftMetadata.excerpt,
+    featured: true,
+    kind: founderDraftMetadata.kind,
+    meta: {
+      description: founderDraftMetadata.excerpt,
+      title: 'Pipeline IA multi-agents : architecture et leçons',
     },
+    readingTime: founderDraftMetadata.readingTime,
+    slug: founderDraftMetadata.slug,
+    sources: sourceDocs.map((source) => source.id),
+    title: founderDraftMetadata.title,
+  }
+
+  const existingPost = await payload.find({
+    collection: 'posts',
     depth: 0,
     draft: true,
+    limit: 1,
+    overrideAccess: false,
+    req,
+    where: { slug: { equals: founderDraftMetadata.slug } },
   })
 
-  payload.logger.info('Seeded categories and the founder article as an unpublished draft.')
+  if (!existingPost.docs[0]) {
+    await payload.create({
+      collection: 'posts',
+      context: { disableRevalidate: true },
+      data: postData,
+      depth: 0,
+      draft: true,
+      overrideAccess: false,
+      req,
+    })
+  } else {
+    payload.logger.info('Founder article draft already exists; leaving editorial changes intact.')
+  }
+
+  payload.logger.info('Imported categories, research sources, and the founder article draft.')
 }
