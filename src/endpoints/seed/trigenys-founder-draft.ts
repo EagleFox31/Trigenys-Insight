@@ -1,11 +1,156 @@
-export const founderDraftSource =
-  "J'AI CONSTRUIT UN PIPELINE IA MULTI-AGENTS EN 4 HEURES POUR 0 €\r\n═══════════════════════════════════════════════════════════════\r\nVoici la matinée.\r\n\r\n\r\nBrouillon · 13 juin 2026\r\nÀ relire et publier sur le blog Trigenys Lab\r\nMots : ~1700\r\n\r\n\r\n\r\n\r\n───────────────────────────────────────────────────────\r\n\r\n\r\nHier matin, j'ai ouvert Claude avec une vague idée : utiliser des agents IA pour automatiser les premières étapes d'une campagne marketing — auditer une boutique, identifier l'audience, proposer des angles stratégiques. Quatre heures plus tard, le pipeline tournait en production. Trois agents, deux gates humains, un formulaire web, et zéro centime dépensé.\r\n\r\n\r\nJe vous raconte comment, avec les vrais bugs et les vraies décisions. Parce que les tutoriels propres mentent.\r\n\r\n\r\n\r\n\r\nLE CONTEXTE (COURT)\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nJe dirige Trigenys Group, une petite ESN à Douala. On accompagne des PME africaines sur leurs projets techniques. Un de nos clients tient une boutique Shopify de smartwatches, ciblage marché US, plateformes TikTok et Reels. Le besoin : industrialiser la production de contenu publicitaire, en commençant par la phase de réflexion stratégique avant de produire la vidéo.\r\n\r\n\r\nLe défi côté budget : pas question de payer un planneur stratégique senior à 1500 € par mois. Pas question non plus de payer des APIs d'IA coûteuses. Tout doit tenir à zéro coût variable, sinon le modèle économique ne tient pas pour des clients qui paient en francs CFA.\r\n\r\n\r\n\r\n\r\nL'IDÉE : UN PIPELINE D'AGENTS\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nAu lieu d'avoir UN modèle IA qui essaie de tout faire (analyser, segmenter, créer), on découpe en stations spécialisées. Chaque station = un agent avec un rôle précis. Entre deux stations, un humain valide. C'est l'idée des chaînes d'assemblage Ford appliquées aux LLM.\r\n\r\n\r\nTrois agents pour la phase 1 :\r\n\r\n\r\n— L'Auditeur regarde la boutique et juge sa préparation à la publicité. Verdict (go / fix-then-go / pivot-needed) + scores 0-10 sur 5 dimensions (identité, promesse vs réalité, trust, market-fit, mobile-first).\r\n\r\n\r\n— Le Cartographe transforme l'audit en un brief audience cible. Persona, codes culturels, concurrents, hashtags, synthèse pour le créatif.\r\n\r\n\r\n— Le Stratège propose 3-5 angles de campagne scorés sur une matrice AHP : viralité × cohérence marque × coût de production × scalabilité.\r\n\r\n\r\nEntre chaque agent, un email part vers le validateur humain avec un bouton \"Approuver et continuer\". Tant qu'il ne clique pas, le pipeline attend. Sept jours max. Le workflow consomme zéro ressource pendant l'attente.\r\n\r\n\r\n\r\n\r\nLE STACK QUE J'AI CHOISI (ET POURQUOI)\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nJ'ai d'abord envisagé un truc sophistiqué : NestJS + Inngest + Anthropic SDK + Supabase + Next.js dashboard. Sur le papier c'est nickel. En pratique pour un MVP que je veux montrer à un client la semaine prochaine, c'est trois semaines de boulot. Refus.\r\n\r\n\r\nÀ la place :\r\n\r\n\r\n— n8n comme orchestrateur visuel\r\n— Google Gemini 2.5 Flash comme modèle (free tier, 1500 requêtes/jour)\r\n— Gmail pour les notifications et la livraison des rapports\r\n— Claude via MCP pour développer le workflow lui-même — je parle à Claude dans mon navigateur, il édite directement mes nœuds n8n via le protocole MCP\r\n\r\n\r\nCoût total : 0 €. Temps de dev : 4 heures (avec les bugs).\r\n\r\n\r\n\r\n\r\nPOURQUOI N8N ET PAS DU CODE\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nJ'aime coder. Mais pour ce projet précis, n8n a trois avantages décisifs :\r\n\r\n\r\n1. Les workflows sont visuels et explicables à un client. Je peux montrer la boîte \"Auditeur\" et expliquer ce qu'elle fait sans qu'il ait à comprendre du TypeScript.\r\n\r\n\r\n2. Le human-in-the-loop est natif. Le nœud Wait avec resume webhook gère les gates humains sans une seule ligne de code.\r\n\r\n\r\n3. L'écosystème de nœuds couvre déjà 90 % des intégrations que je voudrai brancher plus tard : Shopify, TikTok Ads, Meta Ads, Slack, Google Drive, etc.\r\n\r\n\r\n\r\n\r\nLES 7 BUGS QUI M'ONT COÛTÉ DU TEMPS (ET DES LEÇONS)\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nVoilà la partie que les tutos ne racontent jamais. Chaque bug = une leçon réutilisable.\r\n\r\n\r\n▸ Bug 1 — La clé Anthropic gratuite n'est pas une clé API utilisable\r\n\r\n\r\nQuand j'ai créé un compte Anthropic, j'ai vu une clé API dans ma console et j'ai pensé que mon premier appel passerait. Erreur. Le forfait \"évaluation\" n'a pas de crédits API. Il faut activer la facturation et déposer au moins quelques dollars. Or côté Cameroun, les cartes internationales ne passent pas toujours sur Anthropic.\r\n\r\n\r\nLeçon : avant de baser ton MVP sur une API payante, vérifie qu'elle est accessible depuis ton pays. J'ai basculé sur Gemini en deux minutes, et Gemini Flash est plus que suffisant pour ces tâches structurées.\r\n\r\n\r\n\r\n\r\n▸ Bug 2 — Shopify bloque les scrapes via Cloudflare\r\n\r\n\r\nPremier test sur la boutique cliente : 403 Forbidden cloudflare. Pas surprenant — Shopify protège ses boutiques contre le scraping massif.\r\n\r\n\r\nSolution : Shopify a introduit fin 2025 le Web Bot Authentication (signatures HTTP RFC 9421). Tu vas dans l'admin Shopify, tu génères des signatures pour ton bot, et tu les injectes dans 3 headers : Signature, Signature-Input, Signature-Agent. Le scrape passe.\r\n\r\n\r\nLeçon : avant de fight les protections anti-bot, regarde si la plateforme propose une voie légitime pour les bots identifiés. C'est de plus en plus fréquent depuis la mainstream-isation des agents IA.\r\n\r\n\r\n\r\n\r\n▸ Bug 3 — Le piège du www.\r\n\r\n\r\nJ'ai généré les signatures pour maisontg.com. Mon input dans le pipeline : https://www.maisontg.com. Le serveur a refusé : signature invalide. Pourquoi ? Parce que le champ @authority signé par Shopify est l'hôte exact, et maisontg.com n'est pas équivalent à www.maisontg.com.\r\n\r\n\r\nLeçon : quand tu signes une requête HTTP, l'hôte fait partie du payload signé. Toute différence (sous-domaine, port, etc.) casse la vérification.\r\n\r\n\r\n\r\n\r\n▸ Bug 4 — Les emails avec du JSON brut sont illisibles\r\n\r\n\r\nPremière version du pipeline qui marche : je reçois 3 emails. Mais quand je les ouvre, je vois des blocs JSON bruts. C'est techniquement correct mais humainement insupportable. J'ai dû refaire mes templates en HTML propre : badges colorés pour le verdict, cards pour les issues, chips pour les hashtags. Une heure de boulot en plus.\r\n\r\n\r\nLeçon : si tu envoies un rapport par email, prévois dès le départ la mise en forme. Le JSON brut est OK pour debugger, jamais pour livrer.\r\n\r\n\r\n\r\n\r\n▸ Bug 5 — ?approved=true sur une URL déjà query-stringée\r\n\r\n\r\nPour les boutons \"Approve\" dans les emails, j'ai fait ${resumeUrl}?approved=true. Sauf que resumeUrl contenait déjà ?signature=xxx. Résultat : l'URL devenait path?signature=xxx?approved=true, et le serveur considérait le tout comme une signature corrompue. Token invalide à chaque clic.\r\n\r\n\r\nLeçon : avant d'ajouter un query param à une URL construite ailleurs, vérifie si elle a déjà un ?. Soit tu utilises &, soit (mieux) tu n'ajoutes rien si pas nécessaire.\r\n\r\n\r\n\r\n\r\n▸ Bug 6 — Mode test vs Production dans n8n\r\n\r\n\r\nJ'ai testé mon workflow en mode \"Execute workflow\" (test). J'ai cliqué Approve dans l'email. Erreur : token invalide.\r\n\r\n\r\nPourquoi ? En mode test, n8n garde l'exécution en mémoire pendant la session du navigateur. Dès que tu fermes l'onglet, l'exécution meurt et toutes les URLs de validation deviennent caduques. Solution : cliquer Publish pour passer le workflow en mode production. Là, les exécutions sont persistantes, les URLs de gate restent valides 7 jours (configurable).\r\n\r\n\r\nLeçon : le mode test est fait pour des allers-retours immédiats, pas pour des workflows long-running.\r\n\r\n\r\n\r\n\r\n▸ Bug 7 — Configurer un AI Agent sans system message\r\n\r\n\r\nJ'ai d'abord mis toutes mes instructions dans le user prompt (le champ \"text\" de l'AI Agent). Le validateur n8n me râlait dessus. J'ai longtemps ignoré le warning. Puis j'ai pris 10 minutes pour séparer :\r\n\r\n\r\n— System message : le rôle persistant de l'agent (Auditeur, Cartographe, Stratège), les contraintes de format de sortie\r\n— User prompt : les inputs dynamiques de chaque exécution (URL boutique, marché, audit précédent, etc.)\r\n\r\n\r\nRésultat : meilleure qualité de sortie, plus facile à maintenir, et plus économe en tokens.\r\n\r\n\r\nLeçon : séparer rôle et inputs dans les prompts d'agents n'est pas qu'une bonne pratique cosmétique. Ça change la performance du modèle.\r\n\r\n\r\n\r\n\r\nLE RÉSULTAT\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nÀ la fin de la matinée, j'ai un système qui marche comme ça :\r\n\r\n\r\n1. Je remplis un formulaire web (URL boutique, marché cible, catégorie produit, email de validation)\r\n2. 30 secondes plus tard, je reçois un mail d'audit de la boutique avec scores, problèmes critiques, quick wins, et un verdict\r\n3. Je clique \"Valider\", le Cartographe travaille pendant 30s\r\n4. Je reçois un brief audience cible avec persona, codes culturels, comp set, hashtags\r\n5. Je clique \"Valider\" à nouveau\r\n6. Je reçois 3-5 angles de campagne scorés avec hook TikTok et risques\r\n\r\n\r\nTotal : 5-10 minutes pour produire ce qui prend normalement 2-3 jours à un planneur stratégique.\r\n\r\n\r\nLe coût marginal d'une campagne supplémentaire : zéro.\r\n\r\n\r\n\r\n\r\nCE QUE JE PEUX MAINTENANT FACTURER\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nCette même structure, packagée pour un client PME africain, vaut tranquillement 150 000 à 300 000 FCFA par boutique auditée. La marge est presque 100 % puisque je n'ai aucun coût variable.\r\n\r\n\r\nEt cette Phase 1 (audit + brief + stratégie) est juste le début. La Phase 2 enchaîne sur la production vidéo : Directeur Créatif (concept), Scénariste (script timé), Réalisateur Visuel (prompts Kling 3.0 pour génération vidéo), Monteur (spec de montage CapCut).\r\n\r\n\r\nUne fois les 7 agents en place, je vends un service \"campagne TikTok clé en main\" pour 800 000 à 1 500 000 FCFA, marge brute supérieure à 80 %.\r\n\r\n\r\n\r\n\r\nCE QUE J'AI APPRIS\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nTrois trucs qui me restent après cette matinée :\r\n\r\n\r\n1. Les contraintes accouchent de l'élégance. Si Anthropic avait été accessible, je serais parti sur une stack à 30 € par campagne. Le forçage à passer sur Gemini gratuit m'a donné un produit avec marge meilleure et reproductible chez d'autres clients sans risque budget.\r\n\r\n\r\n2. n8n + Claude (via MCP) = vélocité inhumaine. Je décrivais ce que je voulais en français, Claude éditait mes nœuds en direct. Quatre heures de travail correspondent facilement à deux semaines pour une équipe classique qui code from scratch.\r\n\r\n\r\n3. La méthodo bat la techno. Le secret de ce pipeline n'est pas dans n8n ou Gemini. C'est dans le découpage des agents et les gates humains. Tu pourrais reproduire ce système dans n'importe quel outil (Make, Zapier, code custom), ça marcherait pareil tant que la chaîne d'assemblage est bien pensée.\r\n\r\n\r\n\r\n\r\nLA SUITE\r\n═══════════════════════════════════════════════════════\r\n\r\n\r\nCette semaine je vais :\r\n\r\n\r\n— Polir les system prompts (le Stratège tire trop premium, à durcir)\r\n— Ajouter la Phase 2 (production vidéo)\r\n— Documenter pour vendre la méthode à d'autres ESN africaines\r\n\r\n\r\nJe posterai ici la suite. Si tu veux échanger sur des projets similaires, mes DMs sont ouverts.\r\n\r\n\r\n\r\n\r\n───────────────────────────────────────────────────────\r\nTrigenys Group · On automatise l'IA pour les PME africaines,\r\nsans bullshit et sans dépendance aux abonnements à 100 €/mois.\r\n───────────────────────────────────────────────────────"
+export const founderDraftSource = `## Ce que j’ai réellement construit
+
+En juin 2026, je voulais vérifier une idée simple : pouvait-on transformer les premières étapes d’une campagne marketing — audit d’une boutique, compréhension de l’audience et formulation d’angles stratégiques — en un processus assisté par plusieurs agents IA, sans retirer les décisions importantes à l’humain ?
+
+Quatre heures plus tard, un premier prototype fonctionnait. Il reliait trois agents spécialisés, deux validations humaines, un formulaire web et une orchestration n8n. Le coût facturé pendant cette session de prototypage était de 0 €. Ce chiffre décrit une expérience datée, réalisée avec les quotas disponibles sur mes comptes en juin 2026 ; ce n’est ni une promesse de gratuité permanente ni un modèle de coût universel.
+
+Voici l’architecture, les sept problèmes qui ont réellement ralenti le travail et ce que je construirais différemment aujourd’hui.
+
+## Le contexte : prototyper sous contrainte
+
+Je développe Trigenys avec une contrainte familière aux petites équipes : il faut tester vite, mais chaque service supplémentaire augmente le coût, la maintenance et la surface de panne.
+
+Je ne cherchais donc pas à fabriquer une démonstration spectaculaire. Je voulais un flux utilisable : une demande entre, l’analyse progresse par étapes, une personne peut accepter ou corriger les décisions sensibles, puis le résultat revient dans un format exploitable.
+
+Le prototype, baptisé Campaign OS, s’appuyait sur n8n pour l’orchestration, Gemini 2.5 Flash pour les tâches génératives, Gmail pour les validations et Claude via MCP pour accélérer la construction du workflow.
+
+Les offres et quotas des API évoluent. En septembre 2026, Google précise que les limites Gemini dépendent du modèle, du niveau d’usage et du projet, et qu’elles ne sont pas garanties. La bonne pratique n’est donc pas d’inscrire un quota fixe dans un business plan, mais de consulter les limites actives du projet et de mesurer le coût réel de chaque exécution.
+
+## Trois agents, deux décisions humaines
+
+Le premier agent, Auditor, recevait les données de la boutique et produisait un diagnostic structuré : positionnement apparent, qualité du message, friction dans le parcours et signaux de confiance.
+
+Le deuxième, Cartographer, transformait ce diagnostic en hypothèses d’audience : segments, motivations, objections et contextes d’achat.
+
+Le troisième, Strategist, proposait plusieurs angles de campagne à partir du diagnostic et de la cartographie.
+
+Entre ces étapes, deux validations humaines empêchaient le système de poursuivre automatiquement sur une hypothèse faible. Une personne pouvait approuver, rejeter ou demander une correction. L’objectif n’était pas de placer un humain à la fin pour signer mécaniquement le résultat, mais de l’installer aux endroits où une mauvaise décision se propage dans tout le reste du pipeline.
+
+## Pourquoi n8n plutôt qu’un backend sur mesure
+
+Pour cette première version, n8n rendait visibles les dépendances, les embranchements et les données qui circulaient entre les étapes. Cette visibilité comptait davantage que l’élégance d’une architecture entièrement codée.
+
+Le nœud Wait permettait également de suspendre une exécution jusqu’à une validation reçue par webhook. La documentation actuelle de n8n précise que les données d’une exécution en attente sont déchargées vers la base et que chaque exécution dispose d’une URL de reprise. Autrement dit, le workflow n’a pas besoin d’occuper activement un worker pendant toute l’attente, mais sa reprise doit être traitée comme une partie critique du système.
+
+## Les sept problèmes qui ont réellement compté
+
+### 1. Une API disponible n’est pas forcément immédiatement exploitable
+
+Mon premier choix était d’utiliser l’API Anthropic. Dans le compte utilisé ce jour-là, l’accès souhaité nécessitait d’activer la facturation. Plutôt que de bloquer le prototype, j’ai basculé sur Gemini.
+
+La leçon n’est pas qu’une API est « gratuite » et l’autre non. Les API génératives sont tarifées selon les modèles et les volumes, et les conditions d’accès changent. Il faut vérifier avant le développement la facturation, les limites du projet, les régions disponibles et le comportement attendu en cas de dépassement.
+
+### 2. Un refus Shopify n’est pas un problème à contourner
+
+L’audit d’une boutique cliente rencontrait des réponses 403. Mon premier réflexe a été de chercher comment rendre les requêtes acceptables. Le bon cadrage est plus strict : identifier proprement l’agent et obtenir une autorisation adaptée.
+
+Depuis mai 2026, Shopify applique des limites plus sévères aux bots et agents qui accèdent aux pages hébergées et recommande Web Bot Auth pour signer les requêtes. Les marchands qui explorent leurs propres boutiques peuvent récupérer des signatures prêtes à l’emploi depuis leur administration Shopify.
+
+Dans un produit destiné à plusieurs clients, je ne présenterais donc jamais cette étape comme un contournement de protection. J’en ferais un flux explicite de consentement, avec une signature liée au bon domaine et une solution de repli si l’accès n’est pas autorisé.
+
+### 3. Le domaine exact fait partie de l’identité signée
+
+Lors des essais, une signature préparée pour le domaine nu ne fonctionnait pas lorsque la requête partait vers la variante en www. Ce détail paraît minuscule ; dans un mécanisme de signature HTTP, il ne l’est pas.
+
+Il faut normaliser l’URL dès l’entrée, suivre les redirections de manière contrôlée et signer exactement l’autorité réellement appelée. Une différence de sous-domaine ne doit jamais être corrigée au hasard au milieu du workflow.
+
+### 4. Un objet JSON valide peut être une très mauvaise interface
+
+Les premières demandes de validation arrivaient par e-mail sous forme de JSON brut. Les données étaient complètes, mais la décision humaine devenait inutilement pénible.
+
+J’ai remplacé ce rendu par une synthèse lisible : titres, constats prioritaires, risques, recommandations et boutons de décision. Ce changement n’améliorait pas le modèle. Il améliorait le système, parce qu’une validation rapide dépend autant de la présentation que de la qualité de l’analyse.
+
+### 5. Concaténer une URL à la main finit par casser
+
+J’ajoutais initialement « ?approved=true » à l’URL de reprise. Certaines URLs comportaient déjà une chaîne de requête : il fallait alors utiliser « & », pas un second « ? ».
+
+La correction durable consiste à utiliser URL et URLSearchParams, puis à tester les cas avec paramètres existants, encodage et redirections. Une URL est une structure de données, pas une chaîne à assembler par intuition.
+
+### 6. Les URLs de reprise sont des données d’exécution
+
+Dans n8n, l’URL exposée par \$execution.resumeUrl est générée pour l’exécution en cours. La documentation avertit aussi que les exécutions partielles peuvent produire une nouvelle URL de reprise.
+
+Je traite donc désormais cette URL comme un jeton éphémère : elle doit être transmise au bon destinataire, ne pas apparaître dans les logs publics, expirer avec l’exécution et ne jamais être copiée depuis un ancien test.
+
+### 7. Les instructions stables et les données variables ne jouent pas le même rôle
+
+Au début, je mélangeais la mission de l’agent, les règles de sortie et les données du client dans un même message utilisateur. Le résultat fonctionnait, mais devenait difficile à évaluer et à faire évoluer.
+
+J’ai séparé les instructions stables — rôle, contraintes, structure attendue — des entrées propres à chaque exécution. Cette séparation facilite les tests, les changements de modèle et la comparaison des résultats.
+
+## Le résultat observé
+
+Sur le prototype, une analyse complète prenait environ cinq à dix minutes, temps de validation humaine compris. Ce résultat ne constitue pas encore un benchmark : il provient d’un petit nombre d’essais, sans charge concurrente ni jeu d’évaluation formel.
+
+La vraie victoire n’était pas la vitesse brute. C’était la traçabilité. Chaque étape recevait une entrée identifiable, produisait une sortie structurée et attendait une décision lorsque l’incertitude pouvait modifier la suite.
+
+## Ce que l’expérience change économiquement
+
+Ce prototype rend plausible une offre d’audit et de préparation de campagne plus rapide, mais il ne suffit pas à prouver un prix, une marge ou une demande. Les montants envisagés au départ — de l’audit ponctuel à l’accompagnement complet — restent des hypothèses commerciales à tester auprès de vrais clients.
+
+Le coût marginal d’une exécution était proche de zéro dans les conditions de l’essai. À l’échelle, il faut pourtant compter les tokens, les e-mails, le stockage, l’observabilité, les reprises après erreur, le temps de contrôle humain et le support. Une automatisation rentable est une automatisation dont le coût complet est mesuré, pas seulement celle dont la première facture d’API est vide.
+
+## Ce que je construirais différemment aujourd’hui
+
+J’ajouterais un jeu d’évaluation avant de changer les prompts ou les modèles. Je versionnerais les instructions et enregistrerais le modèle utilisé pour chaque étape.
+
+Je rendrais chaque reprise idempotente afin qu’un double clic ou un webhook rejoué ne déclenche pas deux campagnes. J’ajouterais des délais d’expiration, des tentatives bornées et une file d’échecs inspectable.
+
+Je suivrais le coût et la durée par exécution. Je séparerais les secrets de la configuration fonctionnelle et je réduirais au minimum les données client envoyées aux fournisseurs de modèles.
+
+Enfin, je conserverais les sources utilisées par l’audit. Une recommandation devient beaucoup plus utile lorsque l’on peut revenir au signal qui l’a déclenchée.
+
+## Ce que j’en retiens
+
+Construire avec des contraintes force à distinguer l’indispensable du décoratif. Trois agents n’ont d’intérêt que si leurs responsabilités sont réellement distinctes. Deux validations humaines n’ont de valeur que si elles interviennent avant que les erreurs se propagent.
+
+L’IA n’a pas supprimé la méthode. Elle a rendu ses faiblesses plus visibles : permissions mal comprises, URLs assemblées à la main, sorties illisibles, hypothèses commerciales non mesurées.
+
+Quatre heures ont suffi pour établir une preuve de concept. Transformer cette preuve en produit fiable demande ensuite le travail moins spectaculaire — et plus important — de sécurité, d’évaluation, d’observabilité et de consentement.
+
+Cet article inaugure les notes de terrain de Trigenys Insight : des expériences techniques racontées avec leurs limites, leurs sources et les décisions qu’elles permettent de prendre.`
 
 export const founderDraftMetadata = {
   excerpt:
-    'Trois agents, deux validations humaines et un pipeline marketing mis en production en une matinée, avec les bugs et arbitrages qui ont réellement compté.',
+    'En juin 2026, trois agents IA et deux validations humaines ont transformé un audit marketing en workflow. Architecture, sept bugs et retour critique.',
   kind: 'field-note' as const,
-  readingTime: 9,
+  readingTime: 11,
   slug: 'pipeline-ia-multi-agents-quatre-heures',
-  title: 'J’ai construit un pipeline IA multi-agents en 4 heures pour 0 €',
+  title: 'J’ai construit un pipeline IA multi-agents en quatre heures',
 }
+
+export const founderDraftSources = [
+  {
+    accessedAt: '2026-09-09T00:00:00.000Z',
+    language: 'en' as const,
+    notes: 'Les limites varient selon le modèle, le niveau d’usage et le projet.',
+    publisher: 'Google AI for Developers',
+    title: 'Gemini API rate limits',
+    url: 'https://ai.google.dev/gemini-api/docs/rate-limits',
+  },
+  {
+    accessedAt: '2026-09-09T00:00:00.000Z',
+    language: 'en' as const,
+    notes: 'Tarification officielle des modèles Claude via API.',
+    publisher: 'Anthropic',
+    title: 'Claude API pricing',
+    url: 'https://platform.claude.com/docs/en/about-claude/pricing',
+  },
+  {
+    accessedAt: '2026-09-09T00:00:00.000Z',
+    language: 'en' as const,
+    notes: 'Comportement du nœud Wait et de $execution.resumeUrl.',
+    publisher: 'n8n',
+    title: 'Wait node documentation',
+    url: 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.wait/',
+  },
+  {
+    accessedAt: '2026-09-09T00:00:00.000Z',
+    language: 'en' as const,
+    notes: 'Annonce officielle sur Web Bot Auth et les limites appliquées aux bots et agents.',
+    publishedAt: '2026-05-07T00:00:00.000Z',
+    publisher: 'Shopify',
+    title: 'Bots and agents should identify themselves via Web Bot Auth',
+    url: 'https://shopify.dev/changelog/bots-and-agents-should-identify-themselves-via-web-bot-auth',
+  },
+]

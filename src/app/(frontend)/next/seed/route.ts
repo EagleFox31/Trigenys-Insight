@@ -25,7 +25,7 @@ export async function POST(): Promise<Response> {
 
     return Response.json({ success: true })
   } catch (e) {
-    payload.logger.error({ err: e, message: 'Error seeding data' })
-    return new Response('Error seeding data.', { status: 500 })
+    payload.logger.error({ err: e, message: 'Error importing editorial starter content' })
+    return new Response('Error importing editorial starter content.', { status: 500 })
   }
 }
