@@ -16,11 +16,11 @@ Never use the production connection for local development or preview deployments
 
 ## Initial migration verification — 2026-09-09
 
-Payload generated `20260909_073929` from the editorial collections. The development and production databases each contain the 92 generated tables and the corresponding `payload_migrations` record (batch 1).
+Payload generated `20260909_073929` from the editorial collections, followed by two integrity migrations for authorship, research-source uniqueness, and query indexes. Development and production each contain 92 tables and all three `payload_migrations` records.
 
 The local runtime could not resolve the Neon PostgreSQL hostname (`EAI_AGAIN`). The generated UP SQL was therefore executed, together with its migration-history insert, as one transaction through the authenticated Neon connector. Development was applied and checked first, then the same migration was applied and checked on the new, empty production branch. Do not manually repeat that history insert during normal deployment; use `pnpm db:migrate`.
 
-These SQL checks verify provisioning and schema application. They do not verify Payload login, editorial workflows, uploads, or production HTTP behavior against the database.
+The final audit returned 131 foreign keys, 406 indexes, 122 unique indexes, and zero custom triggers on each branch. These SQL checks verify provisioning and schema application. They do not verify Payload login, editorial workflows, uploads, or production HTTP behavior against the database.
 
 ## Remaining launch setup
 

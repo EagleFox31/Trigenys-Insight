@@ -78,7 +78,9 @@ Payload stores many-to-many fields in `*_rels` tables. The `path` column identif
 
 ## Integrity and indexes
 
-The generated schema currently has 129 foreign keys and 396 indexes. Relationships use foreign keys with `CASCADE` for owned relationship rows and `SET NULL` for optional media references. The database enforces unique article, report, page, and category slugs; unique editor and subscriber emails; unique media filenames; and a unique canonical URL for each research source.
+The generated schema currently has 131 foreign keys and 406 indexes, including 122 unique indexes. Relationships use foreign keys with `CASCADE` for owned relationship rows and `SET NULL` for optional media references. The database enforces unique article, report, page, and category slugs; unique editor and subscriber emails; unique media filenames; and a unique canonical URL for each research source.
+
+Every relationship that drives editorial queries has an index. The remaining foreign-key columns are the `parent_id` side of localized tables; their unique `(locale, parent_id)` indexes already cover the parent lookup, so extra single-column indexes would duplicate storage and write work.
 
 The application requires at least one author and one category for every article, and at least one author for every report. Payload validates these required relationship fields before writing. PostgreSQL then enforces the validity of each stored relation through foreign keys.
 
