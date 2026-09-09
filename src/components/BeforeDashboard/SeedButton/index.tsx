@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import React, { Fragment, useCallback, useState } from 'react'
 import { toast } from '@payloadcms/ui'
 
@@ -7,10 +8,8 @@ import './index.scss'
 
 const SuccessMessage: React.FC = () => (
   <div>
-    Database seeded! You can now{' '}
-    <a target="_blank" href="/">
-      visit your website
-    </a>
+    Editorial starter content imported. You can now{' '}
+    <Link href="/admin/collections/posts">review the article draft</Link>
   </div>
 )
 
@@ -24,11 +23,11 @@ export const SeedButton: React.FC = () => {
       e.preventDefault()
 
       if (seeded) {
-        toast.info('Database already seeded.')
+        toast.info('Starter content already imported in this session.')
         return
       }
       if (loading) {
-        toast.info('Seeding already in progress.')
+        toast.info('Import already in progress.')
         return
       }
       if (error) {
@@ -59,7 +58,7 @@ export const SeedButton: React.FC = () => {
             }
           }),
           {
-            loading: 'Seeding with data....',
+            loading: 'Importing editorial content...',
             success: <SuccessMessage />,
             error: 'An error occurred while seeding.',
           },
@@ -80,7 +79,7 @@ export const SeedButton: React.FC = () => {
   return (
     <Fragment>
       <button className="seedButton" onClick={handleClick}>
-        Seed your database
+        Import editorial starter content
       </button>
       {message}
     </Fragment>
