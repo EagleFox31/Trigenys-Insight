@@ -48,7 +48,7 @@ pnpm build
 
 ## Production
 
-Set `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct), `PAYLOAD_SECRET`, `CRON_SECRET`, `PREVIEW_SECRET` and `NEXT_PUBLIC_SERVER_URL`. The initial migration is committed in `src/migrations`. Apply pending migrations using the direct connection before deploying:
+Set `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct), `PAYLOAD_SECRET`, `CRON_SECRET`, `PREVIEW_SECRET`, `NEXT_PUBLIC_SERVER_URL` and `BLOB_READ_WRITE_TOKEN`. The Blob token is injected automatically when a Vercel Blob store is connected to the project. The initial migration is committed in `src/migrations`. Apply pending migrations using the direct connection before deploying:
 
 ```bash
 pnpm db:migrate
