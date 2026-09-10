@@ -14,7 +14,7 @@ describe('parseNewsletterRequest', () => {
     {},
     { email: 'not-an-email' },
     { email: 'reader@trigenys.com', website: 'spam.example' },
-  ])('rejects an invalid or automated request: %o', (request) => {
+  ])('rejects an invalid or automated request: %o', (request: unknown) => {
     expect(parseNewsletterRequest(request)).toBeNull()
   })
 })

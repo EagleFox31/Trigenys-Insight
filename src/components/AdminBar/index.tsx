@@ -37,8 +37,11 @@ export const AdminBar: React.FC<{
   const { adminBarProps } = props || {}
   const segments = useSelectedLayoutSegments()
   const [show, setShow] = useState(false)
+  const selectedCollection = segments?.[1]
   const collection = (
-    collectionLabels[segments?.[1] as keyof typeof collectionLabels] ? segments[1] : 'pages'
+    selectedCollection && collectionLabels[selectedCollection as keyof typeof collectionLabels]
+      ? selectedCollection
+      : 'pages'
   ) as keyof typeof collectionLabels
   const router = useRouter()
 

@@ -1,10 +1,14 @@
+import { FlatCompat } from '@eslint/eslintrc'
 import { defineConfig, globalIgnores } from 'eslint/config'
-import nextVitals from 'eslint-config-next/core-web-vitals'
-import nextTs from 'eslint-config-next/typescript'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
+const compat = new FlatCompat({ baseDirectory: dirname })
 
 export default defineConfig([
-  ...nextVitals,
-  ...nextTs,
+  ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
       '@typescript-eslint/ban-ts-comment': 'warn',
