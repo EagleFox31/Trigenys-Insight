@@ -27,6 +27,7 @@ const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
 export const plugins: Plugin[] = [
   vercelBlobStorage({
     addRandomSuffix: true,
+    alwaysInsertFields: true,
     clientUploads: true,
     collections: {
       media: {
