@@ -105,6 +105,25 @@ export const seed = async ({
 
   payload.logger.info('Importing Trigenys Insight editorial starter content...')
 
+  const author = await payload.findByID({
+    collection: 'users',
+    id: req.user.id,
+    depth: 0,
+    overrideAccess: false,
+    req,
+  })
+
+  if (!author.name) {
+    await payload.update({
+      collection: 'users',
+      id: author.id,
+      data: { name: "Jennifer Lawrynn Aka'a" },
+      depth: 0,
+      overrideAccess: false,
+      req,
+    })
+  }
+
   const categoryDocs = []
   for (const category of categories) {
     const existing = await payload.find({

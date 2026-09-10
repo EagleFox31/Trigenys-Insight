@@ -6,22 +6,51 @@ import { headers } from 'next/headers'
 export const maxDuration = 60 // This function can run for a maximum of 60 seconds
 
 export async function POST(): Promise<Response> {
+  const startedAt = Date.now()
   const payload = await getPayload({ config })
   const requestHeaders = await headers()
 
-  // Authenticate by passing request headers
+  // Editors can seed from the admin UI. Deploy automation may use the same
+  // CRON_SECRET bearer pattern as Payload jobs.
   const { user } = await payload.auth({ headers: requestHeaders })
+  const cronSecret = process.env.CRON_SECRET
+  const hasSystemAccess =
+    Boolean(cronSecret) && requestHeaders.get('authorization') === `Bearer ${cronSecret}`
 
-  if (!user) {
+  let editor = user
+
+  if (!editor && hasSystemAccess) {
+    const users = await payload.find({
+      collection: 'users',
+      depth: 0,
+      limit: 2,
+      overrideAccess: true,
+    })
+
+    if (users.totalDocs !== 1) {
+      payload.logger.error({
+        administratorsFound: users.totalDocs,
+        message: 'Editorial seed requires exactly one administrator',
+      })
+      return new Response('Editorial seed requires exactly one administrator.', { status: 409 })
+    }
+
+    editor = users.docs[0]
+  }
+
+  if (!editor) {
     return new Response('Action forbidden.', { status: 403 })
   }
 
   try {
-    // Create a Payload request object to pass to the Local API for transactions
-    // At this point you should pass in a user, locale, and any other context you need for the Local API
-    const payloadReq = await createLocalReq({ user }, payload)
+    const payloadReq = await createLocalReq({ user: editor }, payload)
 
     await seed({ payload, req: payloadReq })
+
+    payload.logger.info({
+      durationMs: Date.now() - startedAt,
+      message: 'Editorial starter content imported',
+    })
 
     return Response.json({ success: true })
   } catch (e) {
