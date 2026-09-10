@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Independent research and analysis on technology, cybersecurity, business and digital systems.",
   "license": "MIT",
+  "packageManager": "pnpm@11.19.0",
   "type": "module",
   "scripts": {
     "db:migrate": "cross-env PAYLOAD_MIGRATING=true payload migrate",
