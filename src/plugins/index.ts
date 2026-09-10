@@ -31,6 +31,9 @@ export const plugins: Plugin[] = [
     clientUploads: true,
     collections: {
       media: {
+        // Article media are public. Returning the Blob CDN URL avoids proxying every
+        // image request through a Payload serverless route.
+        disablePayloadAccessControl: true,
         prefix: 'media',
       },
     },
