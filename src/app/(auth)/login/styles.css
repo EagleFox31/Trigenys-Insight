@@ -1,0 +1,236 @@
+.admin-login {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  min-height: 100vh;
+  background: #fafaf7;
+}
+
+.admin-login__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  min-height: 100vh;
+  margin-inline: auto;
+  padding: 48px clamp(28px, 6vw, 78px) 32px;
+}
+
+.admin-login__brand {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 11px;
+  color: #102f52;
+  font-size: 12px;
+  letter-spacing: 0.11em;
+}
+
+.admin-login__brand em {
+  color: #e07520;
+  font-style: normal;
+  font-weight: 650;
+}
+
+.admin-login__mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #102f52;
+  border-radius: 50%;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.admin-login__heading {
+  margin-top: auto;
+  padding-top: 80px;
+}
+
+.admin-login__heading > p,
+.admin-login__story p {
+  margin: 0 0 18px;
+  color: #7a7e82;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+}
+
+.admin-login__heading h1 {
+  margin: 0;
+  color: #102f52;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(46px, 6vw, 64px);
+  font-weight: 580;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.admin-login__heading > span {
+  display: block;
+  max-width: 420px;
+  margin-top: 20px;
+  color: #656a70;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.admin-login__form {
+  display: grid;
+  gap: 10px;
+  margin-top: 44px;
+}
+
+.admin-login__form label {
+  color: #3b4147;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-login__form input {
+  width: 100%;
+  height: 50px;
+  margin-bottom: 10px;
+  border: 1px solid #d9d9d3;
+  border-radius: 6px;
+  background: #fff;
+  color: #25282b;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  padding: 0 15px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.admin-login__form input:focus {
+  border-color: #102f52;
+  box-shadow: 0 0 0 3px rgb(16 47 82 / 10%);
+}
+
+.admin-login__form button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  border: 0;
+  border-radius: 6px;
+  background: #102f52;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 0 18px;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.admin-login__form button:hover:not(:disabled) {
+  background: #17436f;
+  transform: translateY(-1px);
+}
+
+.admin-login__form button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.admin-login__error {
+  min-height: 20px;
+  margin: 0 0 2px;
+  color: #b13b29;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-login__back {
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: 54px;
+  color: #70757a;
+  font-size: 12px;
+}
+
+.admin-login__story {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 75% 18%, rgb(224 117 32 / 28%), transparent 28%),
+    linear-gradient(145deg, #173b62, #0b2541 70%);
+  color: #fff;
+  padding: clamp(48px, 7vw, 110px);
+}
+
+.admin-login__story::before,
+.admin-login__story::after {
+  position: absolute;
+  content: '';
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 50%;
+}
+
+.admin-login__story::before {
+  top: -18vw;
+  right: -15vw;
+  width: 46vw;
+  height: 46vw;
+}
+
+.admin-login__story::after {
+  top: 12%;
+  right: 7%;
+  width: 24vw;
+  height: 24vw;
+}
+
+.admin-login__story > div {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-login__story p {
+  color: rgb(255 255 255 / 56%);
+}
+
+.admin-login__story blockquote {
+  margin: 0;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(36px, 4vw, 60px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.13;
+}
+
+.admin-login__story blockquote em {
+  color: #f4a55f;
+  font-style: normal;
+}
+
+@media (max-width: 840px) {
+  .admin-login {
+    display: block;
+  }
+  .admin-login__panel {
+    width: min(100%, 600px);
+  }
+  .admin-login__story {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-login__panel {
+    padding: 30px 22px 24px;
+  }
+  .admin-login__heading {
+    padding-top: 56px;
+  }
+  .admin-login__form {
+    margin-top: 34px;
+  }
+}
