@@ -1,4 +1,6 @@
 import { formatDateTime } from 'src/utilities/formatDateTime'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import React from 'react'
 
 import type { Post } from '@/payload-types'
@@ -17,6 +19,11 @@ export const PostHero: React.FC<{
   return (
     <header className="post-hero">
       <div className="insights-shell post-hero__copy">
+        <Link className="post-hero__back" href="/posts">
+          <ArrowLeft aria-hidden="true" size={15} strokeWidth={1.8} />
+          Retour aux articles
+        </Link>
+
         <div className="story-kicker">
           {categories?.map((category, index) => {
             if (typeof category === 'object' && category !== null) {
