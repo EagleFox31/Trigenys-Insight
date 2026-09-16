@@ -1,6 +1,10 @@
 # Trigenys Insights
 
-Independent research and analysis on technology, cybersecurity, business and digital systems — built from Douala for Africa and beyond.
+**Independent research and analysis on technology, cybersecurity, business and digital systems — built from Douala for Africa and beyond.**
+
+**Live:** https://trigenys-insight.vercel.app/
+
+Trigenys Insights is both a public publication and an editorial platform. The public site serves articles and research, while the same application provides the newsroom with content management, source tracking, scheduled publishing and report workflows.
 
 ## Stack
 
@@ -9,6 +13,7 @@ Independent research and analysis on technology, cybersecurity, business and dig
 - PostgreSQL 17 on Neon (PostgreSQL 16 also supported locally)
 - TypeScript and Tailwind CSS 4
 - Vitest and Playwright
+- Vercel Blob for media storage
 
 Payload lives inside the Next.js application: the public publication is served at `/`, the editorial workspace at `/admin`, and the REST and GraphQL APIs under `/api`.
 
@@ -48,7 +53,9 @@ pnpm build
 
 ## Production
 
-Set `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct), `PAYLOAD_SECRET`, `CRON_SECRET`, `PREVIEW_SECRET`, `NEXT_PUBLIC_SERVER_URL` and `BLOB_READ_WRITE_TOKEN`. The Blob token is injected automatically when a Vercel Blob store is connected to the project. The initial migration is committed in `src/migrations`. Apply pending migrations using the direct connection before deploying:
+Set `DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct), `PAYLOAD_SECRET`, `CRON_SECRET`, `PREVIEW_SECRET`, `NEXT_PUBLIC_SERVER_URL` and `BLOB_READ_WRITE_TOKEN`. The Blob token is injected automatically when a Vercel Blob store is connected to the project.
+
+The initial migration is committed in `src/migrations`. Apply pending migrations using the direct connection before deploying:
 
 ```bash
 pnpm db:migrate
@@ -59,6 +66,12 @@ pnpm start
 Automatic schema push is disabled in every environment. For future schema changes, run `pnpm db:migrate:create`, review the generated migration, and test it on a development branch before production. Never run rollback or reset commands on production without a backup and an explicit recovery plan.
 
 See the [database model](docs/database-model.md) for the logical ER model and design decisions, and [deployment notes](docs/deployment.md) for Neon environments and remaining launch setup.
+
+## Project status
+
+**Status: Production.**
+
+Current work focuses on editorial cadence, article discoverability and keeping the research/source workflow reproducible as the publication grows.
 
 ## Origin
 
