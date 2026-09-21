@@ -51,6 +51,26 @@ const messages = {
       minutesReading: 'min de lecture',
       by: '',
     },
+    newsroom: {
+      edition: 'Édition du',
+      researchMeta: 'Recherche & analyse · Douala, Cameroun',
+      follow: 'À suivre',
+      trending: 'Tendances',
+      now: 'Maintenant',
+      latestPublications: 'Dernières publications',
+      readNow: "Ce qu'il faut lire maintenant.",
+      viewAll: 'Tout voir',
+      latestAnalysis: 'Dernières analyses',
+      archives: 'Archives',
+      editorsPick: 'Choix de la rédaction',
+      desks: 'Nos desks',
+      desksTitle: 'Quatre angles. Une même exigence.',
+      deskPrefix: 'Desk',
+      newDossiers: 'Nouveaux dossiers en préparation.',
+      emptyTitle: 'La salle de rédaction est prête.',
+      emptyText:
+        "Les premiers dossiers restent en brouillon jusqu'à validation de leurs chiffres, sources et exemples. Dès publication, cette page basculera automatiquement en newsroom.",
+    },
     pillars: {
       technology: {
         title: 'Technologie',
@@ -153,6 +173,26 @@ const messages = {
       minutes: 'min',
       minutesReading: 'min read',
       by: '',
+    },
+    newsroom: {
+      edition: 'Edition of',
+      researchMeta: 'Research & analysis · Douala, Cameroon',
+      follow: 'Watch',
+      trending: 'Trending',
+      now: 'Now',
+      latestPublications: 'Latest publications',
+      readNow: 'What to read now.',
+      viewAll: 'View all',
+      latestAnalysis: 'Latest analysis',
+      archives: 'Archives',
+      editorsPick: "Editor's pick",
+      desks: 'Our desks',
+      desksTitle: 'Four angles. One standard.',
+      deskPrefix: 'Desk',
+      newDossiers: 'New dossiers in preparation.',
+      emptyTitle: 'The newsroom is ready.',
+      emptyText:
+        'The first dossiers remain in draft until their figures, sources and examples are checked. Once published, this page will automatically become a live newsroom.',
     },
     pillars: {
       technology: {
