@@ -24,7 +24,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Keep internal editorial tools and the custom login outside public locale routing.
   if (
     pathname === '/login' ||
     pathname.startsWith('/editorial/') ||
@@ -35,13 +34,26 @@ export function proxy(request: NextRequest) {
 
   const firstSegment = pathname.split('/').filter(Boolean)[0]
 
-  if (!isSiteLocale(firstSegment)) {
+  if (isSiteLocale(firstSegment)) {
+    return nextWithLocale(request, firstSegment)
+  }
+
+  // Editorial public routes are canonicalized under /fr and /en.
+  // Generic CMS pages remain on their legacy unprefixed URL until their
+  // content model is localized too.
+  const shouldLocalize =
+    pathname === '/' ||
+    pathname === '/posts' ||
+    pathname.startsWith('/posts/') ||
+    pathname === '/search'
+
+  if (shouldLocalize) {
     const url = request.nextUrl.clone()
     url.pathname = pathname === '/' ? `/${defaultLocale}` : `/${defaultLocale}${pathname}`
     return NextResponse.redirect(url, 308)
   }
 
-  return nextWithLocale(request, firstSegment)
+  return nextWithLocale(request, defaultLocale)
 }
 
 export const config = {
