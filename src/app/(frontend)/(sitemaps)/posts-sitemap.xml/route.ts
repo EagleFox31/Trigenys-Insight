@@ -11,38 +11,45 @@ const getPostsSitemap = unstable_cache(
       process.env.VERCEL_PROJECT_PRODUCTION_URL ||
       'https://example.com'
 
-    const results = await payload.find({
-      collection: 'posts',
-      overrideAccess: false,
-      draft: false,
-      depth: 0,
-      limit: 1000,
-      pagination: false,
-      where: {
-        _status: {
-          equals: 'published',
-        },
-      },
-      select: {
-        slug: true,
-        updatedAt: true,
-      },
-    })
-
     const dateFallback = new Date().toISOString()
+    const locales = ['fr', 'en'] as const
+    const sitemap = []
 
-    const sitemap = results.docs
-      ? results.docs
-          .filter((post) => Boolean(post?.slug))
-          .map((post) => ({
-            loc: `${SITE_URL}/posts/${post?.slug}`,
-            lastmod: post.updatedAt || dateFallback,
-          }))
-      : []
+    for (const locale of locales) {
+      const results = await payload.find({
+        collection: 'posts',
+        overrideAccess: false,
+        draft: false,
+        depth: 0,
+        fallbackLocale: false,
+        locale,
+        limit: 1000,
+        pagination: false,
+        where: {
+          _status: {
+            equals: 'published',
+          },
+        },
+        select: {
+          title: true,
+          slug: true,
+          updatedAt: true,
+        },
+      })
+
+      for (const post of results.docs) {
+        if (!post?.slug || !post?.title) continue
+
+        sitemap.push({
+          loc: `${SITE_URL}/${locale}/posts/${post.slug}`,
+          lastmod: post.updatedAt || dateFallback,
+        })
+      }
+    }
 
     return sitemap
   },
-  ['posts-sitemap'],
+  ['posts-sitemap-v2'],
   {
     tags: ['posts-sitemap'],
   },
