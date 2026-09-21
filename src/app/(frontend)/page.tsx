@@ -12,7 +12,7 @@ async function getPublishedPosts() {
       collection: 'posts',
       depth: 2,
       fallbackLocale: 'en',
-      limit: 12,
+      limit: 20,
       locale: 'fr',
       overrideAccess: false,
       sort: '-publishedAt',
