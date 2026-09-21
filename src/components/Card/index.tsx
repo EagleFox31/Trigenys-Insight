@@ -3,11 +3,14 @@ import Link from 'next/link'
 import React, { Fragment } from 'react'
 
 import type { Post } from '@/payload-types'
+import type { SiteLocale } from '@/i18n/config'
+import { withLocale } from '@/i18n/config'
+import { categoryLabel } from '@/i18n/content'
 
 import { Media } from '@/components/Media'
 
 export type CardPostData = {
-  categories?: null | Array<number | { title?: null | string }>
+  categories?: null | Array<number | { slug?: null | string; title?: null | string }>
   meta?: Post['meta']
   slug?: null | string
   title?: null | string
@@ -17,19 +20,20 @@ export const Card: React.FC<{
   alignItems?: 'center'
   className?: string
   doc?: CardPostData
+  locale?: SiteLocale
   relationTo?: 'posts'
   showCategories?: boolean
   title?: string
 }> = (props) => {
-  const { className, doc, relationTo, showCategories, title: titleFromProps } = props
+  const { className, doc, locale = 'fr', relationTo, showCategories, title: titleFromProps } = props
 
   const { slug, categories, meta, title } = doc || {}
   const { description, image: metaImage } = meta || {}
 
   const hasCategories = categories && Array.isArray(categories) && categories.length > 0
   const titleToUse = titleFromProps || title
-  const sanitizedDescription = description?.replace(/\s/g, ' ') // replace non-breaking space with white space
-  const href = `/${relationTo}/${slug}`
+  const sanitizedDescription = description?.replace(/\s/g, ' ')
+  const href = withLocale(locale, `/${relationTo}/${slug}`)
 
   return (
     <article className={cn('insights-card overflow-hidden bg-card', className)}>
@@ -42,15 +46,14 @@ export const Card: React.FC<{
           <div className="story-kicker">
             {categories?.map((category, index) => {
               if (typeof category === 'object') {
-                const { title: titleFromCategory } = category
-
-                const categoryTitle = titleFromCategory || 'Untitled category'
-
                 const isLast = index === categories.length - 1
+                const label = category.slug
+                  ? categoryLabel(category as never, locale)
+                  : category.title || (locale === 'fr' ? 'Analyse' : 'Analysis')
 
                 return (
                   <Fragment key={index}>
-                    {categoryTitle}
+                    {label}
                     {!isLast && <Fragment>, &nbsp;</Fragment>}
                   </Fragment>
                 )
