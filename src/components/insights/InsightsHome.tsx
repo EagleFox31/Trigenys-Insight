@@ -1,4 +1,8 @@
 import type { Post } from '@/payload-types'
+import type { SiteLocale } from '@/i18n/config'
+import { withLocale } from '@/i18n/config'
+import { formatPostDate, postKindLabel, primaryCategoryLabel } from '@/i18n/content'
+import { getMessages } from '@/i18n/messages'
 import { ArrowRight, ShieldCheck } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -7,55 +11,8 @@ import React from 'react'
 import { NewsletterForm } from './NewsletterForm'
 import styles from './NewsroomHome.module.css'
 
-const channels = [
-  {
-    color: '#e07520',
-    description:
-      "Infrastructure, intelligence artificielle, cybersécurité et produits numériques qui transforment les économies africaines.",
-    id: 'technology',
-    match: ['tech', 'technologie', 'technology', 'cyber', 'ia', 'ai'],
-    title: 'Technologie',
-  },
-  {
-    color: '#15355a',
-    description:
-      "Marchés, modèles économiques, finance et stratégies d'entreprise observés à partir des faits.",
-    id: 'business',
-    match: ['business', 'marché', 'market', 'économie', 'finance'],
-    title: 'Business',
-  },
-  {
-    color: '#2c5f7a',
-    description:
-      "Architecture, cloud, données, logiciels et systèmes d'information vus depuis les contraintes opérationnelles.",
-    id: 'systems',
-    match: ['système', 'system', 'cloud', 'data', 'logiciel', 'software'],
-    title: "Systèmes d'information",
-  },
-  {
-    color: '#5e7a3a',
-    description:
-      "Dynamiques économiques, infrastructures, usages et signaux faibles qui façonnent les marchés du continent.",
-    id: 'africa',
-    match: ['afrique', 'africa', 'cameroun', 'cameroon'],
-    title: 'Afrique',
-  },
-]
-
-const kindLabels: Record<string, string> = {
-  analysis: 'Analyse de fond',
-  comparison: 'Comparatif',
-  'field-note': 'Note de terrain',
-  guide: 'Guide pratique',
-}
-
 function asMedia(value: Post['heroImage'] | NonNullable<Post['meta']>['image']) {
   return value && typeof value === 'object' ? value : null
-}
-
-function categoryTitle(post: Post) {
-  const category = post.categories?.find((item) => item && typeof item === 'object')
-  return category && typeof category === 'object' ? category.title || 'Analyse' : 'Analyse'
 }
 
 function authorNames(post: Post) {
@@ -67,23 +24,8 @@ function authorNames(post: Post) {
   )
 }
 
-function kindLabel(post: Post) {
-  if (!post.kind) return 'Analyse'
-  return kindLabels[post.kind] || post.kind
-}
-
-function formatDate(value?: null | string, long = false) {
-  if (!value) return 'Bientôt'
-
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: long ? 'long' : 'short',
-    year: 'numeric',
-  }).format(new Date(value))
-}
-
-function editionDate() {
-  return new Intl.DateTimeFormat('fr-FR', {
+function editionDate(locale: SiteLocale) {
+  return new Intl.DateTimeFormat(locale === 'fr' ? 'fr-FR' : 'en-GB', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -114,12 +56,30 @@ function ArticleImage({ post, priority = false }: { post: Post; priority?: boole
   )
 }
 
-function postMatchesChannel(post: Post, terms: string[]) {
-  const category = String(categoryTitle(post)).toLowerCase()
-  return terms.some((term) => category.includes(term))
+function categorySlug(post: Post) {
+  const category = post.categories?.find((item) => item && typeof item === 'object')
+  return category && typeof category === 'object' ? category.slug || '' : ''
 }
 
-export function InsightsHome({ posts }: { posts: Post[] }) {
+function postMatchesChannel(post: Post, channel: string) {
+  const slug = categorySlug(post)
+
+  if (channel === 'technology') return slug === 'technology'
+  if (channel === 'business') return slug === 'business'
+  if (channel === 'systems') return slug === 'information-systems'
+  if (channel === 'africa') return slug === 'africa'
+
+  return false
+}
+
+export function InsightsHome({
+  locale,
+  posts,
+}: {
+  locale: SiteLocale
+  posts: Post[]
+}) {
+  const t = getMessages(locale)
   const featured = posts.find((post) => post.featured) || posts[0]
   const remaining = posts.filter((post) => post.id !== featured?.id)
   const compactStories = remaining.slice(0, 4)
@@ -130,38 +90,61 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
     .slice(compactStories.length, compactStories.length + 5)
   const trending = remaining.slice(0, 5)
 
+  const channels = [
+    {
+      color: '#e07520',
+      description: t.pillars.technology.description,
+      id: 'technology',
+      title: t.pillars.technology.title,
+    },
+    {
+      color: '#15355a',
+      description: t.pillars.business.description,
+      id: 'business',
+      title: t.pillars.business.title,
+    },
+    {
+      color: '#2c5f7a',
+      description: t.pillars.systems.description,
+      id: 'systems',
+      title: t.pillars.systems.title,
+    },
+    {
+      color: '#5e7a3a',
+      description: t.pillars.africa.description,
+      id: 'africa',
+      title: t.pillars.africa.title,
+    },
+  ]
+
   if (!featured) {
     return (
       <main className={styles.home}>
         <section className={styles.empty}>
           <div className={'insights-shell ' + styles.emptyGrid}>
-            <h1>La salle de rédaction est prête.</h1>
-            <p>
-              Les premiers dossiers restent en brouillon jusqu&apos;à validation de leurs chiffres,
-              sources et exemples. Dès publication, cette page basculera automatiquement en
-              newsroom.
-            </p>
+            <h1>{t.newsroom.emptyTitle}</h1>
+            <p>{t.newsroom.emptyText}</p>
           </div>
         </section>
 
         <section className="method-section" id="methodologie">
           <div className="insights-shell method-section__grid">
             <div>
-              <p className="eyebrow">Notre méthode</p>
-              <h2>Des conclusions traçables, pas des classements sortis d&apos;un chapeau.</h2>
+              <p className="eyebrow">{t.home.method}</p>
+              <h2>{t.home.methodTitle}</h2>
             </div>
             <div className="method-section__steps">
               <div>
                 <span>01</span>
-                <p>Recouper les sources et dater chaque observation.</p>
+                <p>{t.home.method1}</p>
               </div>
               <div>
                 <span>02</span>
-                <p>Rendre les hypothèses, limites et méthodes de calcul visibles.</p>
+                <p>{t.home.method2}</p>
               </div>
               <div>
                 <span>03</span>
-                <p>Transformer la donnée en décision concrète, contextualisée pour l&apos;Afrique.</p>
+                <p>{t.home.method3}</p>
               </div>
             </div>
           </div>
@@ -173,15 +156,12 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
               <div className="newsletter-section__icon">
                 <ShieldCheck aria-hidden="true" size={22} />
               </div>
-              <p className="eyebrow">Trigenys Brief</p>
-              <h2>Une analyse utile. Pas une avalanche d&apos;e-mails.</h2>
+              <p className="eyebrow">{t.home.brief}</p>
+              <h2>{t.home.briefTitle}</h2>
             </div>
             <div>
-              <p>
-                Recevez les nouveaux dossiers, comparatifs et notes de terrain. Fréquence maîtrisée,
-                désinscription en un clic.
-              </p>
-              <NewsletterForm />
+              <p>{t.home.briefText}</p>
+              <NewsletterForm locale={locale} />
             </div>
           </div>
         </section>
@@ -194,19 +174,21 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
       <section className={styles.edition}>
         <div className="insights-shell">
           <div className={styles.editionTop}>
-            <strong>TRIGENYS INSIGHTS · ÉDITION DU {editionDate().toUpperCase()}</strong>
+            <strong>
+              TRIGENYS INSIGHTS · {t.newsroom.edition.toUpperCase()} {editionDate(locale).toUpperCase()}
+            </strong>
             <div className={styles.editionMeta}>
               <span className={styles.liveDot} />
-              <span>Recherche &amp; analyse · Douala, Cameroun</span>
+              <span>{t.newsroom.researchMeta}</span>
             </div>
           </div>
 
           {trending.length > 0 && (
             <div className={styles.signal}>
-              <span className={styles.signalLabel}>À suivre</span>
+              <span className={styles.signalLabel}>{t.newsroom.follow}</span>
               <div className={styles.signalItems}>
                 {trending.slice(0, 3).map((post) => (
-                  <Link href={'/posts/' + post.slug} key={post.id}>
+                  <Link href={withLocale(locale, `/posts/${post.slug}`)} key={post.id}>
                     {post.title}
                   </Link>
                 ))}
@@ -219,36 +201,41 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
       <section className={styles.lead}>
         <div className={'insights-shell ' + styles.leadGrid}>
           <Link
-            aria-label={'Lire ' + featured.title}
+            aria-label={`${t.home.read} ${featured.title}`}
             className={styles.visual}
-            href={'/posts/' + featured.slug}
+            href={withLocale(locale, `/posts/${featured.slug}`)}
           >
             <ArticleImage post={featured} priority />
           </Link>
 
           <article className={styles.leadCopy}>
             <p className="story-kicker">
-              <span>{categoryTitle(featured)}</span> · {kindLabel(featured)}
+              <span>{primaryCategoryLabel(featured, locale)}</span> · {postKindLabel(featured, locale)}
             </p>
             <h1 className={styles.leadTitle}>
-              <Link href={'/posts/' + featured.slug}>{featured.title}</Link>
+              <Link href={withLocale(locale, `/posts/${featured.slug}`)}>
+                {featured.title}
+              </Link>
             </h1>
             <p className={styles.leadDeck}>{featured.excerpt || featured.meta?.description}</p>
             <div className={styles.meta}>
               <span>{authorNames(featured)}</span>
-              <span>{formatDate(featured.publishedAt, true)}</span>
-              <span>{featured.readingTime || 8} min</span>
+              <span>{formatPostDate(featured.publishedAt, locale, true)}</span>
+              <span>{featured.readingTime || 8} {t.home.minutes}</span>
             </div>
-            <Link className="text-link" href={'/posts/' + featured.slug}>
-              Lire l&apos;analyse <ArrowRight aria-hidden="true" size={15} />
+            <Link
+              className="text-link"
+              href={withLocale(locale, `/posts/${featured.slug}`)}
+            >
+              {t.home.read} <ArrowRight aria-hidden="true" size={15} />
             </Link>
           </article>
 
           {trending.length > 0 && (
-            <aside className={styles.trending} aria-label="Tendances">
+            <aside className={styles.trending} aria-label={t.newsroom.trending}>
               <div className={styles.asideHeading}>
-                <h2>Tendances</h2>
-                <span>Maintenant</span>
+                <h2>{t.newsroom.trending}</h2>
+                <span>{t.newsroom.now}</span>
               </div>
               <div className={styles.trendingList}>
                 {trending.map((post, index) => (
@@ -257,9 +244,11 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
                       {String(index + 1).padStart(2, '0')}
                     </span>
                     <div>
-                      <Link href={'/posts/' + post.slug}>{post.title}</Link>
+                      <Link href={withLocale(locale, `/posts/${post.slug}`)}>
+                        {post.title}
+                      </Link>
                       <span className={styles.trendingMeta}>
-                        {categoryTitle(post)} · {post.readingTime || 8} min
+                        {primaryCategoryLabel(post, locale)} · {post.readingTime || 8} {t.home.minutes}
                       </span>
                     </div>
                   </article>
@@ -275,26 +264,28 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
           <div className="insights-shell">
             <div className={styles.sectionBar}>
               <div>
-                <p className="eyebrow">Dernières publications</p>
-                <h2>Ce qu&apos;il faut lire maintenant.</h2>
+                <p className="eyebrow">{t.newsroom.latestPublications}</p>
+                <h2>{t.newsroom.readNow}</h2>
               </div>
-              <Link className="text-link" href="/posts">
-                Tout voir <ArrowRight aria-hidden="true" size={15} />
+              <Link className="text-link" href={withLocale(locale, '/posts')}>
+                {t.newsroom.viewAll} <ArrowRight aria-hidden="true" size={15} />
               </Link>
             </div>
 
             <div className={styles.compactGrid}>
               {compactStories.map((post) => (
                 <article className={styles.compactCard} key={post.id}>
-                  <Link href={'/posts/' + post.slug}>
+                  <Link href={withLocale(locale, `/posts/${post.slug}`)}>
                     <ArticleImage post={post} />
                   </Link>
-                  <p className="story-kicker">{categoryTitle(post)}</p>
+                  <p className="story-kicker">{primaryCategoryLabel(post, locale)}</p>
                   <h3>
-                    <Link href={'/posts/' + post.slug}>{post.title}</Link>
+                    <Link href={withLocale(locale, `/posts/${post.slug}`)}>
+                      {post.title}
+                    </Link>
                   </h3>
                   <span className={styles.compactCardMeta}>
-                    {formatDate(post.publishedAt)} · {post.readingTime || 8} min
+                    {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8} {t.home.minutes}
                   </span>
                 </article>
               ))}
@@ -308,26 +299,32 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
           <div className={'insights-shell ' + styles.deskGrid}>
             <div>
               <div className={styles.latestHeader}>
-                <h2>Dernières analyses</h2>
-                <Link className="text-link" href="/posts">
-                  Archives <ArrowRight aria-hidden="true" size={14} />
+                <h2>{t.newsroom.latestAnalysis}</h2>
+                <Link className="text-link" href={withLocale(locale, '/posts')}>
+                  {t.newsroom.archives} <ArrowRight aria-hidden="true" size={14} />
                 </Link>
               </div>
 
               <div className={styles.latestList}>
                 {latestStories.map((post) => (
                   <article className={styles.latestItem} key={post.id}>
-                    <Link className={styles.latestThumb} href={'/posts/' + post.slug}>
+                    <Link
+                      className={styles.latestThumb}
+                      href={withLocale(locale, `/posts/${post.slug}`)}
+                    >
                       <ArticleImage post={post} />
                     </Link>
                     <div>
-                      <p className="story-kicker">{categoryTitle(post)}</p>
+                      <p className="story-kicker">{primaryCategoryLabel(post, locale)}</p>
                       <h3>
-                        <Link href={'/posts/' + post.slug}>{post.title}</Link>
+                        <Link href={withLocale(locale, `/posts/${post.slug}`)}>
+                          {post.title}
+                        </Link>
                       </h3>
                       <p>{post.excerpt || post.meta?.description}</p>
                       <span className={styles.latestItemMeta}>
-                        {formatDate(post.publishedAt)} · {post.readingTime || 8} min de lecture
+                        {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8}{' '}
+                        {t.home.minutesReading}
                       </span>
                     </div>
                   </article>
@@ -338,24 +335,26 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
             {editorsPick && (
               <aside>
                 <div className={styles.editorHeader}>
-                  <h2>Choix de la rédaction</h2>
+                  <h2>{t.newsroom.editorsPick}</h2>
                 </div>
                 <article className={styles.editorCard}>
-                  <Link href={'/posts/' + editorsPick.slug}>
+                  <Link href={withLocale(locale, `/posts/${editorsPick.slug}`)}>
                     <ArticleImage post={editorsPick} />
                   </Link>
                   <p className="story-kicker">
-                    {categoryTitle(editorsPick)} · {kindLabel(editorsPick)}
+                    {primaryCategoryLabel(editorsPick, locale)} · {postKindLabel(editorsPick, locale)}
                   </p>
                   <h3 className={styles.editorTitle}>
-                    <Link href={'/posts/' + editorsPick.slug}>{editorsPick.title}</Link>
+                    <Link href={withLocale(locale, `/posts/${editorsPick.slug}`)}>
+                      {editorsPick.title}
+                    </Link>
                   </h3>
                   <p className={styles.editorDeck}>
                     {editorsPick.excerpt || editorsPick.meta?.description}
                   </p>
                   <div className={styles.meta}>
                     <span>{authorNames(editorsPick)}</span>
-                    <span>{editorsPick.readingTime || 8} min</span>
+                    <span>{editorsPick.readingTime || 8} {t.home.minutes}</span>
                   </div>
                 </article>
               </aside>
@@ -368,14 +367,14 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
         <div className="insights-shell">
           <div className={styles.sectionBar}>
             <div>
-              <p className="eyebrow">Nos desks</p>
-              <h2>Quatre angles. Une même exigence.</h2>
+              <p className="eyebrow">{t.newsroom.desks}</p>
+              <h2>{t.newsroom.desksTitle}</h2>
             </div>
           </div>
 
           <div className={styles.channelsGrid}>
             {channels.map((channel) => {
-              const channelPost = posts.find((post) => postMatchesChannel(post, channel.match))
+              const channelPost = posts.find((post) => postMatchesChannel(post, channel.id))
 
               return (
                 <article
@@ -384,20 +383,25 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
                   key={channel.id}
                   style={{ '--channel-color': channel.color } as React.CSSProperties}
                 >
-                  <p className={styles.channelLabel}>Desk {channel.title}</p>
+                  <p className={styles.channelLabel}>
+                    {t.newsroom.deskPrefix} {channel.title}
+                  </p>
                   <h3>{channel.title}</h3>
                   <p className={styles.channelDescription}>{channel.description}</p>
 
                   {channelPost ? (
                     <div className={styles.channelStory}>
-                      <Link href={'/posts/' + channelPost.slug}>{channelPost.title}</Link>
+                      <Link href={withLocale(locale, `/posts/${channelPost.slug}`)}>
+                        {channelPost.title}
+                      </Link>
                       <span>
-                        {formatDate(channelPost.publishedAt)} · {channelPost.readingTime || 8} min
+                        {formatPostDate(channelPost.publishedAt, locale)} ·{' '}
+                        {channelPost.readingTime || 8} {t.home.minutes}
                       </span>
                     </div>
                   ) : (
                     <div className={styles.channelStory}>
-                      <span>Nouveaux dossiers en préparation.</span>
+                      <span>{t.newsroom.newDossiers}</span>
                     </div>
                   )}
                 </article>
@@ -410,21 +414,21 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
       <section className="method-section" id="methodologie">
         <div className="insights-shell method-section__grid">
           <div>
-            <p className="eyebrow">Notre méthode</p>
-            <h2>Des conclusions traçables, pas des classements sortis d&apos;un chapeau.</h2>
+            <p className="eyebrow">{t.home.method}</p>
+            <h2>{t.home.methodTitle}</h2>
           </div>
           <div className="method-section__steps">
             <div>
               <span>01</span>
-              <p>Recouper les sources et dater chaque observation.</p>
+              <p>{t.home.method1}</p>
             </div>
             <div>
               <span>02</span>
-              <p>Rendre les hypothèses, limites et méthodes de calcul visibles.</p>
+              <p>{t.home.method2}</p>
             </div>
             <div>
               <span>03</span>
-              <p>Transformer la donnée en décision concrète, contextualisée pour l&apos;Afrique.</p>
+              <p>{t.home.method3}</p>
             </div>
           </div>
         </div>
@@ -436,15 +440,12 @@ export function InsightsHome({ posts }: { posts: Post[] }) {
             <div className="newsletter-section__icon">
               <ShieldCheck aria-hidden="true" size={22} />
             </div>
-            <p className="eyebrow">Trigenys Brief</p>
-            <h2>Une analyse utile. Pas une avalanche d&apos;e-mails.</h2>
+            <p className="eyebrow">{t.home.brief}</p>
+            <h2>{t.home.briefTitle}</h2>
           </div>
           <div>
-            <p>
-              Recevez les nouveaux dossiers, comparatifs et notes de terrain. Fréquence maîtrisée,
-              désinscription en un clic.
-            </p>
-            <NewsletterForm />
+            <p>{t.home.briefText}</p>
+            <NewsletterForm locale={locale} />
           </div>
         </div>
       </section>

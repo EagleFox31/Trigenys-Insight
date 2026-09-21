@@ -27,7 +27,7 @@ async function getPublishedPosts() {
 }
 
 export default async function HomePage() {
-  return <InsightsHome posts={await getPublishedPosts()} />
+  return <InsightsHome locale="fr" posts={await getPublishedPosts()} />
 }
 
 export const metadata: Metadata = {

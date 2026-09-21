@@ -3,12 +3,13 @@ import React from 'react'
 
 type BrandMarkProps = {
   compact?: boolean
+  href?: string
   inverse?: boolean
 }
 
-export function BrandMark({ compact = false, inverse = false }: BrandMarkProps) {
+export function BrandMark({ compact = false, href = '/', inverse = false }: BrandMarkProps) {
   return (
-    <Link className="brand-mark" href="/" aria-label="Trigenys Insights — accueil">
+    <Link className="brand-mark" href={href} aria-label="Trigenys Insights">
       <svg aria-hidden="true" className="brand-mark__symbol" viewBox="0 0 54 54">
         <path d="M5 8h34v9H27v29h-9V17H5z" fill="currentColor" />
         <path

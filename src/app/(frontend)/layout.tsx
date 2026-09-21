@@ -10,19 +10,23 @@ import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode } from 'next/headers'
+import { draftMode, headers } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
+import { defaultLocale, isSiteLocale } from '@/i18n/config'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces' })
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
+  const requestHeaders = await headers()
+  const requestedLocale = requestHeaders.get('x-trigenys-locale')
+  const locale = isSiteLocale(requestedLocale) ? requestedLocale : defaultLocale
 
   return (
-    <html className={cn(inter.variable, fraunces.variable)} lang="fr" suppressHydrationWarning>
+    <html className={cn(inter.variable, fraunces.variable)} lang={locale} suppressHydrationWarning>
       <head>
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>

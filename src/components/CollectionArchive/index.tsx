@@ -2,13 +2,15 @@ import { cn } from '@/utilities/ui'
 import React from 'react'
 
 import { Card, CardPostData } from '@/components/Card'
+import type { SiteLocale } from '@/i18n/config'
 
 export type Props = {
+  locale?: SiteLocale
   posts: CardPostData[]
 }
 
 export const CollectionArchive: React.FC<Props> = (props) => {
-  const { posts } = props
+  const { locale = 'fr', posts } = props
 
   return (
     <div className={cn('container')}>
@@ -18,7 +20,13 @@ export const CollectionArchive: React.FC<Props> = (props) => {
             if (typeof result === 'object' && result !== null) {
               return (
                 <div className="col-span-4" key={index}>
-                  <Card className="h-full" doc={result} relationTo="posts" showCategories />
+                  <Card
+                    className="h-full"
+                    doc={result}
+                    locale={locale}
+                    relationTo="posts"
+                    showCategories
+                  />
                 </div>
               )
             }
