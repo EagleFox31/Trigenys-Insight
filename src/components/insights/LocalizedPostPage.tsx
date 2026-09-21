@@ -104,6 +104,7 @@ export async function LocalizedPostPage({
             <RelatedPosts
               className="mt-12 max-w-[52rem] lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[2fr]"
               docs={post.relatedPosts.filter((relatedPost) => typeof relatedPost === 'object')}
+              locale={locale}
             />
           )}
         </div>
