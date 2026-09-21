@@ -31,31 +31,38 @@ const getPagesSitemap = unstable_cache(
 
     const dateFallback = new Date().toISOString()
 
-    const defaultSitemap = [
+    const localizedEditorialPages = [
       {
-        loc: `${SITE_URL}/search`,
+        loc: `${SITE_URL}/fr`,
         lastmod: dateFallback,
       },
       {
-        loc: `${SITE_URL}/posts`,
+        loc: `${SITE_URL}/en`,
+        lastmod: dateFallback,
+      },
+      {
+        loc: `${SITE_URL}/fr/posts`,
+        lastmod: dateFallback,
+      },
+      {
+        loc: `${SITE_URL}/en/posts`,
         lastmod: dateFallback,
       },
     ]
 
-    const sitemap = results.docs
+    // Generic CMS pages are not localized yet, so keep their canonical legacy URLs.
+    const cmsPages = results.docs
       ? results.docs
-          .filter((page) => Boolean(page?.slug))
-          .map((page) => {
-            return {
-              loc: page?.slug === 'home' ? `${SITE_URL}/` : `${SITE_URL}/${page?.slug}`,
-              lastmod: page.updatedAt || dateFallback,
-            }
-          })
+          .filter((page) => Boolean(page?.slug && page.slug !== 'home'))
+          .map((page) => ({
+            loc: `${SITE_URL}/${page?.slug}`,
+            lastmod: page.updatedAt || dateFallback,
+          }))
       : []
 
-    return [...defaultSitemap, ...sitemap]
+    return [...localizedEditorialPages, ...cmsPages]
   },
-  ['pages-sitemap'],
+  ['pages-sitemap-v2'],
   {
     tags: ['pages-sitemap'],
   },
