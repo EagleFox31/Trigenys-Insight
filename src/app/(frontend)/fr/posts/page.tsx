@@ -1,0 +1,9 @@
+import { LocalizedPostsArchivePage, localizedArchiveMetadata } from '@/components/insights/LocalizedPostsArchivePage'
+
+export const dynamic = 'force-dynamic'
+
+export default function Page() {
+  return <LocalizedPostsArchivePage locale="fr" />
+}
+
+export const metadata = localizedArchiveMetadata('fr')
