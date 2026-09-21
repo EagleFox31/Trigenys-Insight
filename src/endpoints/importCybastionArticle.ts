@@ -58,7 +58,7 @@ export async function importCybastionArticle({
     }
   }
 
-  const categoryIds: Array<number | string> = []
+  const categoryIds: number[] = []
 
   for (const category of wantedCategories) {
     const match = await payload.find({
@@ -83,7 +83,7 @@ export async function importCybastionArticle({
     categoryIds.push(doc.id)
   }
 
-  const sourceIds: Array<number | string> = []
+  const sourceIds: number[] = []
 
   for (const source of cybastionArticleSources) {
     const match = await payload.find({
