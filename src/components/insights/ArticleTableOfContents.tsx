@@ -104,8 +104,10 @@ export function ArticleTableOfContents({
       })
       .filter((heading): heading is Heading => Boolean(heading))
 
-    setHeadings(items)
-    setActiveId(items[0]?.id || '')
+    const initialStateFrame = window.requestAnimationFrame(() => {
+      setHeadings(items)
+      setActiveId(items[0]?.id || '')
+    })
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -150,6 +152,7 @@ export function ArticleTableOfContents({
     window.addEventListener('resize', updateProgress)
 
     return () => {
+      window.cancelAnimationFrame(initialStateFrame)
       observer.disconnect()
       window.removeEventListener('scroll', updateProgress)
       window.removeEventListener('resize', updateProgress)

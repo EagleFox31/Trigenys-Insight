@@ -5,7 +5,7 @@ import { getPayload } from 'payload'
 import type { SiteLocale } from '@/i18n/config'
 import { InsightsHome } from './InsightsHome'
 
-export async function LocalizedHomePage({ locale }: { locale: SiteLocale }) {
+async function queryLocalizedHomePosts(locale: SiteLocale) {
   try {
     const payload = await getPayload({ config: configPromise })
     const result = await payload.find({
@@ -19,13 +19,17 @@ export async function LocalizedHomePage({ locale }: { locale: SiteLocale }) {
       where: { _status: { equals: 'published' } },
     })
 
-    const posts = result.docs.filter((post) => Boolean(post.title && post.excerpt && post.content))
-
-    return <InsightsHome locale={locale} posts={posts} />
+    return result.docs.filter((post) => Boolean(post.title && post.excerpt && post.content))
   } catch (error) {
     console.warn(`Trigenys Insights: CMS unavailable for locale ${locale}.`, error)
-    return <InsightsHome locale={locale} posts={[]} />
+    return []
   }
+}
+
+export async function LocalizedHomePage({ locale }: { locale: SiteLocale }) {
+  const posts = await queryLocalizedHomePosts(locale)
+
+  return <InsightsHome locale={locale} posts={posts} />
 }
 
 export function localizedHomeMetadata(locale: SiteLocale): Metadata {
