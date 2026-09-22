@@ -2,6 +2,9 @@ name: Deploy Cloudflare pilot
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - infra/cloudflare-pilot
 
 permissions:
   contents: read
