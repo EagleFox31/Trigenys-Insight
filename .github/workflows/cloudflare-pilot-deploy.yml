@@ -15,8 +15,6 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       NEXT_PUBLIC_SERVER_URL: https://trigenys-insight-cloudflare-pilot.lawrynnjennifer.workers.dev
-      NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN }}
-      NEXT_PUBLIC_POSTHOG_HOST: https://eu.i.posthog.com
       DATABASE_URL: ${{ secrets.CLOUDFLARE_PILOT_DATABASE_URL }}
       DATABASE_URL_UNPOOLED: ${{ secrets.CLOUDFLARE_PILOT_DATABASE_URL_UNPOOLED }}
       PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
@@ -46,7 +44,6 @@ jobs:
           required=(
             CLOUDFLARE_API_TOKEN
             CLOUDFLARE_ACCOUNT_ID
-            NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
             DATABASE_URL
             DATABASE_URL_UNPOOLED
             PAYLOAD_SECRET
@@ -85,8 +82,6 @@ jobs:
             'CRON_SECRET',
             'PREVIEW_SECRET',
             'NEXT_PUBLIC_SERVER_URL',
-            'NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN',
-            'NEXT_PUBLIC_POSTHOG_HOST',
           ]
 
           const payload = Object.fromEntries(keys.map((key) => [key, process.env[key]]))
@@ -103,6 +98,19 @@ jobs:
       - name: Remove temporary secrets file
         if: always()
         run: rm -f /tmp/cloudflare-pilot-secrets.json
+
+      - name: Smoke test public routes
+        shell: bash
+        run: |
+          base="https://trigenys-insight-cloudflare-pilot.lawrynnjennifer.workers.dev"
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 "$base/fr" > /dev/null
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 "$base/en" > /dev/null
+
+          admin_status=$(curl --silent --output /dev/null --write-out "%{http_code}" "$base/admin")
+          if [ "$admin_status" -lt 200 ] || [ "$admin_status" -ge 500 ]; then
+            echo "::error::Unexpected /admin status: $admin_status"
+            exit 1
+          fi
 
       - name: Print pilot URL
         run: echo "https://trigenys-insight-cloudflare-pilot.lawrynnjennifer.workers.dev"
