@@ -1,3 +1,5 @@
+import { resolveMediaDeliveryUrl } from './mediaDelivery'
+
 /**
  * Processes media resource URL to ensure proper formatting
  * @param url The original URL from the resource
@@ -10,11 +12,13 @@
  */
 export const getMediaUrl = (url: string | null | undefined, cacheTag?: string | null): string => {
   if (!url) return ''
-  if (!cacheTag) return url
 
-  const hashIndex = url.indexOf('#')
-  const baseURL = hashIndex === -1 ? url : url.slice(0, hashIndex)
-  const fragment = hashIndex === -1 ? '' : url.slice(hashIndex)
+  const resolvedURL = resolveMediaDeliveryUrl(url)
+  if (!cacheTag) return resolvedURL
+
+  const hashIndex = resolvedURL.indexOf('#')
+  const baseURL = hashIndex === -1 ? resolvedURL : resolvedURL.slice(0, hashIndex)
+  const fragment = hashIndex === -1 ? '' : resolvedURL.slice(hashIndex)
   const separator = baseURL.includes('?') ? '&' : '?'
 
   return `${baseURL}${separator}v=${encodeURIComponent(cacheTag)}${fragment}`
