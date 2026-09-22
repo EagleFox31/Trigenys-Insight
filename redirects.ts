@@ -1,6 +1,18 @@
 import type { NextConfig } from 'next'
 
 export const redirects: NextConfig['redirects'] = async () => {
+  const legacyVercelHostRedirect = {
+    source: '/:path*',
+    has: [
+      {
+        type: 'host' as const,
+        value: 'trigenys-insight.vercel.app',
+      },
+    ],
+    destination: 'https://insight.trigenys.com/:path*',
+    permanent: true,
+  }
+
   const homepageRedirect = {
     source: '/',
     destination: '/fr',
@@ -20,5 +32,5 @@ export const redirects: NextConfig['redirects'] = async () => {
     source: '/:path((?!ie-incompatible.html$).*)', // all pages except the incompatibility page
   }
 
-  return [homepageRedirect, internetExplorerRedirect]
+  return [legacyVercelHostRedirect, homepageRedirect, internetExplorerRedirect]
 }
