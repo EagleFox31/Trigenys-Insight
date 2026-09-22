@@ -7,20 +7,26 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'next.config.ts'
+      - 'tsconfig.json'
+      - 'vite.config.ts'
+      - 'wrangler.jsonc'
+      - 'empty-stub.js'
       - '.github/workflows/cloudflare-compatibility.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   vinext-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
-      - name: Checkout
+      - name: Checkout pilot branch
         uses: actions/checkout@v4
+        with:
+          ref: infra/cloudflare-pilot
 
       - name: Enable pnpm
         uses: pnpm/action-setup@v4
@@ -49,27 +55,15 @@ jobs:
           PREVIEW_SECRET: cloudflare-pilot-build-only-preview-secret
         run: pnpm build:vinext
 
-      - name: Generate Cloudflare config ephemerally
-        run: pnpm dlx vinext init --platform=cloudflare --skip-check
-
-      - name: Show vinext init changes
+      - name: Persist lockfile update
         run: |
-          echo "===== package.json ====="
-          git diff -- package.json
-          echo "===== generated files ====="
-          for file in vite.config.ts wrangler.jsonc; do
-            if [ -f "$file" ]; then
-              echo "----- $file -----"
-              cat "$file"
-            fi
-          done
-          echo "===== extra generated files ====="
-          git status --short
-          for file in empty-stub.js; do
-            if [ -f "$file" ]; then
-              echo "----- $file -----"
-              cat "$file"
-            fi
-          done
-          echo "===== gitignore diff ====="
-          git diff -- .gitignore
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "pnpm-lock.yaml is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore: lock Cloudflare pilot dependencies"
+          git push origin HEAD:infra/cloudflare-pilot
