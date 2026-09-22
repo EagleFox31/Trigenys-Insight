@@ -30,3 +30,17 @@ The final audit returned 131 foreign keys, 406 indexes, 122 unique indexes, and 
 4. Secure the deployment while creating the first editorial administrator. The initial database currently contains no users or editorial content.
 5. Import the founder draft through Payload after administrator creation. The current dashboard seed action clears editorial data and must only be used on a new, empty database.
 6. Verify login, draft privacy, publication, media upload, and newsletter subscription on the deployed application before launch.
+
+## IndexNow
+
+IndexNow support is optional and server-side only.
+
+1. Generate a key that satisfies the IndexNow format (8-128 letters, numbers, or dashes).
+2. Set `INDEXNOW_KEY` in the production environment.
+3. Deploy, then confirm `https://insight.trigenys.com/indexnow-key.txt` returns only the configured key.
+4. Publishing, materially updating, unpublishing, or deleting a post will notify the IndexNow endpoint for the affected canonical FR/EN URLs.
+5. Failures are logged without exposing the key and never reject the editorial write.
+
+IndexNow is a change-notification protocol. A successful response means the URL notification was received; it does not guarantee crawling or indexing. Google does not currently use IndexNow.
+
+> Keep `INDEXNOW_KEY` server-side. Do not prefix the key with `NEXT_PUBLIC_` or expose it to client bundles.
