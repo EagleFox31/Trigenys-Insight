@@ -22,11 +22,14 @@ export function Footer() {
         <div>
           <p className="site-footer__label">{t.footer.explore}</p>
           <Link href={withLocale(locale, '/posts')}>{t.footer.analyses}</Link>
-          <Link href={withLocale(locale, '/#methodologie')}>{t.footer.methodology}</Link>
+          <Link href={withLocale(locale, '/methodology')}>{t.footer.methodology}</Link>
           <Link href={withLocale(locale, '/#newsletter')}>{t.footer.newsletter}</Link>
+          <Link href={withLocale(locale, '/about')}>{t.footer.about}</Link>
         </div>
         <div>
           <p className="site-footer__label">Trigenys</p>
+          <Link href={withLocale(locale, '/editorial-policy')}>{t.footer.editorialPolicy}</Link>
+          <Link href={withLocale(locale, '/contact')}>{t.footer.contact}</Link>
           <a href="https://github.com/EagleFox31/Trigenys-Insight" rel="noreferrer" target="_blank">
             GitHub
           </a>

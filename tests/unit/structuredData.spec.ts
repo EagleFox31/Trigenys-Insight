@@ -88,7 +88,15 @@ describe('structured data', () => {
       inLanguage: 'fr-FR',
       publisher: { '@id': ORGANIZATION_ID },
       image: ['https://insight.trigenys.com/media/article.png'],
-      author: [{ '@type': 'Person', name: 'Trigenys Editorial' }],
+      author: [
+        {
+          '@type': 'Person',
+          '@id':
+            'https://insight.trigenys.com/fr/authors/trigenys-editorial#person',
+          name: 'Trigenys Editorial',
+          url: 'https://insight.trigenys.com/fr/authors/trigenys-editorial',
+        },
+      ],
       articleSection: ['Technology'],
     })
   })

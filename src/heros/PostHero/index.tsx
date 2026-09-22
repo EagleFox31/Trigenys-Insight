@@ -9,17 +9,28 @@ import React from 'react'
 import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
-import { formatAuthors } from '@/utilities/formatAuthors'
+import { authorSlug } from '@/utilities/authorSlug'
 
 export const PostHero: React.FC<{
   locale: SiteLocale
   post: Post
 }> = ({ locale, post }) => {
-  const { categories, excerpt, heroImage, populatedAuthors, publishedAt, readingTime, title } = post
+  const {
+    categories,
+    excerpt,
+    heroImage,
+    populatedAuthors,
+    publishedAt,
+    readingTime,
+    title,
+    updatedAt,
+  } = post
   const t = getMessages(locale).post
+  const publicAuthors = populatedAuthors?.filter((author) => Boolean(author?.name)) || []
 
-  const hasAuthors =
-    populatedAuthors && populatedAuthors.length > 0 && formatAuthors(populatedAuthors) !== ''
+  const showUpdatedAt =
+    Boolean(publishedAt && updatedAt) &&
+    new Date(updatedAt).getTime() - new Date(publishedAt as string).getTime() >= 24 * 60 * 60 * 1000
 
   return (
     <header className="post-hero">
@@ -35,8 +46,10 @@ export const PostHero: React.FC<{
               const isLast = index === categories.length - 1
 
               return (
-                <React.Fragment key={index}>
-                  {categoryLabel(category, locale)}
+                <React.Fragment key={category.id || index}>
+                  <Link href={withLocale(locale, `/${category.slug}`)}>
+                    {categoryLabel(category, locale)}
+                  </Link>
                   {!isLast && <React.Fragment> · </React.Fragment>}
                 </React.Fragment>
               )
@@ -49,9 +62,44 @@ export const PostHero: React.FC<{
         {excerpt && <p className="post-hero__excerpt">{excerpt}</p>}
 
         <div className="post-hero__meta">
-          {hasAuthors && <span>{t.by} {formatAuthors(populatedAuthors)}</span>}
-          {publishedAt && <time dateTime={publishedAt}>{formatPostDate(publishedAt, locale, true)}</time>}
-          {readingTime && <span>{readingTime} {t.minutesReading}</span>}
+          {publicAuthors.length > 0 && (
+            <span>
+              {t.by}{' '}
+              {publicAuthors.map((author, index) => {
+                const name = author.name as string
+                const isLast = index === publicAuthors.length - 1
+                const isBeforeLast = index === publicAuthors.length - 2
+                const separator = isLast
+                  ? ''
+                  : isBeforeLast
+                    ? locale === 'fr'
+                      ? ' et '
+                      : ' and '
+                    : ', '
+
+                return (
+                  <React.Fragment key={author.id || name}>
+                    <Link href={withLocale(locale, `/authors/${authorSlug(name)}`)}>{name}</Link>
+                    {separator}
+                  </React.Fragment>
+                )
+              })}
+            </span>
+          )}
+          {publishedAt && (
+            <time dateTime={publishedAt}>{formatPostDate(publishedAt, locale, true)}</time>
+          )}
+          {showUpdatedAt && (
+            <span>
+              {t.updated}{' '}
+              <time dateTime={updatedAt}>{formatPostDate(updatedAt, locale, true)}</time>
+            </span>
+          )}
+          {readingTime && (
+            <span>
+              {readingTime} {t.minutesReading}
+            </span>
+          )}
         </div>
       </div>
       {heroImage && typeof heroImage !== 'string' && (

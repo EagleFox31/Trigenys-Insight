@@ -3,13 +3,25 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { unstable_cache } from 'next/cache'
 
+import { SITE_IDENTITY } from '@/seo/structuredData'
+
+const localizedEditorialPaths = [
+  '',
+  '/posts',
+  '/technology',
+  '/business',
+  '/information-systems',
+  '/africa',
+  '/methodology',
+  '/about',
+  '/editorial-policy',
+  '/contact',
+] as const
+
 const getPagesSitemap = unstable_cache(
   async () => {
     const payload = await getPayload({ config })
-    const SITE_URL =
-      process.env.NEXT_PUBLIC_SERVER_URL ||
-      process.env.VERCEL_PROJECT_PRODUCTION_URL ||
-      'https://example.com'
+    const SITE_URL = SITE_IDENTITY.url
 
     const results = await payload.find({
       collection: 'pages',
@@ -30,25 +42,14 @@ const getPagesSitemap = unstable_cache(
     })
 
     const dateFallback = new Date().toISOString()
+    const locales = ['fr', 'en'] as const
 
-    const localizedEditorialPages = [
-      {
-        loc: `${SITE_URL}/fr`,
+    const localizedEditorialPages = locales.flatMap((locale) =>
+      localizedEditorialPaths.map((path) => ({
+        loc: `${SITE_URL}/${locale}${path}`,
         lastmod: dateFallback,
-      },
-      {
-        loc: `${SITE_URL}/en`,
-        lastmod: dateFallback,
-      },
-      {
-        loc: `${SITE_URL}/fr/posts`,
-        lastmod: dateFallback,
-      },
-      {
-        loc: `${SITE_URL}/en/posts`,
-        lastmod: dateFallback,
-      },
-    ]
+      })),
+    )
 
     // Generic CMS pages are not localized yet, so keep their canonical legacy URLs.
     const cmsPages = results.docs
@@ -62,7 +63,7 @@ const getPagesSitemap = unstable_cache(
 
     return [...localizedEditorialPages, ...cmsPages]
   },
-  ['pages-sitemap-v2'],
+  ['pages-sitemap-v3'],
   {
     tags: ['pages-sitemap'],
   },
