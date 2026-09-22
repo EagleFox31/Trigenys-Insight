@@ -1,11 +1,12 @@
 import type { Payload, PayloadRequest } from 'payload'
+import type { Post } from '@/payload-types'
 
 import {
   readabilityRevisions,
   type EditorialLocale,
 } from '@/editorial/readability-revisions'
 
-function comparableLocale(doc: any) {
+function comparableLocale(doc: Partial<Post> | null | undefined) {
   return {
     title: doc?.title || '',
     excerpt: doc?.excerpt || '',
