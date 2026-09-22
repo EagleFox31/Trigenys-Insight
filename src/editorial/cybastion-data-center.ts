@@ -143,3 +143,64 @@ export function createCybastionLexicalDocument(): Post['content'] {
     },
   } as unknown as Post['content']
 }
+
+
+export const cybastionArticleMetadataEn = {
+  title: '42 Billion FCFA for an AI Data Center in Douala: What Cameroon Is Really Buying',
+  excerpt:
+    'Cybastion plans a $75 million sovereign AI data center with dedicated power infrastructure in Douala. Beyond the headline investment, the real questions concern compute, energy, data sovereignty and who will actually benefit.',
+  metaTitle: 'Douala AI Data Center: What 42 Billion FCFA Really Buys',
+  metaDescription:
+    'Cybastion plans a $75 million AI data center in Douala. We examine compute, power, data sovereignty and what it could mean for Cameroon.',
+}
+
+export const cybastionArticleSourceEn = "42 billion FCFA.\n\nA data center in Douala.\n\nDedicated power capacity.\n\nAnd two words that immediately attract attention in 2026: artificial intelligence and sovereignty.\n\nCybastion plans to invest $75 million — roughly 42 billion FCFA at the exchange rate used around the announcement — in a project in Douala combining a data center designed in part for artificial-intelligence workloads with dedicated power-generation capacity.\n\nOn paper, the announcement checks almost every box of the moment: cloud, AI, local data, energy, US investment and digital sovereignty.\n\nBut an investment announcement is not yet a technical architecture.\n\nAnd that is exactly where the project becomes interesting.\n\n## $75 million still does not tell us how much computing power will be available\n\nThe headline number is striking because it is easy to understand.\n\nComputing capacity is much harder to read.\n\nAt this stage, several decisive details remain undisclosed: the site's electrical capacity, installed compute capacity, the number and type of accelerators, rack density, cooling technology, detailed construction schedule, exact location in Douala and the project's financing structure.\n\nThat changes how the announcement should be interpreted.\n\nA data center consumes capital on far more than the servers visible in promotional photographs: a secure building, transformers, UPS systems, batteries, backup or dedicated generation, cooling, fire detection, access control, storage, networking, fiber connectivity, monitoring, spare parts and maintenance.\n\nFor an AI-oriented facility, another line item becomes decisive: compute.\n\nWhich GPUs will actually be available? At what scale? For which customers? And under what commercial model — colocation, private cloud, GPU-as-a-Service or managed services?\n\nWithout those details, it would be reckless to translate $75 million into a number of GPUs or into model-training capacity.\n\nThe announced project is significant. Its actual computing power remains to be documented.\n\n## Dedicated electricity may be almost as important as the GPUs\n\nAI requires a great deal of computation.\n\nComputation requires a great deal of electricity.\n\nAnd a data center cannot operate like an office that simply accepts a few minutes of downtime when the grid fails.\n\nCybastion is therefore announcing dedicated power capacity alongside the data center. That detail is not secondary: it directly affects availability, operating costs and the computing density the facility will be able to support.\n\nRaw figures from the World Bank Enterprise Survey 2024-2025 illustrate the power constraint faced by surveyed businesses in Cameroon: 560 establishments out of 615 reported experiencing power outages during their most recent fiscal year. The World Bank itself notes that these case counts should not be read as population-level estimates for all Cameroonian businesses. Even so, they are a clear signal of an operational problem.\n\nFor a data center, the issue is therefore not simply obtaining electricity.\n\nPower must be continuous, redundant and predictable, while the heat produced by the equipment must also be removed.\n\nWith high-density AI racks, that constraint rises quickly.\n\nThat is why one number matters particularly: how many megawatts will the project be able to supply and secure?\n\nThe answer will reveal far more about the site's real ambition than the overall investment figure.\n\n## \"Sovereign\" does not simply mean \"located in Cameroon\"\n\nThe term \"sovereign data center\" appears in Cybastion's communication and in the digital priorities discussed by the Cameroonian side during the economic dialogue with the United States.\n\nBut digital sovereignty is not merely a question of where a building stands.\n\nA system can physically host its data in Cameroon while still depending heavily on technologies, licences, administrator accounts, remote operations or cryptographic keys controlled outside the country.\n\nSeveral questions therefore matter.\n\nWhere is the data stored?\n\nWho owns the infrastructure?\n\nWho operates it day to day?\n\nWho controls administrative access?\n\nWhere are encryption keys held?\n\nDo backups remain in Cameroon, or are they replicated elsewhere?\n\nCan local teams maintain the system without permanent dependence on a foreign provider?\n\nWhat happens if a vendor discontinues a service or abruptly changes its commercial terms?\n\nData localization is one layer of sovereignty.\n\nIt is not the whole of sovereignty.\n\nThat distinction has become even more important since Cameroon adopted Law No. 2024/017 of 23 December 2024 on the protection of personal data.\n\nIt also matters in the context of the Cameroon Internet Governance Forum 2026, whose recommendations explicitly addressed data governance, digital public infrastructure, cybersecurity, system interoperability and responsible, sovereign governance of artificial intelligence.\n\nThe word \"sovereign\" therefore has to become visible in architecture choices, contracts, governance and local capabilities.\n\n## Cameroon is not starting from zero\n\nIt would be misleading to present the project as the country's first modern data center.\n\nCameroon already has local infrastructure.\n\nCAMTEL notably promotes its Zamengoé data center, which it describes as Tier III certified and as part of the country's local data-hosting infrastructure.\n\nIn Douala, ST Digital also operates a data center in the port area. In 2025, the Ministry of Posts and Telecommunications presented it as infrastructure intended to meet the hosting needs of public administrations and national businesses.\n\nSo the right question is not: \"Will Cameroon finally have a data center?\"\n\nThe better question is: what will the Cybastion project provide that the existing ecosystem does not yet offer at scale?\n\nIf it is mainly colocation, storage and hosting, the project will strengthen an already existing local market.\n\nIf, however, it brings substantial GPU capacity, high-performance computing, local cloud services, significant power capacity and robust connectivity, then it moves into a different category.\n\nIt is no longer only a place where applications are stored.\n\nIt becomes a place where computation happens.\n\nAnd in the AI economy, that distinction is fundamental.\n\n## Hosting data and owning compute are two different battles\n\nMuch of Africa's discussion about digital infrastructure has historically focused on local data hosting.\n\nAI adds a second battle: local access to computing power.\n\nToday, a Cameroonian startup can use an AI API hosted in the United States or Europe. It can rent GPUs from a foreign hyperscaler. A university can also run certain workloads in an international cloud.\n\nTechnically, that works.\n\nBut the dependencies are numerous: foreign-currency payments, international payment rails, latency, cross-border data transfers, service availability and prices determined outside the local market.\n\nA Cameroonian facility that genuinely offers GPU-as-a-Service could alter part of that equation.\n\nA company could deploy certain open-source models locally.\n\nAn institution could keep sensitive workloads in national infrastructure.\n\nA university could access computing resources without automatically relying on a foreign provider.\n\nStartups could build AI products while keeping some data and processing within the country.\n\nBut everything depends on the final commercial product.\n\nThe word \"AI\" in an announcement does not automatically guarantee a GPU cloud that the local ecosystem can actually use.\n\n## Price will test sovereignty just as much as technology\n\nLocal infrastructure can be technically excellent and still remain economically underused.\n\nThe future data center will have to convince public institutions, banks, telecom operators, insurers, large companies, startups, universities and possibly customers across the subregion.\n\nThose organizations will not migrate simply because the building is in Douala.\n\nThey will compare pricing, certifications, SLAs, support quality, connectivity, backups, disaster-recovery mechanisms, security capabilities and ease of integration.\n\nThe cost of compute will be especially revealing.\n\nIf a startup can rent a GPU in Europe for far less than in Douala, many will continue using foreign infrastructure.\n\nDigital sovereignty may be strategically desirable.\n\nIt also has to become economically usable.\n\nThat requires coherent pricing, contracts suited to local companies, simple payment options and service quality high enough to justify migration.\n\n## The project becomes most interesting exactly where the press release stops\n\nIt would be easy to claim that 42 billion FCFA will turn Cameroon into an African artificial-intelligence hub.\n\nThe information available today does not support that conclusion.\n\nIt would be equally easy to dismiss the project as just another announcement.\n\nThat would also be premature.\n\nThe announced combination — data infrastructure, computing power and dedicated energy — addresses real constraints of modern AI.\n\nThe sensible approach is therefore to watch concrete indicators.\n\nElectrical capacity.\n\nGPU capacity.\n\nCooling technology.\n\nRedundancy level.\n\nCertifications.\n\nConnectivity.\n\nFinancing structure.\n\nPricing.\n\nSigned customers.\n\nBackup locations.\n\nAccess control.\n\nTraining of local teams.\n\nConstruction schedule.\n\nActual commissioning.\n\nThose are the elements that will eventually distinguish a strategic infrastructure project from a project that is merely described as strategic.\n\n## 42 billion FCFA can buy servers. Sovereignty has to be built.\n\nCameroon's current context makes the project particularly interesting.\n\nThe country has strengthened its legal framework for personal data. Public discussions now explicitly cover interoperability, cybersecurity, data governance and sovereign artificial intelligence. Local data centers already exist. And demand for cloud services, computing capacity and digital services continues to grow.\n\nCybastion's project could therefore become an important part of that ecosystem.\n\nBut its value will not be measured by the number of press releases or by the size of the announced figure.\n\nIt will be measured by something far more concrete: how much computation can actually happen locally, at what price, with what level of availability, under whose control and for whose benefit.\n\nA data center can be built in Cameroon.\n\nA genuinely Cameroonian digital infrastructure is judged by the use, control and capabilities it creates around itself.\n\nThat is the difference worth watching over the coming months."
+
+function createLexicalDocumentFromSource(source: string): Post['content'] {
+  const blocks = source
+    .trim()
+    .split(/\n\s*\n/g)
+    .map((block) => block.replace(/\s*\n\s*/g, ' ').trim())
+    .filter(Boolean)
+
+  const children = blocks.map((block) => {
+    const heading = block.match(/^(#{2,4})\s+(.+)$/)
+
+    if (heading) {
+      return {
+        children: [textNode(heading[2])],
+        direction: 'ltr',
+        format: '',
+        indent: 0,
+        tag: 'h' + heading[1].length,
+        type: 'heading',
+        version: 1,
+      }
+    }
+
+    return {
+      children: [textNode(block)],
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      textFormat: 0,
+      type: 'paragraph',
+      version: 1,
+    }
+  })
+
+  return {
+    root: {
+      children,
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      type: 'root',
+      version: 1,
+    },
+  } as unknown as Post['content']
+}
+
+export function createCybastionLexicalDocumentEn(): Post['content'] {
+  return createLexicalDocumentFromSource(cybastionArticleSourceEn)
+}
