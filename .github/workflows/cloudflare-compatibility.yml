@@ -53,5 +53,13 @@ jobs:
               cat "$file"
             fi
           done
+          echo "===== extra generated files ====="
+          git status --short
+          for file in empty-stub.js; do
+            if [ -f "$file" ]; then
+              echo "----- $file -----"
+              cat "$file"
+            fi
+          done
           echo "===== gitignore diff ====="
           git diff -- .gitignore
