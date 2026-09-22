@@ -2,7 +2,11 @@
 
 import type { SiteLocale } from '@/i18n/config'
 import { BookOpenText, Clock3, LibraryBig } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+import { trackEditorialEvent } from '@/lib/analytics/client'
+import type { EditorialAnalyticsEvent } from '@/lib/analytics/events'
+import { readingEventsToEmit } from '@/lib/analytics/reading'
 
 type Heading = {
   id: string
@@ -23,16 +27,22 @@ function slugify(value: string) {
 
 export function ArticleTableOfContents({
   locale,
+  slug,
   readingTime,
   sourceCount,
+  analyticsEnabled = true,
 }: {
   locale: SiteLocale
+  slug: string
   readingTime?: number | null
   sourceCount: number
+  analyticsEnabled?: boolean
 }) {
   const [headings, setHeadings] = useState<Heading[]>([])
   const [activeId, setActiveId] = useState('')
   const [progress, setProgress] = useState(0)
+  const firedMilestones = useRef<Set<EditorialAnalyticsEvent>>(new Set())
+  const activeArticleKey = useRef('')
 
   const copy =
     locale === 'fr'
@@ -55,6 +65,20 @@ export function ArticleTableOfContents({
     const article = document.querySelector<HTMLElement>('[data-article-reading-main]')
     const content = article?.querySelector<HTMLElement>('.article-content')
     if (!article || !content) return
+
+    const articleKey = `${locale}:${slug}`
+    if (activeArticleKey.current !== articleKey) {
+      activeArticleKey.current = articleKey
+      firedMilestones.current = new Set()
+
+      if (analyticsEnabled) {
+        trackEditorialEvent('article_view', {
+          slug,
+          locale,
+          context: 'article',
+        })
+      }
+    }
 
     const headingNodes = Array.from(content.querySelectorAll<HTMLHeadingElement>('h2, h3'))
     const seen = new Map<string, number>()
@@ -108,6 +132,17 @@ export function ArticleTableOfContents({
       const range = Math.max(end - start, 1)
       const nextProgress = Math.min(1, Math.max(0, (window.scrollY - start) / range))
       setProgress(nextProgress)
+
+      if (analyticsEnabled && document.visibilityState === 'visible') {
+        for (const event of readingEventsToEmit(nextProgress, firedMilestones.current)) {
+          firedMilestones.current.add(event)
+          trackEditorialEvent(event, {
+            slug,
+            locale,
+            context: 'article',
+          })
+        }
+      }
     }
 
     updateProgress()
@@ -119,18 +154,27 @@ export function ArticleTableOfContents({
       window.removeEventListener('scroll', updateProgress)
       window.removeEventListener('resize', updateProgress)
     }
-  }, [])
+  }, [analyticsEnabled, locale, slug])
 
   if (headings.length === 0) return null
 
   const nav = (
     <nav aria-label={copy.title} className="article-toc__nav">
-      {headings.map((heading) => (
+      {headings.map((heading, index) => (
         <a
           aria-current={activeId === heading.id ? 'location' : undefined}
           className={heading.level === 3 ? 'is-subsection' : undefined}
           href={`#${heading.id}`}
           key={heading.id}
+          onClick={() => {
+            if (!analyticsEnabled) return
+
+            trackEditorialEvent('toc_click', {
+              slug,
+              locale,
+              context: `section-${index + 1}-h${heading.level}`,
+            })
+          }}
         >
           <span className="article-toc__marker" />
           <span>{heading.text}</span>
