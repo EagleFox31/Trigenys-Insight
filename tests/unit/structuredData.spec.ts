@@ -4,6 +4,7 @@ import type { Post } from '@/payload-types'
 import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
   buildSiteIdentityJsonLd,
   ORGANIZATION_ID,
   SITE_IDENTITY,
@@ -100,6 +101,38 @@ describe('structured data', () => {
     expect(data).not.toHaveProperty('author')
     expect(data).not.toHaveProperty('image')
     expect(data).not.toHaveProperty('articleSection')
+  })
+
+  it('builds localized canonical BreadcrumbList items', () => {
+    const data = buildBreadcrumbJsonLd([
+      { name: 'Accueil', path: '/fr' },
+      { name: 'Analyses', path: '/fr/posts' },
+      { name: 'Titre test', path: '/fr/posts/titre-test' },
+    ])
+
+    expect(data).toMatchObject({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Accueil',
+          item: 'https://insight.trigenys.com/fr',
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Analyses',
+          item: 'https://insight.trigenys.com/fr/posts',
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: 'Titre test',
+          item: 'https://insight.trigenys.com/fr/posts/titre-test',
+        },
+      ],
+    })
   })
 
   it('normalizes canonical paths against the production host', () => {
