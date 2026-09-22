@@ -5,6 +5,7 @@ import { BookOpenText, Clock3, LibraryBig } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { trackEditorialEvent } from '@/lib/analytics/client'
+import { activateArticleAttribution } from '@/lib/analytics/attribution'
 import type { EditorialAnalyticsEvent } from '@/lib/analytics/events'
 import { readingEventsToEmit } from '@/lib/analytics/reading'
 
@@ -72,6 +73,7 @@ export function ArticleTableOfContents({
       firedMilestones.current = new Set()
 
       if (analyticsEnabled) {
+        activateArticleAttribution(slug, locale)
         trackEditorialEvent('article_view', {
           slug,
           locale,

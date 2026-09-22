@@ -8,6 +8,7 @@ import {
   type ArticlePlacement,
 } from '@/lib/analytics/events'
 import { trackEditorialEvent } from '@/lib/analytics/client'
+import { rememberArticleAttribution } from '@/lib/analytics/attribution'
 
 type LinkProps = Omit<ComponentProps<typeof Link>, 'href' | 'onClick'>
 
@@ -34,6 +35,12 @@ export function TrackedArticleLink({
       {...props}
       href={href}
       onClick={(event) => {
+        rememberArticleAttribution({
+          slug,
+          locale,
+          placement,
+          category,
+        })
         trackEditorialEvent('article_card_click', {
           slug,
           locale,
