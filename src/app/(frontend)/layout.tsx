@@ -31,7 +31,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html className={cn(inter.variable, fraunces.variable)} lang={locale} suppressHydrationWarning>
       <head>
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
         <script
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(siteIdentityJsonLd) }}
           type="application/ld+json"
@@ -58,6 +57,16 @@ export const metadata: Metadata = {
   title: {
     default: 'Trigenys Insights',
     template: '%s | Trigenys Insights',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-48x48.png', sizes: '48x48', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: mergeOpenGraph(),
   twitter: {
