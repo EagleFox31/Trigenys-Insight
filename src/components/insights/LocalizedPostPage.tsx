@@ -11,6 +11,9 @@ import RichText from '@/components/RichText'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
+import { ArticleHighlights } from '@/components/insights/ArticleHighlights'
+import { ArticleTableOfContents } from '@/components/insights/ArticleTableOfContents'
+import { extractArticleHighlights } from '@/components/insights/articleEditorial'
 
 async function queryPostBySlug({
   locale,
@@ -58,6 +61,8 @@ export async function LocalizedPostPage({
   if (!post) notFound()
 
   const t = getMessages(locale).post
+  const highlights = extractArticleHighlights(post.content)
+  const visibleSources = post.sources?.filter((source) => typeof source === 'object') || []
 
   return (
     <article className="pb-20">
@@ -66,22 +71,24 @@ export async function LocalizedPostPage({
       <PostHero locale={locale} post={post} />
 
       <div className="article-reading-shell">
-        <div className="container">
-          <RichText className="article-content" data={post.content} enableGutter={false} />
+        <div className="insights-shell article-reading-grid">
+          <ArticleTableOfContents
+            locale={locale}
+            readingTime={post.readingTime}
+            sourceCount={visibleSources.length}
+          />
 
-          {post.sources && post.sources.length > 0 && (
-            <section
-              aria-labelledby="research-sources-title"
-              className="article-sources"
-            >
-              <h2 className="mb-5 text-2xl font-semibold" id="research-sources-title">
-                {t.sourcesTitle}
-              </h2>
-              <p className="mb-6 text-sm leading-6 text-muted-foreground">{t.sourcesText}</p>
-              <ol className="space-y-4">
-                {post.sources
-                  .filter((source) => typeof source === 'object')
-                  .map((source) => (
+          <main className="article-reading-main" data-article-reading-main>
+            <ArticleHighlights highlights={highlights} locale={locale} />
+
+            <RichText className="article-content" data={post.content} enableGutter={false} />
+
+            {visibleSources.length > 0 && (
+              <section aria-labelledby="research-sources-title" className="article-sources">
+                <h2 id="research-sources-title">{t.sourcesTitle}</h2>
+                <p>{t.sourcesText}</p>
+                <ol>
+                  {visibleSources.map((source) => (
                     <li className="text-sm leading-6" key={source.id}>
                       <a
                         className="font-medium underline decoration-muted-foreground/50 underline-offset-4 hover:decoration-foreground"
@@ -96,17 +103,18 @@ export async function LocalizedPostPage({
                       )}
                     </li>
                   ))}
-              </ol>
-            </section>
-          )}
+                </ol>
+              </section>
+            )}
 
-          {post.relatedPosts && post.relatedPosts.length > 0 && (
-            <RelatedPosts
-              className="mt-12 max-w-[52rem] lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[2fr]"
-              docs={post.relatedPosts.filter((relatedPost) => typeof relatedPost === 'object')}
-              locale={locale}
-            />
-          )}
+            {post.relatedPosts && post.relatedPosts.length > 0 && (
+              <RelatedPosts
+                className="mt-14"
+                docs={post.relatedPosts.filter((relatedPost) => typeof relatedPost === 'object')}
+                locale={locale}
+              />
+            )}
+          </main>
         </div>
       </div>
     </article>
