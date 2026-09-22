@@ -24,13 +24,16 @@ export async function POST(): Promise<Response> {
     return Response.json({
       success: true,
       created: result.created,
+      englishCreated: result.englishCreated,
       id: result.id,
       slug: result.slug,
       title: result.title,
       editUrl: '/admin/collections/posts/' + result.id,
       message: result.created
-        ? "Article importé en brouillon. Tu peux maintenant ajouter l'image de couverture, relire et publier."
-        : "Cet article existe déjà dans le CMS. J'ai ouvert sa fiche plutôt que de l'écraser.",
+        ? "Article importé en brouillon en français et en anglais. Tu peux maintenant ajouter l'image de couverture, relire les deux locales et publier."
+        : result.englishCreated
+          ? "L'article existait déjà : sa version anglaise complète vient d'être ajoutée sans toucher à ta version française."
+          : "Les versions française et anglaise existent déjà. Je n'ai écrasé aucun contenu éditorial.",
     })
   } catch (error) {
     payload.logger.error({ err: error, message: 'Cybastion editorial import failed' })
