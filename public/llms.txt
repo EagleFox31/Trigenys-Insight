@@ -25,7 +25,6 @@ Canonical site: https://insight.trigenys.com
 
 - Pages sitemap: https://insight.trigenys.com/pages-sitemap.xml
 - Posts sitemap: https://insight.trigenys.com/posts-sitemap.xml
-- Google News sitemap: https://insight.trigenys.com/news-sitemap.xml
 
 ## Editorial approach
 
