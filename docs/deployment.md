@@ -42,3 +42,5 @@ IndexNow support is optional and server-side only.
 5. Failures are logged without exposing the key and never reject the editorial write.
 
 IndexNow is a change-notification protocol. A successful response means the URL notification was received; it does not guarantee crawling or indexing. Google does not currently use IndexNow.
+
+> Keep `INDEXNOW_KEY` server-side. Do not prefix the key with `NEXT_PUBLIC_` or expose it to client bundles.
