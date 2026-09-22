@@ -18,6 +18,7 @@ import { TrackedOutboundLink } from '@/components/analytics/TrackedOutboundLink'
 import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
   mediaURL,
   serializeJsonLd,
   SITE_IDENTITY,
@@ -71,15 +72,30 @@ export async function LocalizedPostPage({
   const t = getMessages(locale).post
   const highlights = extractArticleHighlights(post.content)
   const visibleSources = post.sources?.filter((source) => typeof source === 'object') || []
-  const articleJsonLd = !draft && post._status === 'published'
-    ? buildArticleJsonLd({ locale, post, slug: decodedSlug })
-    : null
+  const articleJsonLd =
+    !draft && post._status === 'published'
+      ? buildArticleJsonLd({ locale, post, slug: decodedSlug })
+      : null
+  const breadcrumbJsonLd =
+    !draft && post._status === 'published'
+      ? buildBreadcrumbJsonLd([
+          { name: locale === 'fr' ? 'Accueil' : 'Home', path: `/${locale}` },
+          { name: locale === 'fr' ? 'Analyses' : 'Analysis', path: `/${locale}/posts` },
+          { name: post.title, path: `/${locale}/posts/${decodedSlug}` },
+        ])
+      : null
 
   return (
     <article className="pb-20">
       {articleJsonLd && (
         <script
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
+          type="application/ld+json"
+        />
+      )}
+      {breadcrumbJsonLd && (
+        <script
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
           type="application/ld+json"
         />
       )}
