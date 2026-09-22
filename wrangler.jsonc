@@ -8,7 +8,10 @@
     "directory": "dist/client",
     "not_found_handling": "none",
     "binding": "ASSETS",
-    "run_worker_first": true
+    "run_worker_first": [
+      "/*",
+      "!/_next/static/*"
+    ]
   },
   "images": {
     "binding": "IMAGES"
