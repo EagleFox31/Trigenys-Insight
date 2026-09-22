@@ -3,14 +3,16 @@ import React from 'react'
 
 import { Card, CardPostData } from '@/components/Card'
 import type { SiteLocale } from '@/i18n/config'
+import type { ArticlePlacement } from '@/lib/analytics/events'
 
 export type Props = {
   locale?: SiteLocale
+  placement?: ArticlePlacement
   posts: CardPostData[]
 }
 
 export const CollectionArchive: React.FC<Props> = (props) => {
-  const { locale = 'fr', posts } = props
+  const { locale = 'fr', placement = 'archive', posts } = props
 
   return (
     <div className={cn('container')}>
@@ -24,6 +26,7 @@ export const CollectionArchive: React.FC<Props> = (props) => {
                     className="h-full"
                     doc={result}
                     locale={locale}
+                    placement={placement}
                     relationTo="posts"
                     showCategories
                   />
