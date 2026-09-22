@@ -16,22 +16,22 @@ export function ArticleImpressionBoundary({
   placement,
   category,
   children,
-  className,
 }: {
   slug: string
   locale: SiteLocale
   placement: ArticlePlacement
   category?: string | null
   children: ReactNode
-  className?: string
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    const element = ref.current
-    if (!element || fired.current) return
+    const wrapper = wrapperRef.current
+    const element = wrapper?.firstElementChild
+
+    if (!(element instanceof HTMLElement) || fired.current) return
 
     const clearTimer = () => {
       if (timer.current) {
@@ -74,7 +74,7 @@ export function ArticleImpressionBoundary({
   }, [category, locale, placement, slug])
 
   return (
-    <div className={className} ref={ref}>
+    <div ref={wrapperRef} style={{ display: 'contents' }}>
       {children}
     </div>
   )
