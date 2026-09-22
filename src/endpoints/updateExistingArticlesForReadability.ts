@@ -102,7 +102,7 @@ export async function updateExistingArticlesForReadability({
         collection: 'posts',
         id: post.id,
         data: {
-          _status: post._status,
+          _status: isPublished ? 'published' : 'draft',
           content: desired.content,
           excerpt: desired.excerpt,
           meta: {
