@@ -1,16 +1,17 @@
+'use client'
+
 import { BrandMark } from '@/components/insights/BrandMark'
 import { LanguageSwitcher } from '@/components/insights/LanguageSwitcher'
-import { defaultLocale, isSiteLocale, withLocale } from '@/i18n/config'
+import { localeFromPathname, withLocale } from '@/i18n/config'
 import { getMessages } from '@/i18n/messages'
 import { ArrowUpRight } from 'lucide-react'
-import { headers } from 'next/headers'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import React from 'react'
 
-export async function Header() {
-  const requestHeaders = await headers()
-  const requestedLocale = requestHeaders.get('x-trigenys-locale')
-  const locale = isSiteLocale(requestedLocale) ? requestedLocale : defaultLocale
+export function Header() {
+  const pathname = usePathname() || '/fr'
+  const locale = localeFromPathname(pathname)
   const t = getMessages(locale)
 
   const navItems = [
