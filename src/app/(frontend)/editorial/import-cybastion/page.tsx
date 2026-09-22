@@ -1,5 +1,6 @@
 import { ImportCybastionButton } from '@/components/insights/ImportCybastionButton'
 import { ImportEditorialLaunchPackButton } from '@/components/insights/ImportEditorialLaunchPackButton'
+import { UpdateArticleReadabilityButton } from '@/components/insights/UpdateArticleReadabilityButton'
 import { cybastionArticleMetadata, cybastionArticleSources } from '@/editorial/cybastion-data-center'
 import { editorialLaunchArticles } from '@/editorial/editorial-launch-pack'
 import config from '@payload-config'
@@ -27,6 +28,55 @@ export default async function ImportCybastionPage() {
         </h1>
 
         <div className="grid gap-8">
+          <section className="rounded-md border border-[#e07520]/25 bg-[#fffaf5] p-8 shadow-[0_20px_50px_rgba(16,47,82,0.06)] md:p-10">
+            <div className="mb-6 border-b border-[#e07520]/20 pb-6">
+              <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#e07520]">
+                Révision éditoriale · articles existants
+              </p>
+              <h2 className="m-0 font-[var(--font-fraunces)] text-[clamp(30px,4vw,44px)] font-semibold leading-[1.08] tracking-[-0.035em] text-[#102f52]">
+                Rendre les analyses plus simples à lire sans les appauvrir.
+              </h2>
+              <p className="mt-5 max-w-[760px] text-[15px] leading-7 text-[#62686d]">
+                Cette action met à jour les articles déjà présents dans Payload. Les faits, chiffres
+                et sources restent inchangés ; la révision explique le jargon, simplifie les phrases
+                trop abstraites et rapproche le texte d’un lecteur non spécialiste.
+              </p>
+            </div>
+
+            <div className="grid gap-4 text-sm md:grid-cols-3">
+              <div className="rounded-md border border-border bg-white p-4">
+                <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#8a8e91]">
+                  Français
+                </span>
+                <p className="mb-0 mt-2 leading-6 text-[#343b40]">
+                  Termes techniques expliqués dès leur première apparition.
+                </p>
+              </div>
+              <div className="rounded-md border border-border bg-white p-4">
+                <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#8a8e91]">
+                  English
+                </span>
+                <p className="mb-0 mt-2 leading-6 text-[#343b40]">
+                  Même niveau de clarté, sans traduction littérale lourde.
+                </p>
+              </div>
+              <div className="rounded-md border border-border bg-white p-4">
+                <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#8a8e91]">
+                  Sécurité
+                </span>
+                <p className="mb-0 mt-2 leading-6 text-[#343b40]">
+                  Seules les locales réellement différentes sont enregistrées.
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-6 rounded-md bg-white p-4 text-sm leading-6 text-[#555b60]">
+              Les articles déjà publiés restent publiés. Les brouillons restent des brouillons.
+              Payload conserve ses versions, ce qui permet de revenir en arrière si nécessaire.
+            </p>
+
+            <UpdateArticleReadabilityButton />
+          </section>
           <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
             <div className="mb-8 border-b border-border pb-8">
               <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#e07520]">
