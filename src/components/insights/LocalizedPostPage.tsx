@@ -15,6 +15,7 @@ import { ArticleHighlights } from '@/components/insights/ArticleHighlights'
 import { ArticleBodyEnhancer } from '@/components/insights/ArticleBodyEnhancer'
 import { ArticleTableOfContents } from '@/components/insights/ArticleTableOfContents'
 import { extractArticleHighlights } from '@/components/insights/articleEditorial'
+import { TrackedOutboundLink } from '@/components/analytics/TrackedOutboundLink'
 
 async function queryPostBySlug({
   locale,
@@ -74,8 +75,10 @@ export async function LocalizedPostPage({
       <div className="article-reading-shell">
         <div className="insights-shell article-reading-grid">
           <ArticleTableOfContents
+            analyticsEnabled={!draft}
             locale={locale}
             readingTime={post.readingTime}
+            slug={decodedSlug}
             sourceCount={visibleSources.length}
           />
 
@@ -90,16 +93,19 @@ export async function LocalizedPostPage({
                 <h2 id="research-sources-title">{t.sourcesTitle}</h2>
                 <p>{t.sourcesText}</p>
                 <ol>
-                  {visibleSources.map((source) => (
+                  {visibleSources.map((source, index) => (
                     <li className="text-sm leading-6" key={source.id}>
-                      <a
+                      <TrackedOutboundLink
                         className="font-medium underline decoration-muted-foreground/50 underline-offset-4 hover:decoration-foreground"
+                        context={`source-${index + 1}`}
                         href={source.url}
+                        locale={locale}
                         rel="noreferrer"
+                        slug={decodedSlug}
                         target="_blank"
                       >
                         {source.title}
-                      </a>
+                      </TrackedOutboundLink>
                       {source.publisher && (
                         <span className="text-muted-foreground"> — {source.publisher}</span>
                       )}

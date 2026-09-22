@@ -6,8 +6,11 @@ import type { Post } from '@/payload-types'
 import type { SiteLocale } from '@/i18n/config'
 import { withLocale } from '@/i18n/config'
 import { categoryLabel } from '@/i18n/content'
+import type { ArticlePlacement } from '@/lib/analytics/events'
 
 import { Media } from '@/components/Media'
+import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpressionBoundary'
+import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 
 export type CardPostData = {
   categories?: null | Array<number | { slug?: null | string; title?: null | string }>
@@ -21,11 +24,20 @@ export const Card: React.FC<{
   className?: string
   doc?: CardPostData
   locale?: SiteLocale
+  placement?: ArticlePlacement
   relationTo?: 'posts'
   showCategories?: boolean
   title?: string
 }> = (props) => {
-  const { className, doc, locale = 'fr', relationTo, showCategories, title: titleFromProps } = props
+  const {
+    className,
+    doc,
+    locale = 'fr',
+    placement,
+    relationTo,
+    showCategories,
+    title: titleFromProps,
+  } = props
 
   const { slug, categories, meta, title } = doc || {}
   const { description, image: metaImage } = meta || {}
@@ -34,8 +46,31 @@ export const Card: React.FC<{
   const titleToUse = titleFromProps || title
   const sanitizedDescription = description?.replace(/\s/g, ' ')
   const href = withLocale(locale, `/${relationTo}/${slug}`)
+  const firstCategory = categories?.find(
+    (category): category is { slug?: null | string; title?: null | string } =>
+      typeof category === 'object' && category !== null,
+  )
+  const primaryCategory = firstCategory?.slug || null
 
-  return (
+  const titleLink =
+    placement && slug ? (
+      <TrackedArticleLink
+        className="not-prose"
+        href={href}
+        locale={locale}
+        placement={placement}
+        category={primaryCategory}
+        slug={slug}
+      >
+        {titleToUse}
+      </TrackedArticleLink>
+    ) : (
+      <Link className="not-prose" href={href}>
+        {titleToUse}
+      </Link>
+    )
+
+  const article = (
     <article className={cn('insights-card overflow-hidden bg-card', className)}>
       <div className="insights-card__media relative w-full">
         {!metaImage && <div className="insights-card__placeholder">TI</div>}
@@ -65,11 +100,7 @@ export const Card: React.FC<{
         )}
         {titleToUse && (
           <div className="prose">
-            <h3 className="insights-card__title">
-              <Link className="not-prose" href={href}>
-                {titleToUse}
-              </Link>
-            </h3>
+            <h3 className="insights-card__title">{titleLink}</h3>
           </div>
         )}
         {description && (
@@ -79,5 +110,18 @@ export const Card: React.FC<{
         )}
       </div>
     </article>
+  )
+
+  if (!placement || !slug) return article
+
+  return (
+    <ArticleImpressionBoundary
+      category={primaryCategory}
+      locale={locale}
+      placement={placement}
+      slug={slug}
+    >
+      {article}
+    </ArticleImpressionBoundary>
   )
 }

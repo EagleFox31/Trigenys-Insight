@@ -58,7 +58,7 @@ export async function LocalizedPostsArchivePage({
         />
       </div>
 
-      <CollectionArchive locale={locale} posts={translatedDocs} />
+      <CollectionArchive locale={locale} placement="archive" posts={translatedDocs} />
 
       <div className="container">
         {posts.totalPages > 1 && posts.page && (

@@ -31,6 +31,7 @@ export const RelatedPosts: React.FC<RelatedPostsProps> = (props) => {
               key={index}
               doc={doc}
               locale={locale}
+              placement="related"
               relationTo="posts"
               showCategories
             />

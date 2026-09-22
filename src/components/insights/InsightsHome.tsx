@@ -9,6 +9,8 @@ import Link from 'next/link'
 import React from 'react'
 
 import { NewsletterForm } from './NewsletterForm'
+import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpressionBoundary'
+import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 import styles from './NewsroomHome.module.css'
 
 function asMedia(value: Post['heroImage'] | NonNullable<Post['meta']>['image']) {
@@ -192,9 +194,23 @@ export function InsightsHome({
               <span className={styles.signalLabel}>{t.newsroom.follow}</span>
               <div className={styles.signalItems}>
                 {trending.slice(0, 3).map((post) => (
-                  <Link href={withLocale(locale, `/posts/${post.slug}`)} key={post.id}>
-                    {post.title}
-                  </Link>
+                  <ArticleImpressionBoundary
+                    category={categorySlug(post)}
+                    key={post.id}
+                    locale={locale}
+                    placement="home_signal"
+                    slug={post.slug || ''}
+                  >
+                    <TrackedArticleLink
+                      href={withLocale(locale, `/posts/${post.slug}`)}
+                      locale={locale}
+                      placement="home_signal"
+                      category={categorySlug(post)}
+                      slug={post.slug || ''}
+                    >
+                      {post.title}
+                    </TrackedArticleLink>
+                  </ArticleImpressionBoundary>
                 ))}
               </div>
             </div>
@@ -204,22 +220,38 @@ export function InsightsHome({
 
       <section className={styles.lead}>
         <div className={'insights-shell ' + styles.leadGrid}>
-          <Link
+          <TrackedArticleLink
             aria-label={`${t.home.read} ${featured.title}`}
+            category={categorySlug(featured)}
             className={styles.visual}
             href={withLocale(locale, `/posts/${featured.slug}`)}
+            locale={locale}
+            placement="home_lead"
+            slug={featured.slug || ''}
           >
             <ArticleImage post={featured} priority />
-          </Link>
+          </TrackedArticleLink>
 
-          <article className={styles.leadCopy}>
+          <ArticleImpressionBoundary
+            category={categorySlug(featured)}
+            locale={locale}
+            placement="home_lead"
+            slug={featured.slug || ''}
+          >
+            <article className={styles.leadCopy}>
             <p className="story-kicker">
               <span>{primaryCategoryLabel(featured, locale)}</span> · {postKindLabel(featured, locale)}
             </p>
             <h1 className={styles.leadTitle}>
-              <Link href={withLocale(locale, `/posts/${featured.slug}`)}>
+              <TrackedArticleLink
+                category={categorySlug(featured)}
+                href={withLocale(locale, `/posts/${featured.slug}`)}
+                locale={locale}
+                placement="home_lead"
+                slug={featured.slug || ''}
+              >
                 {featured.title}
-              </Link>
+              </TrackedArticleLink>
             </h1>
             <p className={styles.leadDeck}>{featured.excerpt || featured.meta?.description}</p>
             <div className={styles.meta}>
@@ -227,13 +259,18 @@ export function InsightsHome({
               <span>{formatPostDate(featured.publishedAt, locale, true)}</span>
               <span>{featured.readingTime || 8} {t.home.minutes}</span>
             </div>
-            <Link
+            <TrackedArticleLink
+              category={categorySlug(featured)}
               className="text-link"
               href={withLocale(locale, `/posts/${featured.slug}`)}
+              locale={locale}
+              placement="home_lead"
+              slug={featured.slug || ''}
             >
               {t.home.read} <ArrowRight aria-hidden="true" size={15} />
-            </Link>
-          </article>
+            </TrackedArticleLink>
+            </article>
+          </ArticleImpressionBoundary>
 
           {trending.length > 0 && (
             <aside className={styles.trending} aria-label={t.newsroom.trending}>
@@ -243,19 +280,33 @@ export function InsightsHome({
               </div>
               <div className={styles.trendingList}>
                 {trending.map((post, index) => (
-                  <article className={styles.trendingItem} key={post.id}>
-                    <span className={styles.trendingNumber}>
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <div>
-                      <Link href={withLocale(locale, `/posts/${post.slug}`)}>
-                        {post.title}
-                      </Link>
-                      <span className={styles.trendingMeta}>
-                        {primaryCategoryLabel(post, locale)} · {post.readingTime || 8} {t.home.minutes}
+                  <ArticleImpressionBoundary
+                    category={categorySlug(post)}
+                    key={post.id}
+                    locale={locale}
+                    placement="home_trending"
+                    slug={post.slug || ''}
+                  >
+                    <article className={styles.trendingItem}>
+                      <span className={styles.trendingNumber}>
+                        {String(index + 1).padStart(2, '0')}
                       </span>
-                    </div>
-                  </article>
+                      <div>
+                        <TrackedArticleLink
+                          category={categorySlug(post)}
+                          href={withLocale(locale, `/posts/${post.slug}`)}
+                          locale={locale}
+                          placement="home_trending"
+                          slug={post.slug || ''}
+                        >
+                          {post.title}
+                        </TrackedArticleLink>
+                        <span className={styles.trendingMeta}>
+                          {primaryCategoryLabel(post, locale)} · {post.readingTime || 8} {t.home.minutes}
+                        </span>
+                      </div>
+                    </article>
+                  </ArticleImpressionBoundary>
                 ))}
               </div>
             </aside>
@@ -278,20 +329,40 @@ export function InsightsHome({
 
             <div className={styles.compactGrid}>
               {compactStories.map((post) => (
-                <article className={styles.compactCard} key={post.id}>
-                  <Link href={withLocale(locale, `/posts/${post.slug}`)}>
-                    <ArticleImage post={post} />
-                  </Link>
-                  <p className="story-kicker">{primaryCategoryLabel(post, locale)}</p>
-                  <h3>
-                    <Link href={withLocale(locale, `/posts/${post.slug}`)}>
-                      {post.title}
-                    </Link>
-                  </h3>
-                  <span className={styles.compactCardMeta}>
-                    {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8} {t.home.minutes}
-                  </span>
-                </article>
+                <ArticleImpressionBoundary
+                  category={categorySlug(post)}
+                  key={post.id}
+                  locale={locale}
+                  placement="home_latest"
+                  slug={post.slug || ''}
+                >
+                  <article className={styles.compactCard}>
+                    <TrackedArticleLink
+                      category={categorySlug(post)}
+                      href={withLocale(locale, `/posts/${post.slug}`)}
+                      locale={locale}
+                      placement="home_latest"
+                      slug={post.slug || ''}
+                    >
+                      <ArticleImage post={post} />
+                    </TrackedArticleLink>
+                    <p className="story-kicker">{primaryCategoryLabel(post, locale)}</p>
+                    <h3>
+                      <TrackedArticleLink
+                        category={categorySlug(post)}
+                        href={withLocale(locale, `/posts/${post.slug}`)}
+                        locale={locale}
+                        placement="home_latest"
+                        slug={post.slug || ''}
+                      >
+                        {post.title}
+                      </TrackedArticleLink>
+                    </h3>
+                    <span className={styles.compactCardMeta}>
+                      {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8} {t.home.minutes}
+                    </span>
+                  </article>
+                </ArticleImpressionBoundary>
               ))}
             </div>
           </div>
@@ -311,27 +382,45 @@ export function InsightsHome({
 
               <div className={styles.latestList}>
                 {latestStories.map((post) => (
-                  <article className={styles.latestItem} key={post.id}>
-                    <Link
-                      className={styles.latestThumb}
-                      href={withLocale(locale, `/posts/${post.slug}`)}
-                    >
-                      <ArticleImage post={post} />
-                    </Link>
-                    <div>
-                      <p className="story-kicker">{primaryCategoryLabel(post, locale)}</p>
-                      <h3>
-                        <Link href={withLocale(locale, `/posts/${post.slug}`)}>
-                          {post.title}
-                        </Link>
-                      </h3>
-                      <p>{post.excerpt || post.meta?.description}</p>
-                      <span className={styles.latestItemMeta}>
-                        {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8}{' '}
-                        {t.home.minutesReading}
-                      </span>
-                    </div>
-                  </article>
+                  <ArticleImpressionBoundary
+                    category={categorySlug(post)}
+                    key={post.id}
+                    locale={locale}
+                    placement="home_analysis"
+                    slug={post.slug || ''}
+                  >
+                    <article className={styles.latestItem}>
+                      <TrackedArticleLink
+                        category={categorySlug(post)}
+                        className={styles.latestThumb}
+                        href={withLocale(locale, `/posts/${post.slug}`)}
+                        locale={locale}
+                        placement="home_analysis"
+                        slug={post.slug || ''}
+                      >
+                        <ArticleImage post={post} />
+                      </TrackedArticleLink>
+                      <div>
+                        <p className="story-kicker">{primaryCategoryLabel(post, locale)}</p>
+                        <h3>
+                          <TrackedArticleLink
+                            category={categorySlug(post)}
+                            href={withLocale(locale, `/posts/${post.slug}`)}
+                            locale={locale}
+                            placement="home_analysis"
+                            slug={post.slug || ''}
+                          >
+                            {post.title}
+                          </TrackedArticleLink>
+                        </h3>
+                        <p>{post.excerpt || post.meta?.description}</p>
+                        <span className={styles.latestItemMeta}>
+                          {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8}{' '}
+                          {t.home.minutesReading}
+                        </span>
+                      </div>
+                    </article>
+                  </ArticleImpressionBoundary>
                 ))}
               </div>
             </div>
@@ -341,17 +430,35 @@ export function InsightsHome({
                 <div className={styles.editorHeader}>
                   <h2>{t.newsroom.editorsPick}</h2>
                 </div>
+                <ArticleImpressionBoundary
+                  category={categorySlug(editorsPick)}
+                  locale={locale}
+                  placement="home_editors_pick"
+                  slug={editorsPick.slug || ''}
+                >
                 <article className={styles.editorCard}>
-                  <Link href={withLocale(locale, `/posts/${editorsPick.slug}`)}>
+                  <TrackedArticleLink
+                    category={categorySlug(editorsPick)}
+                    href={withLocale(locale, `/posts/${editorsPick.slug}`)}
+                    locale={locale}
+                    placement="home_editors_pick"
+                    slug={editorsPick.slug || ''}
+                  >
                     <ArticleImage post={editorsPick} />
-                  </Link>
+                  </TrackedArticleLink>
                   <p className="story-kicker">
                     {primaryCategoryLabel(editorsPick, locale)} · {postKindLabel(editorsPick, locale)}
                   </p>
                   <h3 className={styles.editorTitle}>
-                    <Link href={withLocale(locale, `/posts/${editorsPick.slug}`)}>
+                    <TrackedArticleLink
+                      category={categorySlug(editorsPick)}
+                      href={withLocale(locale, `/posts/${editorsPick.slug}`)}
+                      locale={locale}
+                      placement="home_editors_pick"
+                      slug={editorsPick.slug || ''}
+                    >
                       {editorsPick.title}
-                    </Link>
+                    </TrackedArticleLink>
                   </h3>
                   <p className={styles.editorDeck}>
                     {editorsPick.excerpt || editorsPick.meta?.description}
@@ -361,6 +468,7 @@ export function InsightsHome({
                     <span>{editorsPick.readingTime || 8} {t.home.minutes}</span>
                   </div>
                 </article>
+                </ArticleImpressionBoundary>
               </aside>
             )}
           </div>
@@ -394,15 +502,28 @@ export function InsightsHome({
                   <p className={styles.channelDescription}>{channel.description}</p>
 
                   {channelPost ? (
-                    <div className={styles.channelStory}>
-                      <Link href={withLocale(locale, `/posts/${channelPost.slug}`)}>
-                        {channelPost.title}
-                      </Link>
-                      <span>
-                        {formatPostDate(channelPost.publishedAt, locale)} ·{' '}
-                        {channelPost.readingTime || 8} {t.home.minutes}
-                      </span>
-                    </div>
+                    <ArticleImpressionBoundary
+                      category={categorySlug(channelPost)}
+                      locale={locale}
+                      placement="home_desk"
+                      slug={channelPost.slug || ''}
+                    >
+                      <div className={styles.channelStory}>
+                        <TrackedArticleLink
+                          category={categorySlug(channelPost)}
+                          href={withLocale(locale, `/posts/${channelPost.slug}`)}
+                          locale={locale}
+                          placement="home_desk"
+                          slug={channelPost.slug || ''}
+                        >
+                          {channelPost.title}
+                        </TrackedArticleLink>
+                        <span>
+                          {formatPostDate(channelPost.publishedAt, locale)} ·{' '}
+                          {channelPost.readingTime || 8} {t.home.minutes}
+                        </span>
+                      </div>
+                    </ArticleImpressionBoundary>
                   ) : (
                     <div className={styles.channelStory}>
                       <span>{t.newsroom.newDossiers}</span>
