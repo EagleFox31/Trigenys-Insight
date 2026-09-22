@@ -11,6 +11,7 @@ import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { buildSiteIdentityJsonLd, serializeJsonLd } from '@/seo/structuredData'
 import { draftMode, headers } from 'next/headers'
 
 import './globals.css'
@@ -25,11 +26,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const requestHeaders = await headers()
   const requestedLocale = requestHeaders.get('x-trigenys-locale')
   const locale = isSiteLocale(requestedLocale) ? requestedLocale : defaultLocale
+  const siteIdentityJsonLd = buildSiteIdentityJsonLd()
 
   return (
     <html className={cn(inter.variable, fraunces.variable)} lang={locale} suppressHydrationWarning>
       <head>
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        <script
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(siteIdentityJsonLd) }}
+          type="application/ld+json"
+        />
       </head>
       <body>
         <Providers>
