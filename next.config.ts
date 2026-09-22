@@ -3,8 +3,8 @@ import type { NextConfig } from 'next'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const dirname = path.dirname(__filename)
+const configFile = fileURLToPath(import.meta.url)
+const configDir = path.dirname(configFile)
 import { redirects } from './redirects'
 
 const NEXT_PUBLIC_SERVER_URL =
@@ -54,7 +54,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   redirects,
   turbopack: {
-    root: path.resolve(dirname),
+    root: path.resolve(configDir),
   },
 }
 
