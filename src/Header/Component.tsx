@@ -15,11 +15,11 @@ export function Header() {
   const t = getMessages(locale)
 
   const navItems = [
-    { href: withLocale(locale, '/#technology'), label: t.header.tech },
-    { href: withLocale(locale, '/#business'), label: t.header.business },
-    { href: withLocale(locale, '/#systems'), label: t.header.systems },
-    { href: withLocale(locale, '/#africa'), label: t.header.africa },
-    { href: withLocale(locale, '/#methodologie'), label: t.header.methodology },
+    { href: withLocale(locale, '/technology'), label: t.header.tech },
+    { href: withLocale(locale, '/business'), label: t.header.business },
+    { href: withLocale(locale, '/information-systems'), label: t.header.systems },
+    { href: withLocale(locale, '/africa'), label: t.header.africa },
+    { href: withLocale(locale, '/methodology'), label: t.header.methodology },
   ]
 
   return (

@@ -18,6 +18,9 @@ const messages = {
       methodology: 'Méthodologie',
       newsletter: 'Newsletter',
       newsroom: 'Rédaction',
+      about: 'À propos',
+      editorialPolicy: 'Politique éditoriale',
+      contact: 'Contact',
       place: 'Conçu à Douala. Pensé pour aller loin.',
     },
     home: {
@@ -115,6 +118,7 @@ const messages = {
       sourcesText:
         "Les faits susceptibles d'évoluer ont été revérifiés dans les sources ci-dessous. Les observations et interprétations sont présentées comme telles dans l'article.",
       minutesReading: 'min de lecture',
+      updated: 'Mis à jour le',
     },
     newsletter: {
       placeholder: 'vous@entreprise.com',
@@ -141,6 +145,9 @@ const messages = {
       methodology: 'Methodology',
       newsletter: 'Newsletter',
       newsroom: 'Newsroom',
+      about: 'About',
+      editorialPolicy: 'Editorial policy',
+      contact: 'Contact',
       place: 'Built in Douala. Designed to travel.',
     },
     home: {
@@ -238,6 +245,7 @@ const messages = {
       sourcesText:
         'Facts that may change over time were checked against the sources below. Observations and interpretations are presented as such in the article.',
       minutesReading: 'min read',
+      updated: 'Updated',
     },
     newsletter: {
       placeholder: 'you@company.com',

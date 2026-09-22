@@ -1,5 +1,6 @@
 import type { Media, Post } from '@/payload-types'
 import type { SiteLocale } from '@/i18n/config'
+import { authorSlug } from '@/utilities/authorSlug'
 
 export const SITE_IDENTITY = {
   name: 'Trigenys Insights',
@@ -92,10 +93,16 @@ export function buildArticleJsonLd({
     post.populatedAuthors
       ?.map((author) => author?.name?.trim())
       .filter((name): name is string => Boolean(name))
-      .map((name) => ({
-        '@type': 'Person',
-        name,
-      })) || []
+      .map((name) => {
+        const profileURL = absoluteCanonicalURL(`/${locale}/authors/${authorSlug(name)}`)
+
+        return {
+          '@type': 'Person',
+          '@id': `${profileURL}#person`,
+          name,
+          url: profileURL,
+        }
+      }) || []
 
   const categories = post.categories
     ?.map((category) => (typeof category === 'object' && category ? category.title : null))

@@ -88,7 +88,11 @@ export const Card: React.FC<{
 
                 return (
                   <Fragment key={index}>
-                    {label}
+                    {category.slug ? (
+                      <Link href={withLocale(locale, `/${category.slug}`)}>{label}</Link>
+                    ) : (
+                      label
+                    )}
                     {!isLast && <Fragment>, &nbsp;</Fragment>}
                   </Fragment>
                 )
