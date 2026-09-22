@@ -7,6 +7,7 @@ import {
   type EditorialAnalyticsEvent,
   type EditorialAnalyticsProperties,
 } from './events'
+import { getActiveArticleAttribution } from './attribution'
 
 function shouldTrack() {
   if (typeof window === 'undefined') return false
@@ -29,15 +30,26 @@ export function trackEditorialEvent(
   const posthog = window.posthog
   if (!posthog?.capture) return
 
+  const attribution =
+    properties.slug && !properties.placement
+      ? getActiveArticleAttribution(properties.slug, properties.locale)
+      : null
+
+  const effectiveProperties: EditorialAnalyticsProperties = {
+    ...properties,
+    placement: properties.placement || attribution?.placement,
+    category: properties.category ?? attribution?.category,
+  }
+
   try {
     posthog.capture(event, {
       schema_version: ANALYTICS_SCHEMA_VERSION,
-      article: articleAnalyticsId(properties.locale, properties.slug),
-      slug: properties.slug,
-      locale: properties.locale,
-      placement: properties.placement,
-      category: properties.category || undefined,
-      context: analyticsContext(properties),
+      article: articleAnalyticsId(effectiveProperties.locale, effectiveProperties.slug),
+      slug: effectiveProperties.slug,
+      locale: effectiveProperties.locale,
+      placement: effectiveProperties.placement,
+      category: effectiveProperties.category || undefined,
+      context: analyticsContext(effectiveProperties),
     })
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
