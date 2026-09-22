@@ -12,6 +12,7 @@ import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import { ArticleHighlights } from '@/components/insights/ArticleHighlights'
+import { ArticleBodyEnhancer } from '@/components/insights/ArticleBodyEnhancer'
 import { ArticleTableOfContents } from '@/components/insights/ArticleTableOfContents'
 import { extractArticleHighlights } from '@/components/insights/articleEditorial'
 
@@ -82,6 +83,7 @@ export async function LocalizedPostPage({
             <ArticleHighlights highlights={highlights} locale={locale} />
 
             <RichText className="article-content" data={post.content} enableGutter={false} />
+            <ArticleBodyEnhancer locale={locale} />
 
             {visibleSources.length > 0 && (
               <section aria-labelledby="research-sources-title" className="article-sources">
