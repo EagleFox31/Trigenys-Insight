@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Invalid subscription request.' }, { status: 400 })
   }
 
-  const { email } = subscription
+  const { email, locale } = subscription
   const payload = await getPayload({ config: configPromise })
   const existing = await payload.find({
     collection: 'newsletter-subscribers',
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   if (existing.docs[0]) {
     await payload.update({
       collection: 'newsletter-subscribers',
-      data: { consentedAt: new Date().toISOString(), status: 'active' },
+      data: { consentedAt: new Date().toISOString(), locale, status: 'active' },
       id: existing.docs[0].id,
       overrideAccess: true,
     })
@@ -32,12 +32,12 @@ export async function POST(request: Request) {
       data: {
         consentedAt: new Date().toISOString(),
         email,
-        locale: 'fr',
+        locale,
         status: 'active',
       },
       overrideAccess: true,
     })
   }
 
-  return Response.json({ ok: true }, { status: 201 })
+  return Response.json({ ok: true, created: !existing.docs[0] }, { status: 201 })
 }
