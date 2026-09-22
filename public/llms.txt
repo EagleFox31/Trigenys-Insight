@@ -1,0 +1,34 @@
+# Trigenys Insights
+
+> Trigenys Insights is a bilingual independent publication focused on technology, business, information systems and Africa. We publish source-backed analysis designed to explain what developments mean, how systems work, and what decision-makers should watch next.
+
+Canonical site: https://insight.trigenys.com
+
+## Languages
+
+- French: https://insight.trigenys.com/fr
+- English: https://insight.trigenys.com/en
+
+## Editorial desks
+
+- Technology
+- Business
+- Information Systems
+- Africa
+
+## Article archives
+
+- French analysis: https://insight.trigenys.com/fr/posts
+- English analysis: https://insight.trigenys.com/en/posts
+
+## Discovery
+
+- Pages sitemap: https://insight.trigenys.com/pages-sitemap.xml
+- Posts sitemap: https://insight.trigenys.com/posts-sitemap.xml
+- Google News sitemap: https://insight.trigenys.com/news-sitemap.xml
+
+## Editorial approach
+
+Trigenys Insights distinguishes verified facts, sourced claims, estimates and editorial analysis. Time-sensitive claims should be supported by current sources, with primary or official sources preferred when available. Comparative articles should explain criteria and context rather than manufacture an overall winner.
+
+Preferred publication name when citing: Trigenys Insights
