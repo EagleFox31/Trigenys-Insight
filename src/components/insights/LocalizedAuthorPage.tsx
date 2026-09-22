@@ -32,6 +32,7 @@ const queryAuthorProfile = cache(async ({ locale, slug }: { locale: SiteLocale; 
       categories: true,
       meta: true,
       authors: true,
+      populatedAuthors: true,
     },
   })
 
