@@ -1397,6 +1397,9 @@ a {
 .article-toc--desktop {
   grid-area: toc;
   min-width: 0;
+  position: sticky;
+  top: 112px;
+  align-self: start;
 }
 
 .article-toc--mobile {
@@ -1404,10 +1407,13 @@ a {
 }
 
 .article-toc__panel {
-  position: sticky;
-  top: 112px;
+  max-height: calc(100vh - 136px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   border-left: 1px solid #dad9d2;
   padding-left: 22px;
+  padding-right: 4px;
 }
 
 .article-toc__heading {
