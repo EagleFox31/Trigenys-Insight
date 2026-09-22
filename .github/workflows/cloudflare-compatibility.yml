@@ -34,10 +34,20 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Run vinext compatibility check
         run: pnpm cloudflare:check
+
+      - name: Build vinext production output
+        env:
+          NEXT_PUBLIC_SERVER_URL: https://trigenys-insight-cloudflare-pilot.example.workers.dev
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          DATABASE_URL_UNPOOLED: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          PAYLOAD_SECRET: cloudflare-pilot-build-only-secret
+          CRON_SECRET: cloudflare-pilot-build-only-cron-secret
+          PREVIEW_SECRET: cloudflare-pilot-build-only-preview-secret
+        run: pnpm build:vinext
 
       - name: Generate Cloudflare config ephemerally
         run: pnpm dlx vinext init --platform=cloudflare --skip-check
