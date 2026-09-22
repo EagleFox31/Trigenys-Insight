@@ -63,7 +63,7 @@ export async function LocalizedSearchPage({
       </div>
 
       {translatedDocs.length > 0 ? (
-        <CollectionArchive locale={locale} posts={translatedDocs} />
+        <CollectionArchive locale={locale} placement="search" posts={translatedDocs} />
       ) : (
         <div className="container">{t.noResults}</div>
       )}
