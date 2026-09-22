@@ -92,6 +92,7 @@ jobs:
           ]
 
           const payload = Object.fromEntries(keys.map((key) => [key, process.env[key]]))
+          payload.NEXT_PUBLIC_MEDIA_ORIGIN = null
           fs.writeFileSync('/tmp/cloudflare-pilot-secrets.json', JSON.stringify(payload))
           NODE
 
