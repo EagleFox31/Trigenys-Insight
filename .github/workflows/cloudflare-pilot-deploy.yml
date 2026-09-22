@@ -18,7 +18,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       NEXT_PUBLIC_SERVER_URL: https://trigenys-insight-cloudflare-pilot.lawrynnjennifer.workers.dev
-      NEXT_PUBLIC_MEDIA_ORIGIN: https://insight.trigenys.com
+      NEXT_PUBLIC_MEDIA_BLOB_ORIGIN: https://z9hq1atmt6mlneyq.public.blob.vercel-storage.com/media
       NEXT_PUBLIC_MEDIA_UNOPTIMIZED: 'true'
       DATABASE_URL: ${{ secrets.CLOUDFLARE_PILOT_DATABASE_URL }}
       DATABASE_URL_UNPOOLED: ${{ secrets.CLOUDFLARE_PILOT_DATABASE_URL_UNPOOLED }}
@@ -87,7 +87,7 @@ jobs:
             'CRON_SECRET',
             'PREVIEW_SECRET',
             'NEXT_PUBLIC_SERVER_URL',
-            'NEXT_PUBLIC_MEDIA_ORIGIN',
+            'NEXT_PUBLIC_MEDIA_BLOB_ORIGIN',
             'NEXT_PUBLIC_MEDIA_UNOPTIMIZED',
           ]
 
@@ -132,31 +132,40 @@ jobs:
             exit 1
           }
 
-          img_src=$(node - <<'NODE'
+          node - <<'NODE' > /tmp/image-urls.txt
           const fs = require('node:fs')
           const html = fs.readFileSync('/tmp/fr.html', 'utf8')
-          const match = html.match(/<img[^>]*\ssrc="([^"]+)"/i)
-          if (match) process.stdout.write(match[1].replace(/&amp;/g, '&'))
+          const urls = [...html.matchAll(/<img[^>]*\ssrc="([^"]+)"/gi)]
+            .map((match) => match[1].replace(/&amp;/g, '&'))
+          for (const url of [...new Set(urls)]) console.log(url)
           NODE
-          )
 
-          if [ -z "$img_src" ]; then
-            echo "::error::No rendered <img> source found in /fr HTML"
+          if [ ! -s /tmp/image-urls.txt ]; then
+            echo "::error::No rendered <img> sources found in /fr HTML"
             exit 1
           fi
 
-          case "$img_src" in
-            http*) img_url="$img_src" ;;
-            *) img_url="$base$img_src" ;;
-          esac
+          checked=0
+          while IFS= read -r img_src; do
+            case "$img_src" in
+              http*) img_url="$img_src" ;;
+              *) img_url="$base$img_src" ;;
+            esac
 
-          echo "Pilot rendered image URL: $img_url"
-          img_headers=$(curl --location --fail --silent --show-error --retry 5 --retry-delay 2 -D - -o /dev/null "$img_url")
-          echo "$img_headers"
-          echo "$img_headers" | grep -qi 'content-type:.*image/' || {
-            echo "::error::Rendered image is not served as image/*: $img_url"
-            exit 1
-          }
+            echo "Testing rendered image: $img_url"
+            img_headers=$(curl --location --fail --silent --show-error --retry 3 --retry-delay 2 -D - -o /dev/null "$img_url")
+            echo "$img_headers" | grep -qi 'content-type:.*image/' || {
+              echo "::error::Rendered image is not served as image/*: $img_url"
+              exit 1
+            }
+
+            checked=$((checked + 1))
+            if [ "$checked" -ge 8 ]; then
+              break
+            fi
+          done < /tmp/image-urls.txt
+
+          echo "Validated $checked rendered image URLs."
 
           admin_status=$(curl --silent --output /dev/null --write-out "%{http_code}" "$base/admin")
           if [ "$admin_status" -lt 200 ] || [ "$admin_status" -ge 500 ]; then
