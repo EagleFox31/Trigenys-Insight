@@ -7,7 +7,8 @@ import { redirects } from '../../redirects'
 
 describe('SEO discovery hardening', () => {
   it('redirects the legacy Vercel host to the canonical domain', async () => {
-    const rules = await redirects()
+    expect(redirects).toBeTypeOf('function')
+    const rules = await redirects!()
     const legacyRule = rules.find((rule) =>
       rule.has?.some(
         (condition) =>
