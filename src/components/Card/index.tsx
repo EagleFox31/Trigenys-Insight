@@ -46,11 +46,11 @@ export const Card: React.FC<{
   const titleToUse = titleFromProps || title
   const sanitizedDescription = description?.replace(/\s/g, ' ')
   const href = withLocale(locale, `/${relationTo}/${slug}`)
-  const primaryCategory =
-    categories?.find((category) => typeof category === 'object') &&
-    typeof categories.find((category) => typeof category === 'object') === 'object'
-      ? (categories.find((category) => typeof category === 'object') as { slug?: string | null }).slug
-      : null
+  const firstCategory = categories?.find(
+    (category): category is { slug?: null | string; title?: null | string } =>
+      typeof category === 'object' && category !== null,
+  )
+  const primaryCategory = firstCategory?.slug || null
 
   const titleLink =
     placement && slug ? (
