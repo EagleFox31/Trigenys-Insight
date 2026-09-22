@@ -4,7 +4,7 @@ import type { SiteLocale } from '@/i18n/config'
 export const SITE_IDENTITY = {
   name: 'Trigenys Insights',
   url: 'https://insight.trigenys.com',
-  logoPath: '/favicon.svg',
+  logoPath: '/trigenys-insights-logo-512.png',
 } as const
 
 export const ORGANIZATION_ID = `${SITE_IDENTITY.url}/#organization`
@@ -38,6 +38,8 @@ export function buildSiteIdentityJsonLd() {
         logo: {
           '@type': 'ImageObject',
           url: absoluteCanonicalURL(SITE_IDENTITY.logoPath),
+          width: 512,
+          height: 512,
         },
       },
       {
