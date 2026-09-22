@@ -237,7 +237,7 @@ a {
 }
 
 .insights-shell {
-  width: min(1200px, calc(100% - 64px));
+  width: min(1360px, calc(100% - 48px));
   margin-inline: auto;
 }
 

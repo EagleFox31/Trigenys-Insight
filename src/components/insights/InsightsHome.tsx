@@ -85,9 +85,13 @@ export function InsightsHome({
   const compactStories = remaining.slice(0, 4)
   const editorsPick =
     remaining.find((post) => post.editorsPick) || remaining[4] || remaining[0] || featured
-  const latestStories = remaining
-    .filter((post) => post.id !== editorsPick?.id)
-    .slice(compactStories.length, compactStories.length + 5)
+  const latestCandidates = remaining.filter((post) => post.id !== editorsPick?.id)
+  const latestAfterCompact = latestCandidates.slice(
+    compactStories.length,
+    compactStories.length + 5,
+  )
+  const latestStories =
+    latestAfterCompact.length >= 2 ? latestAfterCompact : latestCandidates.slice(0, 5)
   const trending = remaining.slice(0, 5)
 
   const channels = [
