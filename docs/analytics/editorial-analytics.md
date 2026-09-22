@@ -2,11 +2,11 @@
 
 ## Decision
 
-**Adapt the existing Vercel Web Analytics integration for v1.**
+**Adopt PostHog Cloud EU for editorial/product analytics; keep Vercel Analytics for basic hosting-level web analytics.**
 
-The application already ships `@vercel/analytics` and mounts `<Analytics />` globally. Custom editorial events therefore use the same integration through a provider-agnostic adapter.
+The application already ships `@vercel/analytics` and keeps `<Analytics />` globally for basic page analytics. However, Vercel Hobby does not provide the custom-event capability required by the editorial funnel. The provider-neutral adapter therefore routes editorial events to PostHog Cloud EU.
 
-The product UI must not import Vercel directly. If richer funnels or event dimensions later justify PostHog, only the adapter changes.
+The product UI still does not import a vendor SDK. PostHog is initialized once at the application shell and the shared analytics adapter owns capture semantics.
 
 ## Event schema
 
@@ -37,12 +37,7 @@ The internal contract can carry:
 - `category`
 - `context`
 
-The Vercel adapter deliberately emits at most two custom properties:
-
-- `article` — `<locale>:<slug>`
-- `context` — placement or event-specific normalized context
-
-This keeps the UI contract richer than the provider transport and avoids vendor lock-in.
+The PostHog transport emits the canonical typed properties directly: `schema_version`, `article`, `slug`, `locale`, `placement`, `category` and normalized `context` when relevant. The UI remains provider-neutral, so changing analytics backends does not require changing tracked components.
 
 Never send:
 
@@ -130,14 +125,14 @@ Raw events are not automatically "unique readers". Distinct-user language must o
 
 - localhost: disabled;
 - `*.vercel.app` preview domains: disabled by default;
-- production custom domain: enabled;
+- production custom domain: enabled through PostHog Cloud EU;
 - Payload draft/preview article instrumentation: disabled;
 - analytics failure must never block navigation or successful form submission.
 
 ## RAIDER mapping
 
 - **Reusable** — shared tracked links/boundaries and one article tracker.
-- **Agnostic** — provider-neutral event contract.
+- **Agnostic** — provider-neutral event contract; the first provider switch required no tracked-component rewrite.
 - **Idempotent** — impressions and reading milestones are deduplicated.
 - **Durable** — links/forms work without analytics.
 - **Failure memory** — analytics incidents go to `docs/engineering/lessons-learned.md`.
