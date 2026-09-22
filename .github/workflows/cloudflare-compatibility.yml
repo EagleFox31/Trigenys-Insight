@@ -38,3 +38,20 @@ jobs:
 
       - name: Run vinext compatibility check
         run: pnpm cloudflare:check
+
+      - name: Generate Cloudflare config ephemerally
+        run: pnpm dlx vinext init --platform=cloudflare --skip-check
+
+      - name: Show vinext init changes
+        run: |
+          echo "===== package.json ====="
+          git diff -- package.json
+          echo "===== generated files ====="
+          for file in vite.config.ts wrangler.jsonc; do
+            if [ -f "$file" ]; then
+              echo "----- $file -----"
+              cat "$file"
+            fi
+          done
+          echo "===== gitignore diff ====="
+          git diff -- .gitignore
