@@ -1,8 +1,7 @@
 'use client'
 
-import { track } from '@vercel/analytics'
-
 import {
+  ANALYTICS_SCHEMA_VERSION,
   analyticsContext,
   articleAnalyticsId,
   type EditorialAnalyticsEvent,
@@ -26,13 +25,19 @@ export function trackEditorialEvent(
 ) {
   if (!shouldTrack()) return
 
-  const payload = {
-    article: articleAnalyticsId(properties.locale, properties.slug),
-    context: analyticsContext(properties),
-  }
+  const posthog = window.posthog
+  if (!posthog?.capture) return
 
   try {
-    track(event, payload)
+    posthog.capture(event, {
+      schema_version: ANALYTICS_SCHEMA_VERSION,
+      article: articleAnalyticsId(properties.locale, properties.slug),
+      slug: properties.slug,
+      locale: properties.locale,
+      placement: properties.placement,
+      category: properties.category || undefined,
+      context: analyticsContext(properties),
+    })
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
       console.warn('Editorial analytics event could not be sent.', { event, error })

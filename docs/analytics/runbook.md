@@ -10,7 +10,7 @@ The UI is provider-agnostic. Do not import `@vercel/analytics` in article, card 
 
 1. Deploy to a preview URL.
 2. Confirm navigation, article progress, sources and newsletter work normally.
-3. Custom editorial events are intentionally disabled on `*.vercel.app` previews.
+3. Custom editorial events are intentionally disabled on `*.vercel.app` previews and PostHog credentials are currently configured only for Production.
 4. Merge only after CI/preview build succeeds.
 5. On the production custom domain, perform one controlled path:
    - view one article card for at least 400 ms;
@@ -18,15 +18,20 @@ The UI is provider-agnostic. Do not import `@vercel/analytics` in article, card 
    - cross 25%, 50%, 75% and 95%;
    - click one TOC item;
    - click one research source.
-6. Inspect Vercel Web Analytics custom events after ingestion.
+6. Inspect PostHog Live Events after ingestion.
 7. Check that one action did not create multiple identical events.
 
-## Expected Vercel payload
+## Expected PostHog payload
 
-The adapter sends at most two custom properties:
+The adapter sends the typed editorial dimensions, for example:
 
 ```text
+schema_version = 1
 article = fr:article-slug
+slug = article-slug
+locale = fr
+placement = home_latest
+category = technology
 context = home_latest:technology
 ```
 
@@ -69,7 +74,7 @@ Check:
 
 - the request is on the production custom domain;
 - the article is not in Payload draft preview;
-- the analytics script is not blocked;
+- the PostHog EU script/ingestion endpoint is not blocked;
 - event/property names still match the typed contract.
 
 ### Newsletter clicks but no success
