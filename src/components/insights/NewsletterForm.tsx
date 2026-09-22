@@ -4,6 +4,7 @@ import type { SiteLocale } from '@/i18n/config'
 import { getMessages } from '@/i18n/messages'
 import { ArrowRight } from 'lucide-react'
 import React, { FormEvent, useState } from 'react'
+import { trackEditorialEvent } from '@/lib/analytics/client'
 
 type FormState = 'idle' | 'loading' | 'success' | 'error'
 
@@ -20,10 +21,17 @@ export function NewsletterForm({ locale = 'fr' }: { locale?: SiteLocale }) {
     setState('loading')
     setMessage('')
 
+    trackEditorialEvent('newsletter_cta_click', {
+      locale,
+      placement: 'newsletter',
+      context: 'submit',
+    })
+
     try {
       const response = await fetch('/api/newsletter', {
         body: JSON.stringify({
           email: form.get('email'),
+          locale,
           website: form.get('website'),
         }),
         headers: { 'Content-Type': 'application/json' },
@@ -35,6 +43,11 @@ export function NewsletterForm({ locale = 'fr' }: { locale?: SiteLocale }) {
       formElement.reset()
       setState('success')
       setMessage(t.success)
+      trackEditorialEvent('newsletter_subscribe_success', {
+        locale,
+        placement: 'newsletter',
+        context: 'confirmed',
+      })
     } catch {
       setState('error')
       setMessage(t.error)
