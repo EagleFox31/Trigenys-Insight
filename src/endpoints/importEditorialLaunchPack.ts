@@ -1,0 +1,250 @@
+import type { Payload, PayloadRequest } from 'payload'
+
+import {
+  createEditorialLexicalDocument,
+  editorialLaunchArticles,
+} from '@/editorial/editorial-launch-pack'
+
+const categoryDefinitions = {
+  technology: {
+    color: '#E07520',
+    manifesto:
+      "Technologie, intelligence artificielle et cybersécurité analysées depuis les réalités africaines.",
+    manifestoEn:
+      'Technology, artificial intelligence and cybersecurity analysed through African realities.',
+    title: 'Technologie',
+    titleEn: 'Technology',
+  },
+  business: {
+    color: '#15355A',
+    manifesto:
+      "Marchés, modèles économiques et stratégies d’entreprise pour décider avec davantage de lucidité.",
+    manifestoEn:
+      'Markets, business models and corporate strategy analysed without the hype.',
+    title: 'Business',
+    titleEn: 'Business',
+  },
+  'information-systems': {
+    color: '#2C5F7A',
+    manifesto: 'Architecture, données, cloud et logiciels vus depuis le terrain opérationnel.',
+    manifestoEn: 'Architecture, data, cloud and software viewed from operational reality.',
+    title: "Systèmes d'information",
+    titleEn: 'Information Systems',
+  },
+  africa: {
+    color: '#5E7A3A',
+    manifesto: 'Signaux économiques, sociaux et réglementaires qui transforment le continent.',
+    manifestoEn: 'Economic, social and regulatory signals reshaping the continent.',
+    title: 'Afrique',
+    titleEn: 'Africa',
+  },
+} as const
+
+type CategorySlug = keyof typeof categoryDefinitions
+
+async function ensureCategory({
+  payload,
+  req,
+  slug,
+}: {
+  payload: Payload
+  req: PayloadRequest
+  slug: CategorySlug
+}) {
+  const category = categoryDefinitions[slug]
+
+  const match = await payload.find({
+    collection: 'categories',
+    depth: 0,
+    fallbackLocale: false,
+    limit: 1,
+    locale: 'fr',
+    overrideAccess: false,
+    req,
+    where: { slug: { equals: slug } },
+  })
+
+  const doc =
+    match.docs[0] ??
+    (await payload.create({
+      collection: 'categories',
+      data: {
+        color: category.color,
+        manifesto: category.manifesto,
+        slug,
+        title: category.title,
+      },
+      depth: 0,
+      locale: 'fr',
+      overrideAccess: false,
+      req,
+    }))
+
+  await payload.update({
+    collection: 'categories',
+    id: doc.id,
+    data: {
+      manifesto: category.manifestoEn,
+      title: category.titleEn,
+    },
+    depth: 0,
+    fallbackLocale: false,
+    locale: 'en',
+    overrideAccess: false,
+    req,
+  })
+
+  return doc.id
+}
+
+export async function importEditorialLaunchPack({
+  payload,
+  req,
+}: {
+  payload: Payload
+  req: PayloadRequest
+}) {
+  if (!req.user) {
+    throw new Error('An authenticated editor is required to import the editorial launch pack.')
+  }
+
+  const categoryIds = new Map<CategorySlug, number>()
+
+  for (const slug of Object.keys(categoryDefinitions) as CategorySlug[]) {
+    const id = await ensureCategory({ payload, req, slug })
+    categoryIds.set(slug, id as number)
+  }
+
+  const results: Array<{
+    created: boolean
+    englishCreated: boolean
+    id: number
+    slug: string
+    title: string
+  }> = []
+
+  for (const article of editorialLaunchArticles) {
+    const existing = await payload.find({
+      collection: 'posts',
+      depth: 0,
+      draft: true,
+      fallbackLocale: false,
+      limit: 1,
+      locale: 'fr',
+      overrideAccess: false,
+      req,
+      where: { slug: { equals: article.slug } },
+    })
+
+    const sourceIds: number[] = []
+
+    for (const source of article.sources) {
+      const match = await payload.find({
+        collection: 'research-sources',
+        depth: 0,
+        limit: 1,
+        overrideAccess: false,
+        req,
+        where: { url: { equals: source.url } },
+      })
+
+      const doc =
+        match.docs[0] ??
+        (await payload.create({
+          collection: 'research-sources',
+          data: source,
+          depth: 0,
+          overrideAccess: false,
+          req,
+        }))
+
+      sourceIds.push(doc.id as number)
+    }
+
+    const articleCategoryIds = article.categories.map((slug) => {
+      const id = categoryIds.get(slug as CategorySlug)
+      if (!id) throw new Error(`Missing category during import: ${slug}`)
+      return id
+    })
+
+    let post = existing.docs[0]
+    let created = false
+
+    if (!post) {
+      post = await payload.create({
+        collection: 'posts',
+        data: {
+          _status: 'draft',
+          authors: [req.user.id],
+          categories: articleCategoryIds,
+          content: createEditorialLexicalDocument(article.fr.content),
+          editorsPick: article.editorsPick,
+          excerpt: article.fr.excerpt,
+          featured: article.featured,
+          kind: article.kind,
+          meta: {
+            description: article.fr.metaDescription,
+            title: article.fr.metaTitle,
+          },
+          readingTime: article.readingTime,
+          slug: article.slug,
+          sources: sourceIds,
+          title: article.fr.title,
+        },
+        depth: 0,
+        draft: true,
+        locale: 'fr',
+        overrideAccess: false,
+        req,
+      })
+      created = true
+    }
+
+    const existingEnglish = await payload.findByID({
+      collection: 'posts',
+      id: post.id,
+      depth: 0,
+      draft: true,
+      fallbackLocale: false,
+      locale: 'en',
+      overrideAccess: false,
+      req,
+    })
+
+    const hasEnglishTranslation = Boolean(
+      existingEnglish?.title && existingEnglish?.excerpt && existingEnglish?.content,
+    )
+
+    if (!hasEnglishTranslation) {
+      await payload.update({
+        collection: 'posts',
+        id: post.id,
+        data: {
+          content: createEditorialLexicalDocument(article.en.content),
+          excerpt: article.en.excerpt,
+          meta: {
+            description: article.en.metaDescription,
+            title: article.en.metaTitle,
+          },
+          title: article.en.title,
+        },
+        depth: 0,
+        draft: true,
+        fallbackLocale: false,
+        locale: 'en',
+        overrideAccess: false,
+        req,
+      })
+    }
+
+    results.push({
+      created,
+      englishCreated: !hasEnglishTranslation,
+      id: post.id as number,
+      slug: article.slug,
+      title: article.fr.title,
+    })
+  }
+
+  return results
+}
