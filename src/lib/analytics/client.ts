@@ -15,9 +15,7 @@ function shouldTrack() {
 
   if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')) return false
 
-  if (host.endsWith('.vercel.app')) {
-    return host === 'trigenys-insight.vercel.app'
-  }
+  if (host.endsWith('.vercel.app')) return false
 
   return true
 }
