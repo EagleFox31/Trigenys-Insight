@@ -150,7 +150,8 @@ jobs:
             *) img_url="$base$img_src" ;;
           esac
 
-          img_headers=$(curl --fail --silent --show-error --retry 5 --retry-delay 2 -I "$img_url")
+          echo "Pilot rendered image URL: $img_url"
+          img_headers=$(curl --location --fail --silent --show-error --retry 5 --retry-delay 2 -D - -o /dev/null "$img_url")
           echo "$img_headers"
           echo "$img_headers" | grep -qi 'content-type:.*image/' || {
             echo "::error::Rendered image is not served as image/*: $img_url"
