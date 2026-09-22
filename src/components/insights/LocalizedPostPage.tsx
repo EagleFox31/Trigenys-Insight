@@ -65,14 +65,14 @@ export async function LocalizedPostPage({
 
       <PostHero locale={locale} post={post} />
 
-      <div className="flex flex-col items-center gap-4 pt-14">
+      <div className="article-reading-shell">
         <div className="container">
-          <RichText className="max-w-[48rem] mx-auto" data={post.content} enableGutter={false} />
+          <RichText className="article-content" data={post.content} enableGutter={false} />
 
           {post.sources && post.sources.length > 0 && (
             <section
               aria-labelledby="research-sources-title"
-              className="mx-auto mt-14 max-w-[48rem] border-t border-border pt-8"
+              className="article-sources"
             >
               <h2 className="mb-5 text-2xl font-semibold" id="research-sources-title">
                 {t.sourcesTitle}
