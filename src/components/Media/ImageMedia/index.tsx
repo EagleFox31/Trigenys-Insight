@@ -10,6 +10,7 @@ import type { Props as MediaProps } from '../types'
 
 import { cssVariables } from '@/cssVariables'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { shouldBypassImageOptimization } from '@/utilities/mediaDelivery'
 
 const { breakpoints } = cssVariables
 
@@ -70,6 +71,7 @@ export const ImageMedia: React.FC<MediaProps> = (props) => {
         loading={loading}
         sizes={sizes}
         src={src}
+        unoptimized={shouldBypassImageOptimization}
         width={!fill ? width : undefined}
       />
     </picture>

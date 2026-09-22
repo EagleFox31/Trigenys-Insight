@@ -84,3 +84,24 @@ For user-visible fixes, report separately: coded → CI green → merged → pro
 
 **Generalized lesson**  
 A correct patch is not a production fix until the deployed revision contains it.
+
+
+## Cloudflare pilot rendered HTML but lost Next static assets
+
+**Symptom:** The Worker returned 200 for `/fr` and `/en`, but the page rendered almost unstyled with an oversized brand mark.
+
+**Cause:** `assets.run_worker_first: true` routed `/_next/static/*` through the vinext Worker instead of Cloudflare's static asset path. Route-only smoke tests produced a false green.
+
+**Fix:** Use selective Worker-first routing: application routes go through the Worker while `/_next/static/*` stays asset-first. Deployment smoke tests now parse the rendered HTML and verify an actual CSS URL returns `Content-Type: text/css`.
+
+**Rule:** A successful SSR status code is not sufficient evidence of a healthy frontend. Deployment validation must include at least one referenced static asset.
+
+## Provider migration rewrote Payload media URLs
+
+**Symptom:** After CSS was fixed, article image containers still showed alt text instead of images.
+
+**Cause:** The Vercel Blob adapter is intentionally disabled on the Cloudflare pilot. Payload therefore exposed historical media as local `/api/media/file/*` paths even though the objects already existed in the public Vercel Blob store. Pointing those paths at the Vercel application returned 500 because those files are not local filesystem assets.
+
+**Fix:** During the pilot, legacy `/api/media/file/*` paths are bridged directly to the existing public Blob object by filename, and image optimization is bypassed. The deployment smoke test validates every rendered homepage image URL (up to eight) as `image/*`.
+
+**Rule:** During a storage-provider migration, validate both the persisted database URL and the runtime URL returned by the CMS. They may differ when a storage adapter is disabled.

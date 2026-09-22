@@ -1,0 +1,69 @@
+name: Cloudflare compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'next.config.ts'
+      - 'tsconfig.json'
+      - 'vite.config.ts'
+      - 'wrangler.jsonc'
+      - 'empty-stub.js'
+      - '.github/workflows/cloudflare-compatibility.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vinext-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout pilot branch
+        uses: actions/checkout@v4
+        with:
+          ref: infra/cloudflare-pilot
+
+      - name: Enable pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run vinext compatibility check
+        run: pnpm cloudflare:check
+
+      - name: Build vinext production output
+        env:
+          NEXT_PUBLIC_SERVER_URL: https://trigenys-insight-cloudflare-pilot.example.workers.dev
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          DATABASE_URL_UNPOOLED: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          PAYLOAD_SECRET: cloudflare-pilot-build-only-secret
+          CRON_SECRET: cloudflare-pilot-build-only-cron-secret
+          PREVIEW_SECRET: cloudflare-pilot-build-only-preview-secret
+        run: pnpm build:vinext
+
+      - name: Persist lockfile update
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "pnpm-lock.yaml is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore: lock Cloudflare pilot dependencies"
+          git push origin HEAD:infra/cloudflare-pilot

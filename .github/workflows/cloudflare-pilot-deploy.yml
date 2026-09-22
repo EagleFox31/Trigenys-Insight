@@ -1,0 +1,175 @@
+name: Deploy Cloudflare pilot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      NEXT_PUBLIC_SERVER_URL: https://trigenys-insight-cloudflare-pilot.lawrynnjennifer.workers.dev
+      NEXT_PUBLIC_MEDIA_BLOB_ORIGIN: https://z9hq1atmt6mlneyq.public.blob.vercel-storage.com/media
+      NEXT_PUBLIC_MEDIA_UNOPTIMIZED: 'true'
+      DATABASE_URL: ${{ secrets.CLOUDFLARE_PILOT_DATABASE_URL }}
+      DATABASE_URL_UNPOOLED: ${{ secrets.CLOUDFLARE_PILOT_DATABASE_URL_UNPOOLED }}
+      PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      PREVIEW_SECRET: ${{ secrets.PREVIEW_SECRET }}
+
+    steps:
+      - name: Checkout pilot branch
+        uses: actions/checkout@v4
+        with:
+          ref: infra/cloudflare-pilot
+
+      - name: Enable pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Verify required secrets
+        shell: bash
+        run: |
+          required=(
+            CLOUDFLARE_API_TOKEN
+            CLOUDFLARE_ACCOUNT_ID
+            DATABASE_URL
+            DATABASE_URL_UNPOOLED
+            PAYLOAD_SECRET
+            CRON_SECRET
+            PREVIEW_SECRET
+          )
+
+          missing=0
+          for name in "${required[@]}"; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required secret/environment: $name"
+              missing=1
+            fi
+          done
+
+          exit "$missing"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run compatibility gate
+        run: pnpm cloudflare:check
+
+      - name: Build Worker
+        run: pnpm build:vinext
+
+      - name: Prepare Worker secrets file
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+
+          const keys = [
+            'DATABASE_URL',
+            'DATABASE_URL_UNPOOLED',
+            'PAYLOAD_SECRET',
+            'CRON_SECRET',
+            'PREVIEW_SECRET',
+            'NEXT_PUBLIC_SERVER_URL',
+            'NEXT_PUBLIC_MEDIA_BLOB_ORIGIN',
+            'NEXT_PUBLIC_MEDIA_UNOPTIMIZED',
+          ]
+
+          const payload = Object.fromEntries(keys.map((key) => [key, process.env[key]]))
+          payload.NEXT_PUBLIC_MEDIA_ORIGIN = null
+          fs.writeFileSync('/tmp/cloudflare-pilot-secrets.json', JSON.stringify(payload))
+          NODE
+
+      - name: Deploy isolated Worker
+        run: |
+          pnpm exec wrangler deploy \
+            --config dist/server/wrangler.json \
+            --name trigenys-insight-cloudflare-pilot \
+            --secrets-file /tmp/cloudflare-pilot-secrets.json
+
+      - name: Remove temporary secrets file
+        if: always()
+        run: rm -f /tmp/cloudflare-pilot-secrets.json
+
+      - name: Smoke test public routes and assets
+        shell: bash
+        run: |
+          base="https://trigenys-insight-cloudflare-pilot.lawrynnjennifer.workers.dev"
+
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 "$base/fr" -o /tmp/fr.html
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 "$base/en" -o /tmp/en.html
+
+          css_path=$(grep -oE 'href="[^"]+\.css' /tmp/fr.html | head -n 1 | cut -d'"' -f2)
+          if [ -z "$css_path" ]; then
+            echo "::error::No CSS asset found in /fr HTML"
+            exit 1
+          fi
+
+          case "$css_path" in
+            http*) css_url="$css_path" ;;
+            *) css_url="$base$css_path" ;;
+          esac
+
+          css_headers=$(curl --fail --silent --show-error --retry 5 --retry-delay 2 -I "$css_url")
+          echo "$css_headers"
+          echo "$css_headers" | grep -qi 'content-type:.*text/css' || {
+            echo "::error::CSS asset is not served as text/css: $css_url"
+            exit 1
+          }
+
+          node - <<'NODE' > /tmp/image-urls.txt
+          const fs = require('node:fs')
+          const html = fs.readFileSync('/tmp/fr.html', 'utf8')
+          const urls = [...html.matchAll(/<img[^>]*\ssrc="([^"]+)"/gi)]
+            .map((match) => match[1].replace(/&amp;/g, '&'))
+          for (const url of [...new Set(urls)]) console.log(url)
+          NODE
+
+          if [ ! -s /tmp/image-urls.txt ]; then
+            echo "::error::No rendered <img> sources found in /fr HTML"
+            exit 1
+          fi
+
+          checked=0
+          while IFS= read -r img_src; do
+            case "$img_src" in
+              http*) img_url="$img_src" ;;
+              *) img_url="$base$img_src" ;;
+            esac
+
+            echo "Testing rendered image: $img_url"
+            img_headers=$(curl --location --fail --silent --show-error --retry 3 --retry-delay 2 -D - -o /dev/null "$img_url")
+            echo "$img_headers" | grep -qi 'content-type:.*image/' || {
+              echo "::error::Rendered image is not served as image/*: $img_url"
+              exit 1
+            }
+
+            checked=$((checked + 1))
+            if [ "$checked" -ge 8 ]; then
+              break
+            fi
+          done < /tmp/image-urls.txt
+
+          echo "Validated $checked rendered image URLs."
+
+          admin_status=$(curl --silent --output /dev/null --write-out "%{http_code}" "$base/admin")
+          if [ "$admin_status" -lt 200 ] || [ "$admin_status" -ge 500 ]; then
+            echo "::error::Unexpected /admin status: $admin_status"
+            exit 1
+          fi
+
+      - name: Print pilot URL
+        run: echo "https://trigenys-insight-cloudflare-pilot.lawrynnjennifer.workers.dev"

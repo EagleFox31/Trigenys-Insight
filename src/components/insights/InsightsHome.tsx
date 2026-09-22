@@ -12,6 +12,8 @@ import { NewsletterForm } from './NewsletterForm'
 import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpressionBoundary'
 import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 import styles from './NewsroomHome.module.css'
+import { getMediaUrl } from '@/utilities/getMediaUrl'
+import { shouldBypassImageOptimization } from '@/utilities/mediaDelivery'
 
 function asMedia(value: Post['heroImage'] | NonNullable<Post['meta']>['image']) {
   return value && typeof value === 'object' ? value : null
@@ -52,7 +54,8 @@ function ArticleImage({ post, priority = false }: { post: Post; priority?: boole
         fill
         priority={priority}
         sizes="(max-width: 760px) 100vw, (max-width: 1050px) 50vw, 36vw"
-        src={media.url}
+        src={getMediaUrl(media.url, media.updatedAt)}
+        unoptimized={shouldBypassImageOptimization}
       />
     </div>
   )
