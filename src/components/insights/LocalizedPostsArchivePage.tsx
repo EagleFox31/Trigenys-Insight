@@ -8,6 +8,7 @@ import { getMessages } from '@/i18n/messages'
 import { CollectionArchive } from '@/components/CollectionArchive'
 import { PageRange } from '@/components/PageRange'
 import { Pagination } from '@/components/Pagination'
+import { buildBreadcrumbJsonLd, serializeJsonLd } from '@/seo/structuredData'
 
 export async function LocalizedPostsArchivePage({
   locale,
@@ -40,9 +41,28 @@ export async function LocalizedPostsArchivePage({
   })
 
   const translatedDocs = posts.docs.filter((post) => Boolean(post.title))
+  const archivePath =
+    pageNumber > 1 ? `/${locale}/posts/page/${pageNumber}` : `/${locale}/posts`
+  const breadcrumbItems = [
+    { name: locale === 'fr' ? 'Accueil' : 'Home', path: `/${locale}` },
+    { name: locale === 'fr' ? 'Analyses' : 'Analysis', path: `/${locale}/posts` },
+  ]
+
+  if (pageNumber > 1) {
+    breadcrumbItems.push({
+      name: locale === 'fr' ? `Page ${pageNumber}` : `Page ${pageNumber}`,
+      path: archivePath,
+    })
+  }
+
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbItems)
 
   return (
     <div className="insights-archive">
+      <script
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+        type="application/ld+json"
+      />
       <div className="container insights-archive__heading">
         <p className="eyebrow">{t.eyebrow}</p>
         <h1>{t.title}</h1>

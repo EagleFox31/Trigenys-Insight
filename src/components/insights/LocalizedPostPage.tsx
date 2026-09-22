@@ -10,12 +10,19 @@ import { RelatedPosts } from '@/blocks/RelatedPosts/Component'
 import RichText from '@/components/RichText'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { PostHero } from '@/heros/PostHero'
-import { generateMeta } from '@/utilities/generateMeta'
 import { ArticleHighlights } from '@/components/insights/ArticleHighlights'
 import { ArticleBodyEnhancer } from '@/components/insights/ArticleBodyEnhancer'
 import { ArticleTableOfContents } from '@/components/insights/ArticleTableOfContents'
 import { extractArticleHighlights } from '@/components/insights/articleEditorial'
 import { TrackedOutboundLink } from '@/components/analytics/TrackedOutboundLink'
+import {
+  absoluteCanonicalURL,
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  mediaURL,
+  serializeJsonLd,
+  SITE_IDENTITY,
+} from '@/seo/structuredData'
 
 async function queryPostBySlug({
   locale,
@@ -65,9 +72,34 @@ export async function LocalizedPostPage({
   const t = getMessages(locale).post
   const highlights = extractArticleHighlights(post.content)
   const visibleSources = post.sources?.filter((source) => typeof source === 'object') || []
+  const articleJsonLd =
+    !draft && post._status === 'published'
+      ? buildArticleJsonLd({ locale, post, slug: decodedSlug })
+      : null
+  const breadcrumbJsonLd =
+    !draft && post._status === 'published'
+      ? buildBreadcrumbJsonLd([
+          { name: locale === 'fr' ? 'Accueil' : 'Home', path: `/${locale}` },
+          { name: locale === 'fr' ? 'Analyses' : 'Analysis', path: `/${locale}/posts` },
+          { name: post.title, path: `/${locale}/posts/${decodedSlug}` },
+        ])
+      : null
 
   return (
     <article className="pb-20">
+      {articleJsonLd && (
+        <script
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
+          type="application/ld+json"
+        />
+      )}
+      {breadcrumbJsonLd && (
+        <script
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+          type="application/ld+json"
+        />
+      )}
+
       {draft && <LivePreviewListener />}
 
       <PostHero locale={locale} post={post} />
@@ -154,26 +186,56 @@ export async function localizedPostMetadata({
     draft,
   })
 
-  const base = await generateMeta({ doc: post })
+  const canonicalURL = absoluteCanonicalURL(`/${locale}/posts/${decodedSlug}`)
+  const otherURL = absoluteCanonicalURL(`/${otherLocale}/posts/${decodedSlug}`)
+  const defaultURL = absoluteCanonicalURL(`/fr/posts/${decodedSlug}`)
+  const seoTitle = post.meta?.title || post.title
+  const seoDescription = post.meta?.description || post.excerpt
+  const socialImage =
+    mediaURL(post.meta?.image, 'og') ||
+    mediaURL(post.heroImage) ||
+    absoluteCanonicalURL('/api/og')
+
   const languages: Record<string, string> = {
-    [locale]: `/${locale}/posts/${decodedSlug}`,
+    [locale]: canonicalURL,
+    'x-default': defaultURL,
   }
 
   if (translated) {
-    languages[otherLocale] = `/${otherLocale}/posts/${decodedSlug}`
+    languages[otherLocale] = otherURL
   }
 
-  if (locale === 'fr') {
-    languages['x-default'] = `/fr/posts/${decodedSlug}`
-  }
+  const authorNames =
+    post.populatedAuthors
+      ?.map((author) => author?.name?.trim())
+      .filter((name): name is string => Boolean(name)) || []
 
   return {
-    ...base,
-    title: post.title,
-    description: post.excerpt,
+    title: seoTitle,
+    description: seoDescription,
+    robots: draft ? { index: false, follow: false } : undefined,
     alternates: {
-      canonical: `/${locale}/posts/${decodedSlug}`,
+      canonical: canonicalURL,
       languages,
+    },
+    openGraph: {
+      type: 'article',
+      title: seoTitle,
+      description: seoDescription,
+      url: canonicalURL,
+      siteName: SITE_IDENTITY.name,
+      images: [{ url: socialImage }],
+      locale: locale === 'fr' ? 'fr_FR' : 'en_GB',
+      alternateLocale: translated ? [otherLocale === 'fr' ? 'fr_FR' : 'en_GB'] : undefined,
+      publishedTime: post.publishedAt || post.createdAt,
+      modifiedTime: post.updatedAt,
+      authors: authorNames.length > 0 ? authorNames : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: seoTitle,
+      description: seoDescription,
+      images: [socialImage],
     },
   }
 }
