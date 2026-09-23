@@ -35,7 +35,7 @@ export async function POST(): Promise<Response> {
           ? `${createdCount} article(s) créé(s) en brouillon. Les versions anglaises manquantes ont aussi été ajoutées. Ajoute les images de couverture, relis les deux locales puis publie.`
           : englishCreatedCount > 0
             ? `Les articles existaient déjà. ${englishCreatedCount} version(s) anglaise(s) manquante(s) ont été ajoutée(s) sans écraser les versions françaises.`
-            : "Les trois articles existent déjà en français et en anglais. Aucun contenu éditorial n'a été écrasé.",
+            : "Tous les articles du pack existent déjà en français et en anglais. Aucun contenu éditorial n'a été écrasé.",
     })
   } catch (error) {
     payload.logger.error({ err: error, message: 'Editorial launch pack import failed' })
