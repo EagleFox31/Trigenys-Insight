@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   analyticsContext,
   articleAnalyticsId,
+  normalizeSourceDomain,
   type EditorialAnalyticsEvent,
 } from '@/lib/analytics/events'
 import { readingEventsToEmit } from '@/lib/analytics/reading'
@@ -22,6 +23,13 @@ describe('editorial analytics contract', () => {
         context: 'source-2',
       }),
     ).toBe('source-2')
+  })
+
+  it('normalizes source URLs to hostname-only analytics dimensions', () => {
+    expect(
+      normalizeSourceDomain('https://www.beac.int/report.pdf?token=secret#page=2'),
+    ).toBe('beac.int')
+    expect(normalizeSourceDomain('not-a-url')).toBeUndefined()
   })
 
   it('combines placement and category when both exist', () => {

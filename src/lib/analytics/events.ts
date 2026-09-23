@@ -34,6 +34,9 @@ export type EditorialAnalyticsProperties = {
   placement?: ArticlePlacement | 'newsletter'
   category?: string | null
   context?: string
+  sourceId?: string
+  sourcePosition?: number
+  sourceDomain?: string
 }
 
 export function articleAnalyticsId(locale: SiteLocale, slug?: string) {
@@ -46,4 +49,14 @@ export function analyticsContext(properties: EditorialAnalyticsProperties) {
     return `${properties.placement}:${properties.category}`
   }
   return properties.placement || properties.category || 'site'
+}
+
+export function normalizeSourceDomain(value?: string) {
+  if (!value) return undefined
+
+  try {
+    return new URL(value).hostname.toLowerCase().replace(/^www\./, '') || undefined
+  } catch {
+    return undefined
+  }
 }

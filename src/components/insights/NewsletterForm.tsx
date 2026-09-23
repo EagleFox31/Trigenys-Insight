@@ -5,6 +5,10 @@ import { getMessages } from '@/i18n/messages'
 import { ArrowRight } from 'lucide-react'
 import React, { FormEvent, useState } from 'react'
 import { trackEditorialEvent } from '@/lib/analytics/client'
+import {
+  shouldTrackNewsletterSubscriptionSuccess,
+  type NewsletterSubscriptionOutcome,
+} from '@/utilities/newsletter'
 
 type FormState = 'idle' | 'loading' | 'success' | 'error'
 
@@ -40,14 +44,26 @@ export function NewsletterForm({ locale = 'fr' }: { locale?: SiteLocale }) {
 
       if (!response.ok) throw new Error('Subscription request failed')
 
+      const result = (await response.json()) as {
+        ok?: boolean
+        subscription?: NewsletterSubscriptionOutcome
+      }
+
+      if (!result.ok || !result.subscription) {
+        throw new Error('Subscription response was invalid')
+      }
+
       formElement.reset()
       setState('success')
       setMessage(t.success)
-      trackEditorialEvent('newsletter_subscribe_success', {
-        locale,
-        placement: 'newsletter',
-        context: 'confirmed',
-      })
+
+      if (shouldTrackNewsletterSubscriptionSuccess(result.subscription)) {
+        trackEditorialEvent('newsletter_subscribe_success', {
+          locale,
+          placement: 'newsletter',
+          context: result.subscription,
+        })
+      }
     } catch {
       setState('error')
       setMessage(t.error)

@@ -50,6 +50,9 @@ export function trackEditorialEvent(
       placement: effectiveProperties.placement,
       category: effectiveProperties.category || undefined,
       context: analyticsContext(effectiveProperties),
+      source_id: effectiveProperties.sourceId,
+      source_position: effectiveProperties.sourcePosition,
+      source_domain: effectiveProperties.sourceDomain,
     })
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') {

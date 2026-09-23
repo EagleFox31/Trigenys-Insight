@@ -1,7 +1,10 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { parseNewsletterRequest } from '@/utilities/newsletter'
+import {
+  parseNewsletterRequest,
+  type NewsletterSubscriptionOutcome,
+} from '@/utilities/newsletter'
 
 export async function POST(request: Request) {
   const subscription = parseNewsletterRequest(await request.json().catch(() => null))
@@ -19,14 +22,10 @@ export async function POST(request: Request) {
     where: { email: { equals: email } },
   })
 
-  if (existing.docs[0]) {
-    await payload.update({
-      collection: 'newsletter-subscribers',
-      data: { consentedAt: new Date().toISOString(), locale, status: 'active' },
-      id: existing.docs[0].id,
-      overrideAccess: true,
-    })
-  } else {
+  const subscriber = existing.docs[0]
+  let outcome: NewsletterSubscriptionOutcome
+
+  if (!subscriber) {
     await payload.create({
       collection: 'newsletter-subscribers',
       data: {
@@ -37,7 +36,37 @@ export async function POST(request: Request) {
       },
       overrideAccess: true,
     })
+    outcome = 'created'
+  } else if (subscriber.status === 'unsubscribed') {
+    await payload.update({
+      collection: 'newsletter-subscribers',
+      data: {
+        consentedAt: new Date().toISOString(),
+        locale,
+        status: 'active',
+      },
+      id: subscriber.id,
+      overrideAccess: true,
+    })
+    outcome = 'reactivated'
+  } else {
+    if (subscriber.locale !== locale) {
+      await payload.update({
+        collection: 'newsletter-subscribers',
+        data: { locale },
+        id: subscriber.id,
+        overrideAccess: true,
+      })
+    }
+
+    outcome = 'existing'
   }
 
-  return Response.json({ ok: true, created: !existing.docs[0] }, { status: 201 })
+  return Response.json(
+    {
+      ok: true,
+      subscription: outcome,
+    },
+    { status: outcome === 'created' ? 201 : 200 },
+  )
 }
