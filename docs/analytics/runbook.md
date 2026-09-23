@@ -59,7 +59,57 @@ Do not call raw event totals "unique readers".
 
 ## Kill switch
 
-If custom analytics causes a regression, the safest temporary response is to make `trackEditorialEvent()` a no-op. All tracked links and forms must continue to work because analytics is side-effect-only.
+Set:
+
+```text
+NEXT_PUBLIC_EDITORIAL_ANALYTICS_ENABLED=false
+```
+
+and redeploy. Both the PostHog bootstrap and the provider-neutral event adapter stop emitting events.
+
+Accepted disabled values are `0`, `false`, `off` and `disabled` (case-insensitive).
+
+The kill switch is intentionally side-effect-only: article links, source links, reading UI and newsletter submission must continue to work normally.
+
+To re-enable, remove the variable or set it to a non-disabled value and redeploy.
+
+## Automated-test adapter
+
+Playwright/Vitest must never send traffic to PostHog.
+
+Tests can initialize:
+
+```js
+window.__TRIGENYS_ANALYTICS_TEST_EVENTS__ = []
+```
+
+The analytics adapter writes normalized event payloads to that in-memory array and performs no network request. This test sink works on localhost specifically so E2E tests can validate the contract without relaxing production host rules.
+
+Do not expose or initialize the test sink in production application code.
+
+## Staged rollout
+
+1. Keep `NEXT_PUBLIC_EDITORIAL_ANALYTICS_ENABLED=false` for the first preview/debug deployment if the provider configuration changed materially.
+2. Validate the page without analytics.
+3. Enable analytics on the intended environment.
+4. Perform one controlled reader path and inspect the provider's live events.
+5. Check the first 24–48 hours for duplicate impressions, missing placements, impossible conversion counts and privacy regressions.
+6. Record any meaningful incident in `docs/engineering/lessons-learned.md` and add a regression guardrail before considering the rollout complete.
+
+## Performance gate
+
+Before and after a material analytics-provider or bootstrap change, record comparable measurements under the same conditions:
+
+- production JS/bootstrap impact;
+- Lighthouse mobile run;
+- LCP;
+- INP;
+- CLS;
+- provider script/network weight.
+
+Store the dated result in `docs/analytics/performance-gate.md`.
+
+Do not compare different devices, throttling profiles or unrelated production revisions and present the result as an analytics delta.
 
 ## Troubleshooting
 
@@ -90,6 +140,6 @@ That can be legitimate. `newsletter_cta_click` measures attempts. `newsletter_su
 
 1. Add it to `EditorialAnalyticsEvent`.
 2. Define its meaning and KPI impact in `editorial-analytics.md`.
-3. Keep Vercel transport to two normalized properties.
+3. Keep provider transport behind `src/lib/analytics/client.ts`; UI components must remain provider-neutral.
 4. Add or update tests.
 5. If it introduces a free-form dimension, review cardinality and privacy first.
