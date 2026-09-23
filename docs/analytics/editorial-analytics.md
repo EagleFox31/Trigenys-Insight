@@ -22,10 +22,10 @@ Schema version: **1**
 | `article_read_75` | Reader crossed 75% |
 | `article_read_complete` | Reader crossed the completion threshold (95%) |
 | `toc_click` | Reader used the table of contents |
-| `source_click` | Reader opened a research source |
+| `source_click` | Reader opened a research source; source identity is normalized and never includes query strings |
 | `share_click` | Reserved for a future share control |
 | `newsletter_cta_click` | Newsletter form was submitted |
-| `newsletter_subscribe_success` | Newsletter API confirmed success |
+| `newsletter_subscribe_success` | Newsletter API confirmed a new or reactivated subscription; an already-active subscriber is not counted again |
 
 ## Properties
 
@@ -36,8 +36,11 @@ The internal contract can carry:
 - `placement`
 - `category`
 - `context`
+- `sourceId`
+- `sourcePosition`
+- `sourceDomain`
 
-The PostHog transport emits the canonical typed properties directly: `schema_version`, `article`, `slug`, `locale`, `placement`, `category` and normalized `context` when relevant. The UI remains provider-neutral, so changing analytics backends does not require changing tracked components.
+The PostHog transport emits the canonical typed properties directly. Source clicks add `source_id`, one-based `source_position` and a normalized hostname-only `source_domain`. Raw source URLs and query strings are deliberately excluded. The UI remains provider-neutral, so changing analytics backends does not require changing tracked components.
 
 Never send:
 
@@ -118,6 +121,14 @@ source_click / article_view
 ```text
 newsletter_subscribe_success / relevant content views
 ```
+
+A newsletter attempt has three server-confirmed outcomes:
+
+- `created`: a new subscriber was persisted → conversion event;
+- `reactivated`: a previously unsubscribed address explicitly subscribed again → conversion event;
+- `existing`: the address was already active → successful UX response, but **no new conversion event**.
+
+This keeps retries and repeated submissions from inflating conversion totals.
 
 Raw events are not automatically "unique readers". Distinct-user language must only be used when the provider/report explicitly uses a distinct visitor/session measure.
 
