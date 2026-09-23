@@ -4,6 +4,7 @@ import {
   createEditorialLexicalDocument,
   editorialLaunchArticles,
 } from '@/editorial/editorial-launch-pack'
+import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
 
 const categoryDefinitions = {
   technology: {
@@ -123,7 +124,7 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of editorialLaunchArticles) {
+  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle]) {
     const existing = await payload.find({
       collection: 'posts',
       depth: 0,
