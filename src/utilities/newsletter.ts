@@ -18,3 +18,11 @@ export function parseNewsletterRequest(input: unknown): NewsletterRequest | null
 
   return emailPattern.test(email) ? { email, locale } : null
 }
+
+export type NewsletterSubscriptionOutcome = 'created' | 'reactivated' | 'existing'
+
+export function shouldTrackNewsletterSubscriptionSuccess(
+  outcome: NewsletterSubscriptionOutcome,
+) {
+  return outcome === 'created' || outcome === 'reactivated'
+}
