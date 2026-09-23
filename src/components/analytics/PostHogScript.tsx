@@ -1,4 +1,6 @@
-import Script from 'next/script'\n\nimport { isEditorialAnalyticsEnabled } from '@/lib/analytics/runtime'
+import Script from 'next/script'
+
+import { isEditorialAnalyticsEnabled } from '@/lib/analytics/runtime'
 
 function postHogBootstrap(projectToken: string, apiHost: string) {
   const token = JSON.stringify(projectToken)
@@ -22,7 +24,7 @@ export function PostHogScript() {
   const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
   const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
 
-  if (!projectToken || !apiHost) return null
+  if (!isEditorialAnalyticsEnabled() || !projectToken || !apiHost) return null
 
   return (
     <Script id="posthog-init" strategy="afterInteractive">

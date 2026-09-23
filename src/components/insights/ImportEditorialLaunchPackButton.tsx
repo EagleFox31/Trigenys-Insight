@@ -57,7 +57,7 @@ export function ImportEditorialLaunchPackButton() {
         onClick={runImport}
         type="button"
       >
-        {state === 'loading' ? 'Import des 3 articles…' : 'Importer les 3 articles FR + EN'}
+        {state === 'loading' ? 'Import des articles…' : 'Importer les articles FR + EN'}
       </button>
 
       {message && (
