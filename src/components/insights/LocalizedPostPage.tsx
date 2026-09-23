@@ -134,6 +134,8 @@ export async function LocalizedPostPage({
                         locale={locale}
                         rel="noreferrer"
                         slug={decodedSlug}
+                        sourceId={source.id}
+                        sourcePosition={index + 1}
                         target="_blank"
                       >
                         {source.title}
