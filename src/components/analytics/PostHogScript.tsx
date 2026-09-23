@@ -1,4 +1,6 @@
-import Script from 'next/script'\n\nimport { isEditorialAnalyticsEnabled } from '@/lib/analytics/runtime'
+import Script from 'next/script'
+
+import { isEditorialAnalyticsEnabled } from '@/lib/analytics/runtime'
 
 function postHogBootstrap(projectToken: string, apiHost: string) {
   const token = JSON.stringify(projectToken)
