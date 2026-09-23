@@ -3,12 +3,15 @@ import { ImportEditorialLaunchPackButton } from '@/components/insights/ImportEdi
 import { UpdateArticleReadabilityButton } from '@/components/insights/UpdateArticleReadabilityButton'
 import { cybastionArticleMetadata, cybastionArticleSources } from '@/editorial/cybastion-data-center'
 import { editorialLaunchArticles } from '@/editorial/editorial-launch-pack'
+import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
 
 export const dynamic = 'force-dynamic'
+
+const importableArticles = [...editorialLaunchArticles, learningAiBackwardsArticle]
 
 export default async function ImportCybastionPage() {
   const payload = await getPayload({ config })
@@ -117,19 +120,19 @@ export default async function ImportCybastionPage() {
           <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
             <div className="mb-8 border-b border-border pb-8">
               <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#e07520]">
-                Pack de lancement · Business + Information Systems + Africa
+                Pack éditorial · Technology + Business + Information Systems + Africa
               </p>
               <h2 className="m-0 font-[var(--font-fraunces)] text-[clamp(30px,4vw,44px)] font-semibold leading-[1.08] tracking-[-0.035em] text-[#102f52]">
-                Trois analyses bilingues prêtes pour le CMS.
+                Analyses bilingues prêtes pour le CMS.
               </h2>
               <p className="mt-5 max-w-[760px] text-[15px] leading-7 text-[#62686d]">
-                Un clic crée les trois brouillons en français, ajoute leur traduction anglaise sur le
+                Un clic crée les brouillons manquants en français, ajoute leur traduction anglaise sur le
                 même post, rattache les catégories et réutilise les sources déjà présentes.
               </p>
             </div>
 
             <div className="grid gap-4">
-              {editorialLaunchArticles.map((article) => (
+              {importableArticles.map((article) => (
                 <div
                   className="rounded-md border border-border bg-[#fafaf7] px-5 py-4"
                   key={article.slug}
@@ -146,7 +149,7 @@ export default async function ImportCybastionPage() {
 
             <div className="mt-8 rounded-md bg-[#f2f2ed] p-5 text-sm leading-6 text-[#555b60]">
               Import idempotent : un article existant n&apos;est pas écrasé. Si seule la traduction
-              anglaise manque, elle est ajoutée sans toucher à la version française. Les trois posts
+              anglaise manque, elle est ajoutée sans toucher à la version française. Les nouveaux posts
               restent en brouillon pour te laisser ajouter les hero images et faire la dernière relecture.
             </div>
 
