@@ -39,8 +39,9 @@ Event-specific context examples:
 
 ```text
 toc_click      context=section-3-h2
-source_click   context=source-2
-newsletter_*   context=submit|confirmed
+source_click   context=source-2 source_id=42 source_position=2 source_domain=beac.int
+newsletter_cta_click       context=submit
+newsletter_subscribe_success context=created|reactivated
 ```
 
 ## Editorial reporting
@@ -79,7 +80,11 @@ Check:
 
 ### Newsletter clicks but no success
 
-That can be legitimate. `newsletter_cta_click` measures attempts; `newsletter_subscribe_success` fires only after the API returns success.
+That can be legitimate. `newsletter_cta_click` measures attempts. `newsletter_subscribe_success` fires only when the API confirms a `created` or `reactivated` subscription. An already-active subscriber receives a normal success response but does not generate another conversion event.
+
+### Source events contain unexpected URLs or tokens
+
+`source_click` must contain only `source_id`, `source_position`, and the normalized hostname in `source_domain`. If a full URL, query string, token, or fragment appears in PostHog, treat it as a privacy regression and stop the affected event before continuing collection.
 
 ## Adding an event
 
