@@ -136,9 +136,11 @@ Raw events are not automatically "unique readers". Distinct-user language must o
 
 - localhost: disabled;
 - `*.vercel.app` preview domains: disabled by default;
-- production custom domain: enabled through PostHog Cloud EU;
+- production custom domain: enabled through PostHog Cloud EU when `NEXT_PUBLIC_EDITORIAL_ANALYTICS_ENABLED` is not disabled;
 - Payload draft/preview article instrumentation: disabled;
-- analytics failure must never block navigation or successful form submission.
+- analytics failure must never block navigation or successful form submission;
+- `NEXT_PUBLIC_EDITORIAL_ANALYTICS_ENABLED=false` is the production kill switch;
+- automated tests use an in-memory event sink and never send events to PostHog.
 
 ## RAIDER mapping
 
