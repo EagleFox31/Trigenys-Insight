@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseNewsletterRequest } from '@/utilities/newsletter'
+import {
+  parseNewsletterRequest,
+  shouldTrackNewsletterSubscriptionSuccess,
+} from '@/utilities/newsletter'
 
 describe('parseNewsletterRequest', () => {
   it('normalizes a valid French subscription', () => {
@@ -49,5 +52,16 @@ describe('parseNewsletterRequest', () => {
     { email: 'reader@trigenys.com', website: 'spam.example' },
   ])('rejects an invalid or automated request: %o', (request) => {
     expect(parseNewsletterRequest(request)).toBeNull()
+  })
+})
+
+describe('newsletter conversion semantics', () => {
+  it('counts created and reactivated subscriptions as conversions', () => {
+    expect(shouldTrackNewsletterSubscriptionSuccess('created')).toBe(true)
+    expect(shouldTrackNewsletterSubscriptionSuccess('reactivated')).toBe(true)
+  })
+
+  it('does not count an already-active subscriber as a new conversion', () => {
+    expect(shouldTrackNewsletterSubscriptionSuccess('existing')).toBe(false)
   })
 })
