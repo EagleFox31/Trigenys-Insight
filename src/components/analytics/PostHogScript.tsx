@@ -24,7 +24,7 @@ export function PostHogScript() {
   const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
   const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
 
-  if (!projectToken || !apiHost) return null
+  if (!isEditorialAnalyticsEnabled() || !projectToken || !apiHost) return null
 
   return (
     <Script id="posthog-init" strategy="afterInteractive">
