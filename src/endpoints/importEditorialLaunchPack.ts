@@ -5,6 +5,7 @@ import {
   editorialLaunchArticles,
 } from '@/editorial/editorial-launch-pack'
 import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
+import { fc27Article } from '@/editorial/fc27'
 
 const categoryDefinitions = {
   technology: {
@@ -101,9 +102,11 @@ async function ensureCategory({
 export async function importEditorialLaunchPack({
   payload,
   req,
+  onlySlug,
 }: {
   payload: Payload
   req: PayloadRequest
+  onlySlug?: string
 }) {
   if (!req.user) {
     throw new Error('An authenticated editor is required to import the editorial launch pack.')
@@ -124,7 +127,9 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle]) {
+  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article].filter(
+    (item) => !onlySlug || item.slug === onlySlug,
+  )) {
     const existing = await payload.find({
       collection: 'posts',
       depth: 0,
