@@ -4,6 +4,8 @@ import { UpdateArticleReadabilityButton } from '@/components/insights/UpdateArti
 import { cybastionArticleMetadata, cybastionArticleSources } from '@/editorial/cybastion-data-center'
 import { editorialLaunchArticles } from '@/editorial/editorial-launch-pack'
 import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
+import { fc27Article } from '@/editorial/fc27'
+import { ImportFC27Button } from '@/components/insights/ImportFC27Button'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -31,6 +33,18 @@ export default async function ImportCybastionPage() {
         </h1>
 
         <div className="grid gap-8">
+          <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
+            <p className="eyebrow">Article à la une · import unitaire FR + EN</p>
+            <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl font-semibold text-[#102f52]">
+              {fc27Article.fr.title}
+            </h2>
+            <p className="text-[#62686d]">{fc27Article.fr.excerpt}</p>
+            <p className="text-sm text-[#62686d]">
+              Un clic crée le brouillon et ses deux locales, avec catégories et sources. Aucun article
+              existant n’est écrasé.
+            </p>
+            <ImportFC27Button />
+          </section>
           <section className="rounded-md border border-[#e07520]/25 bg-[#fffaf5] p-8 shadow-[0_20px_50px_rgba(16,47,82,0.06)] md:p-10">
             <div className="mb-6 border-b border-[#e07520]/20 pb-6">
               <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#e07520]">
