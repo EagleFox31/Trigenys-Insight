@@ -1,8 +1,8 @@
 const configuredProfiles = [
-  { name: 'LinkedIn', url: process.env.NEXT_PUBLIC_INSIGHT_LINKEDIN_URL, host: 'linkedin.com' },
-  { name: 'Facebook', url: process.env.NEXT_PUBLIC_INSIGHT_FACEBOOK_URL, host: 'facebook.com' },
-  { name: 'Instagram', url: process.env.NEXT_PUBLIC_INSIGHT_INSTAGRAM_URL, host: 'instagram.com' },
-  { name: 'Threads', url: process.env.NEXT_PUBLIC_INSIGHT_THREADS_URL, host: 'threads.net' },
+  { name: 'LinkedIn', url: process.env.NEXT_PUBLIC_TRIGENYS_LINKEDIN_URL, host: 'linkedin.com' },
+  { name: 'Facebook', url: process.env.NEXT_PUBLIC_TRIGENYS_FACEBOOK_URL, host: 'facebook.com' },
+  { name: 'Instagram', url: process.env.NEXT_PUBLIC_TRIGENYS_INSTAGRAM_URL, host: 'instagram.com' },
+  { name: 'Threads', url: process.env.NEXT_PUBLIC_TRIGENYS_THREADS_URL, host: 'threads.net' },
 ]
 
 export const socialProfiles = configuredProfiles.flatMap(({ name, url, host }) => {

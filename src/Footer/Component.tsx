@@ -38,9 +38,9 @@ export function Footer() {
         </div>
         {socialProfiles.length > 0 && (
           <div>
-            <p className="site-footer__label">{locale === 'fr' ? 'Nous suivre' : 'Follow us'}</p>
+            <p className="site-footer__label">{locale === 'fr' ? 'Suivre Trigenys Group' : 'Follow Trigenys Group'}</p>
             {socialProfiles.map(({ name, url }) => (
-              <a key={name} href={url} rel="noopener noreferrer me" target="_blank" aria-label={`${locale === 'fr' ? 'Suivre Trigenys Insight sur' : 'Follow Trigenys Insight on'} ${name}`}>
+              <a key={name} href={url} rel="noopener noreferrer me" target="_blank" aria-label={`${locale === 'fr' ? 'Suivre Trigenys Group sur' : 'Follow Trigenys Group on'} ${name}`}>
                 {name} ↗
               </a>
             ))}
