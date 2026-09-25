@@ -6,6 +6,7 @@ import { editorialLaunchArticles } from '@/editorial/editorial-launch-pack'
 import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
 import { fc27Article } from '@/editorial/fc27'
 import { ImportFC27Button } from '@/components/insights/ImportFC27Button'
+import { SetupLocalConsumptionButton } from '@/components/insights/SetupLocalConsumptionButton'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -33,6 +34,12 @@ export default async function ImportCybastionPage() {
         </h1>
 
         <div className="grid gap-8">
+          <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
+            <p className="eyebrow">Nouvelle rubrique · Consommer local</p>
+            <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl font-semibold text-[#102f52]">Cameroun et Afrique dans Payload</h2>
+            <p className="mt-4 text-[#62686d]">Crée les deux catégories bilingues. Classe ensuite chaque article dans « Consommer camerounais » ou « Consommer africain » : la rubrique et ses deux séries se remplissent automatiquement à la publication.</p>
+            <SetupLocalConsumptionButton />
+          </section>
           <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
             <p className="eyebrow">Article à la une · import unitaire FR + EN</p>
             <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl font-semibold text-[#102f52]">

@@ -19,6 +19,7 @@ export function Header() {
     { href: withLocale(locale, '/business'), label: t.header.business },
     { href: withLocale(locale, '/information-systems'), label: t.header.systems },
     { href: withLocale(locale, '/africa'), label: t.header.africa },
+    { href: withLocale(locale, '/consommer-local'), label: t.header.consumeLocal },
     { href: withLocale(locale, '/methodology'), label: t.header.methodology },
   ]
 
