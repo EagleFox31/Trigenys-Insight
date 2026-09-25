@@ -89,7 +89,18 @@ export const Card: React.FC<{
                 return (
                   <Fragment key={index}>
                     {category.slug ? (
-                      <Link href={withLocale(locale, `/${category.slug}`)}>{label}</Link>
+                      <Link
+                        href={withLocale(
+                          locale,
+                          category.slug === 'consommer-camerounais'
+                            ? '/consommer-local/cameroun'
+                            : category.slug === 'consommer-africain'
+                              ? '/consommer-local/afrique'
+                              : `/${category.slug}`,
+                        )}
+                      >
+                        {label}
+                      </Link>
                     ) : (
                       label
                     )}

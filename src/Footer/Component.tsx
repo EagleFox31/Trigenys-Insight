@@ -6,6 +6,7 @@ import { getMessages } from '@/i18n/messages'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
+import { socialProfiles } from './socialProfiles'
 
 export function Footer() {
   const pathname = usePathname() || '/fr'
@@ -14,7 +15,7 @@ export function Footer() {
 
   return (
     <footer className="site-footer">
-      <div className="insights-shell site-footer__grid">
+      <div className={`insights-shell site-footer__grid${socialProfiles.length ? ' site-footer__grid--social' : ''}`}>
         <div>
           <BrandMark href={withLocale(locale)} inverse />
           <p>{t.footer.tagline}</p>
@@ -35,6 +36,16 @@ export function Footer() {
           </a>
           <Link href="/admin">{t.footer.newsroom}</Link>
         </div>
+        {socialProfiles.length > 0 && (
+          <div>
+            <p className="site-footer__label">{locale === 'fr' ? 'Nous suivre' : 'Follow us'}</p>
+            {socialProfiles.map(({ name, url }) => (
+              <a key={name} href={url} rel="noopener noreferrer me" target="_blank" aria-label={`${locale === 'fr' ? 'Suivre Trigenys Insight sur' : 'Follow Trigenys Insight on'} ${name}`}>
+                {name} ↗
+              </a>
+            ))}
+          </div>
+        )}
       </div>
       <div className="insights-shell site-footer__bottom">
         <span>© {new Date().getFullYear()} Trigenys Insights</span>

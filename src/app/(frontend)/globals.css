@@ -701,6 +701,9 @@ a {
   grid-template-columns: 2fr 1fr 1fr;
   gap: 50px;
 }
+.site-footer__grid--social {
+  grid-template-columns: 2fr repeat(3, minmax(0, 1fr));
+}
 .site-footer__grid > div {
   display: flex;
   flex-direction: column;
@@ -1214,7 +1217,8 @@ a {
   }
   .pillar-grid,
   .story-grid,
-  .site-footer__grid {
+  .site-footer__grid,
+  .site-footer__grid--social {
     grid-template-columns: 1fr;
   }
   .pillar {

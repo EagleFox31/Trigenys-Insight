@@ -102,7 +102,7 @@ export async function LocalizedPostPage({
 
       {draft && <LivePreviewListener />}
 
-      <PostHero locale={locale} post={post} />
+      <PostHero analyticsEnabled={!draft} locale={locale} post={post} />
 
       <div className="article-reading-shell">
         <div className="insights-shell article-reading-grid">
@@ -119,6 +119,7 @@ export async function LocalizedPostPage({
 
             <RichText className="article-content" data={post.content} enableGutter={false} />
             <ArticleBodyEnhancer locale={locale} />
+
 
             {visibleSources.length > 0 && (
               <section aria-labelledby="research-sources-title" className="article-sources">
