@@ -3,7 +3,7 @@ import type { Post } from '@/payload-types'
 export type EditorialLaunchArticle = {
   id: string
   slug: string
-  primaryCategory: 'technology' | 'business' | 'information-systems' | 'africa'
+  primaryCategory: 'technology' | 'business' | 'information-systems' | 'africa' | 'consommer-camerounais'
   categories: string[]
   kind: 'analysis'
   readingTime: number

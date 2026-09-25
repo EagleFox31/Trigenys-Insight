@@ -7,6 +7,8 @@ import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
 import { fc27Article } from '@/editorial/fc27'
 import { ImportFC27Button } from '@/components/insights/ImportFC27Button'
 import { SetupLocalConsumptionButton } from '@/components/insights/SetupLocalConsumptionButton'
+import { ImportWhispButton } from '@/components/insights/ImportWhispButton'
+import { whispArticle } from '@/editorial/whisp'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -34,6 +36,13 @@ export default async function ImportCybastionPage() {
         </h1>
 
         <div className="grid gap-8">
+          <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
+            <p className="eyebrow">Consommer camerounais · Comparatif FR + EN</p>
+            <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl font-semibold text-[#102f52]">{whispArticle.fr.title}</h2>
+            <p className="mt-4 text-[#62686d]">{whispArticle.fr.excerpt}</p>
+            <p className="text-sm text-[#62686d]">Importe les deux langues, les sources et les métadonnées SEO dans un brouillon. L’article existant ne sera pas écrasé.</p>
+            <ImportWhispButton />
+          </section>
           <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
             <p className="eyebrow">Nouvelle rubrique · Consommer local</p>
             <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl font-semibold text-[#102f52]">Cameroun et Afrique dans Payload</h2>
