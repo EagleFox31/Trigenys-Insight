@@ -94,7 +94,7 @@ export function InsightsHome({
   )
   const latestStories =
     latestAfterCompact.length >= 2 ? latestAfterCompact : latestCandidates.slice(0, 5)
-  const trending = remaining.slice(0, 5)
+  const trending = remaining.slice(0, 3)
 
   const channels = [
     {
