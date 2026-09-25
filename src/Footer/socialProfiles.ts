@@ -1,7 +1,7 @@
 const configuredProfiles = [
-  { name: 'LinkedIn', url: process.env.NEXT_PUBLIC_TRIGENYS_LINKEDIN_URL, host: 'linkedin.com' },
-  { name: 'Facebook', url: process.env.NEXT_PUBLIC_TRIGENYS_FACEBOOK_URL, host: 'facebook.com' },
-  { name: 'Instagram', url: process.env.NEXT_PUBLIC_TRIGENYS_INSTAGRAM_URL, host: 'instagram.com' },
+  { name: 'LinkedIn', url: process.env.NEXT_PUBLIC_TRIGENYS_LINKEDIN_URL || 'https://www.linkedin.com/company/145209329/', host: 'linkedin.com' },
+  { name: 'Facebook', url: process.env.NEXT_PUBLIC_TRIGENYS_FACEBOOK_URL || 'https://www.facebook.com/share/1FMm14cri9/', host: 'facebook.com' },
+  { name: 'Instagram', url: process.env.NEXT_PUBLIC_TRIGENYS_INSTAGRAM_URL || 'https://www.instagram.com/trigenysgroup/', host: 'instagram.com' },
   { name: 'Threads', url: process.env.NEXT_PUBLIC_TRIGENYS_THREADS_URL, host: 'threads.net' },
 ]
 
