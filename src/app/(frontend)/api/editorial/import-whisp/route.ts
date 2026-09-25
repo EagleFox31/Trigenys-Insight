@@ -21,7 +21,7 @@ export async function POST(): Promise<Response> {
         ? 'Article Whisp créé en brouillon FR et EN, avec sources et SEO. Ajoute une image, relis et publie.'
         : result.englishCreated
           ? 'La traduction anglaise a été ajoutée au brouillon existant.'
-          : 'L’article existe déjà dans les deux langues. Aucun contenu écrasé.',
+          : 'Le lien whisp.cm est présent dans les deux versions. Les autres retouches du brouillon sont conservées.',
     })
   } catch (error) {
     payload.logger.error({ err: error, message: 'Whisp editorial import failed' })
