@@ -1,4 +1,5 @@
 import type { Payload, PayloadRequest } from 'payload'
+import type { Post } from '@/payload-types'
 
 import {
   createEditorialLexicalDocument,
@@ -51,6 +52,34 @@ const categoryDefinitions = {
 } as const
 
 type CategorySlug = keyof typeof categoryDefinitions
+
+async function ensureWhispWebsiteLink({ payload, req, id }: { payload: Payload; req: PayloadRequest; id: number }) {
+  for (const locale of ['fr', 'en'] as const) {
+    const post = await payload.findByID({
+      collection: 'posts', id, locale, fallbackLocale: false, draft: true,
+      depth: 0, overrideAccess: false, req,
+    })
+    if (!post.content || JSON.stringify(post.content).includes('https://whisp.cm/')) continue
+
+    const content = structuredClone(post.content) as { root: { children: unknown[] } }
+    const label = locale === 'fr' ? 'Découvrir le service : ' : 'Explore the service: '
+    content.root.children.splice(2, 0, {
+      children: [
+        { detail: 0, format: 0, mode: 'normal', style: '', text: label, type: 'text', version: 1 },
+        {
+          children: [{ detail: 0, format: 0, mode: 'normal', style: '', text: 'whisp.cm', type: 'text', version: 1 }],
+          direction: 'ltr', fields: { linkType: 'custom', newTab: true, url: 'https://whisp.cm/' },
+          format: '', indent: 0, type: 'link', version: 2,
+        },
+      ],
+      direction: 'ltr', format: '', indent: 0, textFormat: 0, type: 'paragraph', version: 1,
+    })
+    await payload.update({
+      collection: 'posts', id, locale, fallbackLocale: false, draft: true,
+      data: { content: content as Post['content'] }, depth: 0, overrideAccess: false, req,
+    })
+  }
+}
 
 async function ensureCategory({
   payload,
@@ -249,6 +278,10 @@ export async function importEditorialLaunchPack({
         overrideAccess: false,
         req,
       })
+    }
+
+    if (article.slug === whispArticle.slug) {
+      await ensureWhispWebsiteLink({ payload, req, id: post.id as number })
     }
 
     results.push({
