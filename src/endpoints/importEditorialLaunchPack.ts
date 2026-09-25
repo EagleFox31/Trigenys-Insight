@@ -6,8 +6,16 @@ import {
 } from '@/editorial/editorial-launch-pack'
 import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
 import { fc27Article } from '@/editorial/fc27'
+import { whispArticle } from '@/editorial/whisp'
 
 const categoryDefinitions = {
+  'consommer-camerounais': {
+    color: '#E07520',
+    manifesto: 'Guides d’achat et comparatifs de produits et services camerounais : prix, disponibilité, qualité et service après-vente.',
+    manifestoEn: 'Buying guides and comparisons of Cameroonian products and services: price, availability, quality and after-sales support.',
+    title: 'Consommer camerounais',
+    titleEn: 'Buy Cameroonian',
+  },
   technology: {
     color: '#E07520',
     manifesto:
@@ -127,7 +135,7 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article].filter(
+  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle].filter(
     (item) => !onlySlug || item.slug === onlySlug,
   )) {
     const existing = await payload.find({
