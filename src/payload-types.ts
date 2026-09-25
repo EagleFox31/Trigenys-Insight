@@ -1954,6 +1954,39 @@ export interface CodeBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "EditorialChartBlock".
+ */
+export interface EditorialChartBlock {
+  title: string;
+  /**
+   * Résumé accessible du constat que montre le graphique.
+   */
+  description: string;
+  sourceLabel: string;
+  /**
+   * Lien public vers la source des données.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Une métrique par vue. Les lignes sont les périodes ou catégories comparées.
+   */
+  metrics: {
+    label: string;
+    unit: string;
+    precision: number;
+    points: {
+      label: string;
+      value: number;
+      id?: string | null;
+    }[];
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'chart';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {

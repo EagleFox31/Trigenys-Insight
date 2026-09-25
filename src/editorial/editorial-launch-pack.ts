@@ -32,6 +32,24 @@ export type EditorialLaunchArticle = {
     language: 'fr' | 'en' | 'other'
     notes?: string
   }>
+  chart?: {
+    marker: string
+    fr: EditorialChartInput
+    en: EditorialChartInput
+  }
+}
+
+export type EditorialChartInput = {
+  title: string
+  description: string
+  sourceLabel: string
+  sourceUrl: string
+  metrics: Array<{
+    label: string
+    unit: string
+    precision: number
+    points: Array<{ label: string; value: number }>
+  }>
 }
 
 function textNode(text: string) {
@@ -46,7 +64,7 @@ function textNode(text: string) {
   }
 }
 
-export function createEditorialLexicalDocument(source: string): Post['content'] {
+export function createEditorialLexicalDocument(source: string, chart?: { marker: string; data: EditorialChartInput }): Post['content'] {
   const blocks = source
     .trim()
     .split(/\n\s*\n/g)
@@ -54,6 +72,12 @@ export function createEditorialLexicalDocument(source: string): Post['content'] 
     .filter(Boolean)
 
   const children = blocks.map((block) => {
+    if (chart && block === chart.marker) {
+      return {
+        type: 'block', version: 2, format: '',
+        fields: { blockType: 'chart', ...chart.data },
+      }
+    }
     const heading = block.match(/^(#{2,4})\s+(.+)$/)
 
     if (heading) {

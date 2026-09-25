@@ -1,4 +1,5 @@
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
+import { ChartBlock } from '@/blocks/Chart/Component'
 import {
   DefaultNodeTypes,
   SerializedBlockNode,
@@ -17,6 +18,7 @@ import type {
   BannerBlock as BannerBlockProps,
   CallToActionBlock as CTABlockProps,
   MediaBlock as MediaBlockProps,
+  EditorialChartBlock as ChartBlockProps,
 } from '@/payload-types'
 import { BannerBlock } from '@/blocks/Banner/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
@@ -24,7 +26,7 @@ import { cn } from '@/utilities/ui'
 
 type NodeTypes =
   | DefaultNodeTypes
-  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps>
+  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps | ChartBlockProps>
 
 const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
   const { value, relationTo } = linkNode.fields.doc!
@@ -39,6 +41,7 @@ const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) 
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
   blocks: {
+    chart: ({ node }) => <ChartBlock className="col-start-2 my-9" {...node.fields} />,
     banner: ({ node }) => <BannerBlock className="col-start-2 mb-4" {...node.fields} />,
     mediaBlock: ({ node }) => (
       <MediaBlock

@@ -8,6 +8,7 @@ import {
 import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
 import { fc27Article } from '@/editorial/fc27'
 import { whispArticle } from '@/editorial/whisp'
+import { cfaoArticle } from '@/editorial/cfao-mobility-cameroon'
 
 const categoryDefinitions = {
   'consommer-camerounais': {
@@ -164,7 +165,7 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle].filter(
+  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle].filter(
     (item) => !onlySlug || item.slug === onlySlug,
   )) {
     const existing = await payload.find({
@@ -220,7 +221,7 @@ export async function importEditorialLaunchPack({
           _status: 'draft',
           authors: [req.user.id],
           categories: articleCategoryIds,
-          content: createEditorialLexicalDocument(article.fr.content),
+          content: createEditorialLexicalDocument(article.fr.content, article.chart && { marker: article.chart.marker, data: article.chart.fr }),
           editorsPick: article.editorsPick,
           excerpt: article.fr.excerpt,
           featured: article.featured,
@@ -263,7 +264,7 @@ export async function importEditorialLaunchPack({
         collection: 'posts',
         id: post.id,
         data: {
-          content: createEditorialLexicalDocument(article.en.content),
+          content: createEditorialLexicalDocument(article.en.content, article.chart && { marker: article.chart.marker, data: article.chart.en }),
           excerpt: article.en.excerpt,
           meta: {
             description: article.en.metaDescription,

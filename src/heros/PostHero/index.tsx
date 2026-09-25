@@ -10,11 +10,14 @@ import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
 import { authorSlug } from '@/utilities/authorSlug'
+import { ArticleShareButtons } from '@/components/insights/ArticleShareButtons'
+import { absoluteCanonicalURL } from '@/seo/structuredData'
 
 export const PostHero: React.FC<{
   locale: SiteLocale
   post: Post
-}> = ({ locale, post }) => {
+  analyticsEnabled?: boolean
+}> = ({ locale, post, analyticsEnabled = true }) => {
   const {
     categories,
     excerpt,
@@ -101,6 +104,15 @@ export const PostHero: React.FC<{
             </span>
           )}
         </div>
+        {post.slug && (
+          <ArticleShareButtons
+            analyticsEnabled={analyticsEnabled}
+            locale={locale}
+            slug={post.slug}
+            title={title}
+            url={absoluteCanonicalURL(`/${locale}/posts/${post.slug}`)}
+          />
+        )}
       </div>
       {heroImage && typeof heroImage !== 'string' && (
         <div className="insights-shell post-hero__image">
