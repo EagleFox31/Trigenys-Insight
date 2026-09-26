@@ -1,4 +1,6 @@
-import type { EditorialLaunchArticle } from './editorial-launch-pack'\n\nexport const freellmapiArticle: EditorialLaunchArticle = {
+import type { EditorialLaunchArticle } from './editorial-launch-pack'
+
+export const freellmapiArticle: EditorialLaunchArticle = {
   "id": "freellmapi-claude-code-free-tiers-2026",
   "slug": "freellmapi-claude-code-free-tiers-llm-router",
   "primaryCategory": "technology",
