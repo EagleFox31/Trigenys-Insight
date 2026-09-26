@@ -165,7 +165,7 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle].filter(
+  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle].filter(
     (item) => !onlySlug || item.slug === onlySlug,
   )) {
     const existing = await payload.find({
