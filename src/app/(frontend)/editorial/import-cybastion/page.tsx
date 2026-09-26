@@ -16,7 +16,7 @@ import { getPayload } from 'payload'
 
 export const dynamic = 'force-dynamic'
 
-const importableArticles = [...editorialLaunchArticles, learningAiBackwardsArticle]
+const importableArticles = [...editorialLaunchArticles, learningAiBackwardsArticle, freellmapiArticle]
 
 export default async function ImportCybastionPage() {
   const payload = await getPayload({ config })
