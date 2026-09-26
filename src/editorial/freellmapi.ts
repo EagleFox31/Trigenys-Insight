@@ -68,4 +68,4 @@ export const freellmapiArticle: EditorialLaunchArticle = {
       "notes": "Primary documentation for ENCRYPTION_KEY handling and AES-256-GCM encryption of stored provider credentials."
     }
   ]
-}\n
+}
