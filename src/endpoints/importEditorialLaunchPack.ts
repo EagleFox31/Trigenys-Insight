@@ -9,6 +9,7 @@ import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
 import { fc27Article } from '@/editorial/fc27'
 import { whispArticle } from '@/editorial/whisp'
 import { cfaoArticle } from '@/editorial/cfao-mobility-cameroon'
+import { freellmapiArticle } from '@/editorial/freellmapi'
 
 const categoryDefinitions = {
   'consommer-camerounais': {
