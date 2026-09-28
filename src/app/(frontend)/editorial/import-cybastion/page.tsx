@@ -1,6 +1,7 @@
 import { ImportCybastionButton } from '@/components/insights/ImportCybastionButton'
 import { ImportEditorialLaunchPackButton } from '@/components/insights/ImportEditorialLaunchPackButton'
 import { UpdateArticleReadabilityButton } from '@/components/insights/UpdateArticleReadabilityButton'
+import { RefreshSeptemberEditorialButton } from '@/components/insights/RefreshSeptemberEditorialButton'
 import { cybastionArticleMetadata, cybastionArticleSources } from '@/editorial/cybastion-data-center'
 import { editorialLaunchArticles } from '@/editorial/editorial-launch-pack'
 import { learningAiBackwardsArticle } from '@/editorial/learning-ai-backwards'
@@ -156,6 +157,22 @@ export default async function ImportCybastionPage() {
             </div>
 
             <ImportCybastionButton />
+          </section>
+
+          <section className="rounded-md border border-[#102f52]/20 bg-[#f7fafc] p-8 shadow-[0_20px_50px_rgba(16,47,82,0.06)] md:p-10">
+            <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#102f52]">
+              Mise à jour ciblée · articles déjà importés
+            </p>
+            <h2 className="m-0 font-[var(--font-fraunces)] text-[clamp(30px,4vw,44px)] font-semibold leading-[1.08] tracking-[-0.035em] text-[#102f52]">
+              Cloudflare, Dangote et Kempinski.
+            </h2>
+            <p className="mt-5 max-w-[760px] text-[15px] leading-7 text-[#62686d]">
+              Si tu avais déjà importé ces trois articles avant les dernières révisions, ce bouton
+              applique les nouveaux titres, les introductions enrichies, les métadonnées SEO et les
+              versions anglaises. Les hero images, le statut publié/brouillon et les autres champs non
+              ciblés restent intacts.
+            </p>
+            <RefreshSeptemberEditorialButton />
           </section>
 
           <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
