@@ -10,6 +10,9 @@ import { fc27Article } from '@/editorial/fc27'
 import { whispArticle } from '@/editorial/whisp'
 import { cfaoArticle } from '@/editorial/cfao-mobility-cameroon'
 import { freellmapiArticle } from '@/editorial/freellmapi'
+import { cloudflareContainersArticle } from '@/editorial/cloudflare-containers-cross-tenant'
+import { dangoteLamuRefineryArticle } from '@/editorial/dangote-lamu-refinery'
+import { kempinskiDoualaArticle } from '@/editorial/kempinski-douala'
 
 const categoryDefinitions = {
   'consommer-camerounais': {
@@ -166,7 +169,7 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle].filter(
+  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle, cloudflareContainersArticle, dangoteLamuRefineryArticle, kempinskiDoualaArticle].filter(
     (item) => !onlySlug || item.slug === onlySlug,
   )) {
     const existing = await payload.find({
