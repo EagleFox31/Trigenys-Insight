@@ -10,6 +10,9 @@ import { SetupLocalConsumptionButton } from '@/components/insights/SetupLocalCon
 import { ImportWhispButton } from '@/components/insights/ImportWhispButton'
 import { whispArticle } from '@/editorial/whisp'
 import { freellmapiArticle } from '@/editorial/freellmapi'
+import { cloudflareContainersArticle } from '@/editorial/cloudflare-containers-cross-tenant'
+import { dangoteLamuRefineryArticle } from '@/editorial/dangote-lamu-refinery'
+import { kempinskiDoualaArticle } from '@/editorial/kempinski-douala'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -17,7 +20,14 @@ import { getPayload } from 'payload'
 
 export const dynamic = 'force-dynamic'
 
-const importableArticles = [...editorialLaunchArticles, learningAiBackwardsArticle, freellmapiArticle]
+const importableArticles = [
+  ...editorialLaunchArticles,
+  learningAiBackwardsArticle,
+  freellmapiArticle,
+  cloudflareContainersArticle,
+  dangoteLamuRefineryArticle,
+  kempinskiDoualaArticle,
+]
 
 export default async function ImportCybastionPage() {
   const payload = await getPayload({ config })
