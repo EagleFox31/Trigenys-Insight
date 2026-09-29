@@ -140,6 +140,22 @@ export function buildArticleJsonLd({
   return jsonLd
 }
 
+export function buildJsonLdGraph(
+  ...documents: Array<Record<string, unknown> | null | undefined>
+) {
+  const graph = documents
+    .filter((document): document is Record<string, unknown> => Boolean(document))
+    .map((document) => {
+      const { ['@context']: _context, ...node } = document
+      return node
+    })
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': graph,
+  }
+}
+
 export function serializeJsonLd(value: unknown) {
   return JSON.stringify(value).replace(/</g, '\\u003c')
 }

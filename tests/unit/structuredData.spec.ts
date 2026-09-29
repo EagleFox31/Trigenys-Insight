@@ -5,6 +5,7 @@ import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
+  buildJsonLdGraph,
   buildSiteIdentityJsonLd,
   ORGANIZATION_ID,
   SITE_IDENTITY,
@@ -141,6 +142,28 @@ describe('structured data', () => {
         },
       ],
     })
+  })
+
+  it('combines article and breadcrumb data in one schema graph', () => {
+    const article = buildArticleJsonLd({
+      locale: 'fr',
+      post: makePost(),
+      slug: 'titre-test',
+    })
+    const breadcrumb = buildBreadcrumbJsonLd([
+      { name: 'Accueil', path: '/fr' },
+      { name: 'Analyses', path: '/fr/posts' },
+      { name: 'Titre test', path: '/fr/posts/titre-test' },
+    ])
+
+    const data = buildJsonLdGraph(article, breadcrumb)
+
+    expect(data['@context']).toBe('https://schema.org')
+    expect(data['@graph']).toHaveLength(2)
+    expect(data['@graph'][0]).toMatchObject({ '@type': 'Article' })
+    expect(data['@graph'][1]).toMatchObject({ '@type': 'BreadcrumbList' })
+    expect(data['@graph'][0]).not.toHaveProperty('@context')
+    expect(data['@graph'][1]).not.toHaveProperty('@context')
   })
 
   it('normalizes canonical paths against the production host', () => {
