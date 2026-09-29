@@ -213,7 +213,19 @@ export async function localizedPostMetadata({
   return {
     title: seoTitle,
     description: seoDescription,
-    robots: draft ? { index: false, follow: false } : undefined,
+    robots: draft
+      ? { index: false, follow: false }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+            'max-video-preview': -1,
+          },
+        },
     alternates: {
       canonical: canonicalURL,
       languages,

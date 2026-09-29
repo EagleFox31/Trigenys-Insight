@@ -34,4 +34,19 @@ describe('SEO discovery hardening', () => {
     expect(llms).not.toContain('vercel.app')
     expect(llms).not.toContain('/admin')
   })
+
+
+  it('keeps large-image Googlebot previews on published article metadata', async () => {
+    const articlePage = await readFile(
+      path.join(process.cwd(), 'src', 'components', 'insights', 'LocalizedPostPage.tsx'),
+      'utf8',
+    )
+
+    expect(articlePage).toContain("'max-image-preview': 'large'")
+    expect(articlePage).toContain("'max-snippet': -1")
+    expect(articlePage).toContain("'max-video-preview': -1")
+    expect(articlePage).not.toContain(
+      "robots: draft ? { index: false, follow: false } : undefined",
+    )
+  })
 })
