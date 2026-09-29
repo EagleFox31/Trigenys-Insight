@@ -19,6 +19,7 @@ import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
+  buildJsonLdGraph,
   mediaURL,
   serializeJsonLd,
   SITE_IDENTITY,
@@ -84,18 +85,14 @@ export async function LocalizedPostPage({
           { name: post.title, path: `/${locale}/posts/${decodedSlug}` },
         ])
       : null
+  const pageJsonLd =
+    articleJsonLd && breadcrumbJsonLd ? buildJsonLdGraph(articleJsonLd, breadcrumbJsonLd) : null
 
   return (
     <article className="pb-20">
-      {articleJsonLd && (
+      {pageJsonLd && (
         <script
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
-          type="application/ld+json"
-        />
-      )}
-      {breadcrumbJsonLd && (
-        <script
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(pageJsonLd) }}
           type="application/ld+json"
         />
       )}
