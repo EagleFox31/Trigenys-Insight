@@ -13,6 +13,10 @@ import { freellmapiArticle } from '@/editorial/freellmapi'
 import { cloudflareContainersArticle } from '@/editorial/cloudflare-containers-cross-tenant'
 import { dangoteLamuRefineryArticle } from '@/editorial/dangote-lamu-refinery'
 import { kempinskiDoualaArticle } from '@/editorial/kempinski-douala'
+import { internetCameroonPeeringArticle } from '@/editorial/internet-cameroon-peering'
+import { africaAiGovernanceArticle } from '@/editorial/africa-ai-governance'
+import { nvidiaCudaHuaweiArticle } from '@/editorial/nvidia-cuda-huawei-deepseek'
+import { stablecoinsCfaArticle } from '@/editorial/stablecoins-cfa-cemac'
 
 const categoryDefinitions = {
   'consommer-camerounais': {
@@ -169,7 +173,7 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle, cloudflareContainersArticle, dangoteLamuRefineryArticle, kempinskiDoualaArticle].filter(
+  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle, cloudflareContainersArticle, dangoteLamuRefineryArticle, kempinskiDoualaArticle, internetCameroonPeeringArticle, africaAiGovernanceArticle, nvidiaCudaHuaweiArticle, stablecoinsCfaArticle].filter(
     (item) => !onlySlug || item.slug === onlySlug,
   )) {
     const existing = await payload.find({
