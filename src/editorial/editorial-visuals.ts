@@ -23,7 +23,7 @@ type EditorialVisualSet = {
 const editorialVisuals: Record<string, EditorialVisualSet> = {
   'internet-cameroun-ou-partent-nos-donnees': {
     hero: {
-      src: '/editorial/internet-cameroon/hero.png',
+      src: '/editorial/internet-cameroon/hero.webp',
       alt: {
         fr: 'Illustration éditoriale réaliste d’une grande ville portuaire camerounaise reliée par des flux de données.',
         en: 'Realistic editorial illustration of a major Cameroonian port city connected by data flows.',
@@ -35,7 +35,7 @@ const editorialVisuals: Record<string, EditorialVisualSet> = {
           fr: 'Internet ressemble plus à un réseau de compagnies de transport qu’à une seule autoroute',
           en: 'The Internet looks more like a network of transport companies than one giant highway',
         },
-        src: '/editorial/internet-cameroon/routes.png',
+        src: '/editorial/internet-cameroon/routes.webp',
         alt: {
           fr: 'Centre de supervision montrant plusieurs routes numériques entre l’Afrique et le reste du monde.',
           en: 'Network operations centre showing several digital routes between Africa and the rest of the world.',
@@ -50,7 +50,7 @@ const editorialVisuals: Record<string, EditorialVisualSet> = {
           fr: 'Un IXP ressemble à un grand marché où les réseaux viennent se rencontrer',
           en: 'An IXP is like a large market where networks meet',
         },
-        src: '/editorial/internet-cameroon/ixp.png',
+        src: '/editorial/internet-cameroon/ixp.webp',
         alt: {
           fr: 'Techniciens travaillant sur des équipements réseau et des connexions fibre dans un centre de données.',
           en: 'Technicians working on network equipment and fibre connections inside a data centre.',
@@ -65,7 +65,7 @@ const editorialVisuals: Record<string, EditorialVisualSet> = {
           fr: 'Pourquoi la distance compte encore, même sur Internet',
           en: 'Distance still matters on the Internet',
         },
-        src: '/editorial/internet-cameroon/cable.png',
+        src: '/editorial/internet-cameroon/cable.webp',
         alt: {
           fr: 'Techniciens installant un câble de télécommunications sous-marin sur une côte africaine.',
           en: 'Technicians installing a submarine telecommunications cable on an African coast.',
