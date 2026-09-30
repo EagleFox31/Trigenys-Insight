@@ -3,6 +3,7 @@ import { withLocale } from '@/i18n/config'
 import { categoryLabel, formatPostDate } from '@/i18n/content'
 import { getMessages } from '@/i18n/messages'
 import { ArrowLeft } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
@@ -12,6 +13,7 @@ import { Media } from '@/components/Media'
 import { authorSlug } from '@/utilities/authorSlug'
 import { ArticleShareButtons } from '@/components/insights/ArticleShareButtons'
 import { absoluteCanonicalURL } from '@/seo/structuredData'
+import { getEditorialVisuals, localizedEditorialText } from '@/editorial/editorial-visuals'
 
 export const PostHero: React.FC<{
   locale: SiteLocale
@@ -29,6 +31,7 @@ export const PostHero: React.FC<{
     updatedAt,
   } = post
   const t = getMessages(locale).post
+  const editorialVisuals = getEditorialVisuals(post.slug)
   const publicAuthors = populatedAuthors?.filter((author) => Boolean(author?.name)) || []
 
   const showUpdatedAt =
@@ -114,11 +117,22 @@ export const PostHero: React.FC<{
           />
         )}
       </div>
-      {heroImage && typeof heroImage !== 'string' && (
+      {heroImage && typeof heroImage !== 'string' ? (
         <div className="insights-shell post-hero__image">
           <Media priority imgClassName="object-cover" resource={heroImage} />
         </div>
-      )}
+      ) : editorialVisuals?.hero ? (
+        <div className="insights-shell post-hero__image">
+          <Image
+            priority
+            alt={localizedEditorialText(editorialVisuals.hero.alt, locale)}
+            className="h-auto w-full object-cover"
+            height={900}
+            src={editorialVisuals.hero.src}
+            width={1600}
+          />
+        </div>
+      ) : null}
     </header>
   )
 }
