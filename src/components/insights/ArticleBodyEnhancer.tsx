@@ -1,6 +1,7 @@
 'use client'
 
 import type { SiteLocale } from '@/i18n/config'
+import { getEditorialVisuals, localizedEditorialText } from '@/editorial/editorial-visuals'
 import { useEffect } from 'react'
 
 function textOf(element: Element) {
@@ -11,7 +12,7 @@ function isQuestionParagraph(element: Element) {
   return element.tagName === 'P' && /[?？]$/.test(textOf(element))
 }
 
-export function ArticleBodyEnhancer({ locale }: { locale: SiteLocale }) {
+export function ArticleBodyEnhancer({ locale, slug }: { locale: SiteLocale; slug: string }) {
   useEffect(() => {
     const content = document.querySelector<HTMLElement>('.article-content')
     if (!content || content.dataset.editorialEnhanced === 'true') return
@@ -95,8 +96,44 @@ export function ArticleBodyEnhancer({ locale }: { locale: SiteLocale }) {
       cursor = probe
     }
 
+    const visuals = getEditorialVisuals(slug)
+
+    if (visuals) {
+      for (const visual of visuals.sections) {
+        const headingText = localizedEditorialText(visual.heading, locale)
+        const heading = Array.from(content.querySelectorAll('h2')).find(
+          (candidate) => textOf(candidate) === headingText,
+        )
+
+        if (!heading || heading.nextElementSibling?.classList.contains('article-editorial-figure')) {
+          continue
+        }
+
+        const figure = document.createElement('figure')
+        figure.className = 'article-editorial-figure'
+
+        const image = document.createElement('img')
+        image.src = visual.src
+        image.alt = localizedEditorialText(visual.alt, locale)
+        image.loading = 'lazy'
+        image.decoding = 'async'
+        image.width = 1600
+        image.height = 900
+
+        const caption = document.createElement('figcaption')
+        caption.textContent = localizedEditorialText(visual.caption, locale)
+
+        figure.appendChild(image)
+        figure.appendChild(caption)
+
+        const insertionPoint =
+          heading.nextElementSibling?.tagName === 'P' ? heading.nextElementSibling : heading
+        insertionPoint.after(figure)
+      }
+    }
+
     content.dataset.editorialEnhanced = 'true'
-  }, [locale])
+  }, [locale, slug])
 
   return null
 }

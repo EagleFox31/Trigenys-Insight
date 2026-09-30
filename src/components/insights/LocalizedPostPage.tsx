@@ -15,6 +15,7 @@ import { ArticleBodyEnhancer } from '@/components/insights/ArticleBodyEnhancer'
 import { ArticleTableOfContents } from '@/components/insights/ArticleTableOfContents'
 import { extractArticleHighlights } from '@/components/insights/articleEditorial'
 import { TrackedOutboundLink } from '@/components/analytics/TrackedOutboundLink'
+import { getEditorialVisuals } from '@/editorial/editorial-visuals'
 import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
@@ -115,7 +116,7 @@ export async function LocalizedPostPage({
             <ArticleHighlights highlights={highlights} locale={locale} />
 
             <RichText className="article-content" data={post.content} enableGutter={false} />
-            <ArticleBodyEnhancer locale={locale} />
+            <ArticleBodyEnhancer locale={locale} slug={decodedSlug} />
 
 
             {visibleSources.length > 0 && (
@@ -191,9 +192,11 @@ export async function localizedPostMetadata({
   const defaultURL = absoluteCanonicalURL(`/fr/posts/${decodedSlug}`)
   const seoTitle = post.meta?.title || post.title
   const seoDescription = post.meta?.description || post.excerpt
+  const editorialVisuals = getEditorialVisuals(decodedSlug)
   const socialImage =
     mediaURL(post.meta?.image, 'og') ||
     mediaURL(post.heroImage) ||
+    (editorialVisuals?.hero ? absoluteCanonicalURL(editorialVisuals.hero.src) : null) ||
     absoluteCanonicalURL('/api/og')
 
   const languages: Record<string, string> = {
