@@ -55,7 +55,7 @@ export const Card: React.FC<{
   const titleLink =
     placement && slug ? (
       <TrackedArticleLink
-        className="not-prose"
+        className="relative z-20 not-prose"
         href={href}
         locale={locale}
         placement={placement}
@@ -65,13 +65,33 @@ export const Card: React.FC<{
         {titleToUse}
       </TrackedArticleLink>
     ) : (
-      <Link className="not-prose" href={href}>
+      <Link className="relative z-20 not-prose" href={href}>
         {titleToUse}
       </Link>
     )
 
   const article = (
-    <article className={cn('insights-card overflow-hidden bg-card', className)}>
+    <article className={cn('insights-card relative cursor-pointer overflow-hidden bg-card', className)}>
+      {slug && relationTo && (
+        placement ? (
+          <TrackedArticleLink
+            aria-hidden="true"
+            className="absolute inset-0 z-10"
+            href={href}
+            locale={locale}
+            placement={placement}
+            category={primaryCategory}
+            slug={slug}
+            tabIndex={-1}
+          >
+            <span className="sr-only">{titleToUse}</span>
+          </TrackedArticleLink>
+        ) : (
+          <Link aria-hidden="true" className="absolute inset-0 z-10" href={href} tabIndex={-1}>
+            <span className="sr-only">{titleToUse}</span>
+          </Link>
+        )
+      )}
       <div className="insights-card__media relative w-full">
         {!metaImage && <div className="insights-card__placeholder">TI</div>}
         {metaImage && typeof metaImage !== 'string' && <Media resource={metaImage} size="33vw" />}
@@ -90,6 +110,7 @@ export const Card: React.FC<{
                   <Fragment key={index}>
                     {category.slug ? (
                       <Link
+                        className="relative z-20"
                         href={withLocale(
                           locale,
                           category.slug === 'consommer-camerounais'
