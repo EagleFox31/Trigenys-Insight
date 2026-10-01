@@ -11,6 +11,7 @@ import React from 'react'
 import { NewsletterForm } from './NewsletterForm'
 import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpressionBoundary'
 import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
+import type { ArticlePlacement } from '@/lib/analytics/events'
 import styles from './NewsroomHome.module.css'
 
 function asMedia(value: Post['heroImage'] | NonNullable<Post['meta']>['image']) {
@@ -81,7 +82,7 @@ function ArticleCardOverlay({
 }: {
   post: Post
   locale: SiteLocale
-  placement: Parameters<typeof TrackedArticleLink>[0]['placement']
+  placement: ArticlePlacement
 }) {
   if (!post.slug) return null
 
@@ -381,6 +382,7 @@ export function InsightsHome({
                     <h3>
                       <TrackedArticleLink
                         category={categorySlug(post)}
+                        className="relative z-20"
                         href={withLocale(locale, `/posts/${post.slug}`)}
                         locale={locale}
                         placement="home_latest"
@@ -486,7 +488,7 @@ export function InsightsHome({
                   </p>
                   <h3 className={styles.editorTitle}>
                     <TrackedArticleLink
-                    className="relative z-20"
+                      className="relative z-20"
                       category={categorySlug(editorsPick)}
                       href={withLocale(locale, `/posts/${editorsPick.slug}`)}
                       locale={locale}
