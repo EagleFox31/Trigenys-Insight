@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { parseContactRequest } from '@/utilities/contact'
+import { contactEmailConfigured, sendContactNotification } from '@/utilities/spacemail'
 
 const CONTACT_FORM_TITLE = 'Trigenys Insights Contact'
 
@@ -73,5 +74,18 @@ export async function POST(request: Request) {
     overrideAccess: true,
   })
 
-  return Response.json({ ok: true }, { status: 201 })
+  let emailSent = false
+
+  if (contactEmailConfigured()) {
+    try {
+      await sendContactNotification(contact)
+      emailSent = true
+    } catch (error) {
+      // The submission is already stored in Payload, so a temporary SMTP failure must
+      // not lose the reader's message.
+      console.error('Trigenys Insights: contact email notification failed.', error)
+    }
+  }
+
+  return Response.json({ emailSent, ok: true }, { status: 201 })
 }
