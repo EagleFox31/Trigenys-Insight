@@ -1,7 +1,8 @@
-import { PublisherInfoPage, publisherInfoMetadata } from '@/components/insights/PublisherInfoPage'
+import { ContactPage } from '@/components/insights/ContactPage'
+import { publisherInfoMetadata } from '@/components/insights/PublisherInfoPage'
 
 export default function Page() {
-  return <PublisherInfoPage locale="fr" kind="contact" />
+  return <ContactPage locale="fr" />
 }
 
 export const metadata = publisherInfoMetadata('fr', 'contact')
