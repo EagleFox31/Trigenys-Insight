@@ -76,7 +76,7 @@ const editorialVisuals: Record<string, EditorialVisualSet> = {
         },
       },
     ],
-  },,
+  },
   'ia-afrique-peut-elle-vraiment-decider': {
     hero: {
       src: '/editorial/africa-ai-governance/hero.webp',
