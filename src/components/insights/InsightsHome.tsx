@@ -74,6 +74,33 @@ function postMatchesChannel(post: Post, channel: string) {
   return false
 }
 
+function ArticleCardOverlay({
+  post,
+  locale,
+  placement,
+}: {
+  post: Post
+  locale: SiteLocale
+  placement: Parameters<typeof TrackedArticleLink>[0]['placement']
+}) {
+  if (!post.slug) return null
+
+  return (
+    <TrackedArticleLink
+      aria-hidden="true"
+      category={categorySlug(post)}
+      className="absolute inset-0 z-10"
+      href={withLocale(locale, `/posts/${post.slug}`)}
+      locale={locale}
+      placement={placement}
+      slug={post.slug}
+      tabIndex={-1}
+    >
+      <span className="sr-only">{post.title}</span>
+    </TrackedArticleLink>
+  )
+}
+
 export function InsightsHome({
   locale,
   posts,
@@ -287,13 +314,15 @@ export function InsightsHome({
                     placement="home_trending"
                     slug={post.slug || ''}
                   >
-                    <article className={styles.trendingItem}>
+                    <article className={'relative cursor-pointer ' + styles.trendingItem}>
+                      <ArticleCardOverlay post={post} locale={locale} placement="home_trending" />
                       <span className={styles.trendingNumber}>
                         {String(index + 1).padStart(2, '0')}
                       </span>
                       <div>
                         <TrackedArticleLink
                           category={categorySlug(post)}
+                          className="relative z-20"
                           href={withLocale(locale, `/posts/${post.slug}`)}
                           locale={locale}
                           placement="home_trending"
@@ -336,9 +365,11 @@ export function InsightsHome({
                   placement="home_latest"
                   slug={post.slug || ''}
                 >
-                  <article className={styles.compactCard}>
+                  <article className={'relative cursor-pointer ' + styles.compactCard}>
+                    <ArticleCardOverlay post={post} locale={locale} placement="home_latest" />
                     <TrackedArticleLink
                       category={categorySlug(post)}
+                      className="relative z-20"
                       href={withLocale(locale, `/posts/${post.slug}`)}
                       locale={locale}
                       placement="home_latest"
@@ -389,10 +420,11 @@ export function InsightsHome({
                     placement="home_analysis"
                     slug={post.slug || ''}
                   >
-                    <article className={styles.latestItem}>
+                    <article className={'relative cursor-pointer ' + styles.latestItem}>
+                      <ArticleCardOverlay post={post} locale={locale} placement="home_analysis" />
                       <TrackedArticleLink
                         category={categorySlug(post)}
-                        className={styles.latestThumb}
+                        className={'relative z-20 ' + styles.latestThumb}
                         href={withLocale(locale, `/posts/${post.slug}`)}
                         locale={locale}
                         placement="home_analysis"
@@ -404,6 +436,7 @@ export function InsightsHome({
                         <p className="story-kicker">{primaryCategoryLabel(post, locale)}</p>
                         <h3>
                           <TrackedArticleLink
+                            className="relative z-20"
                             category={categorySlug(post)}
                             href={withLocale(locale, `/posts/${post.slug}`)}
                             locale={locale}
@@ -436,8 +469,10 @@ export function InsightsHome({
                   placement="home_editors_pick"
                   slug={editorsPick.slug || ''}
                 >
-                <article className={styles.editorCard}>
+                <article className={'relative cursor-pointer ' + styles.editorCard}>
+                  <ArticleCardOverlay post={editorsPick} locale={locale} placement="home_editors_pick" />
                   <TrackedArticleLink
+                    className="relative z-20"
                     category={categorySlug(editorsPick)}
                     href={withLocale(locale, `/posts/${editorsPick.slug}`)}
                     locale={locale}
@@ -451,6 +486,7 @@ export function InsightsHome({
                   </p>
                   <h3 className={styles.editorTitle}>
                     <TrackedArticleLink
+                    className="relative z-20"
                       category={categorySlug(editorsPick)}
                       href={withLocale(locale, `/posts/${editorsPick.slug}`)}
                       locale={locale}
