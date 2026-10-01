@@ -77,6 +77,62 @@ const editorialVisuals: Record<string, EditorialVisualSet> = {
       },
     ],
   },
+  'ia-afrique-peut-elle-vraiment-decider': {
+    hero: {
+      src: '/editorial/africa-ai-governance/hero.webp',
+      alt: {
+        fr: 'Décideuse africaine observant une carte numérique de l’Afrique et ses réseaux technologiques.',
+        en: 'African decision-maker looking at a digital map of Africa and its technology networks.',
+      },
+    },
+    sections: [
+      {
+        heading: {
+          fr: 'Avant de parler de souveraineté, il faut découper l’IA en morceaux',
+          en: 'AI is a chain, not one product',
+        },
+        src: '/editorial/africa-ai-governance/industry.webp',
+        alt: {
+          fr: 'Ingénieurs africains utilisant des outils numériques dans une usine automobile moderne.',
+          en: 'African engineers using digital tools inside a modern automotive factory.',
+        },
+        caption: {
+          fr: 'Illustration éditoriale. L’IA ne se limite pas aux modèles : sa valeur dépend aussi des usages, des compétences et des infrastructures qui l’entourent.',
+          en: 'Editorial illustration. AI is not only about models: its value also depends on applications, skills and the infrastructure around them.',
+        },
+      },
+      {
+        heading: {
+          fr: 'Réguler, c’est fixer les règles du terrain',
+          en: 'Regulation sets the rules of the field',
+        },
+        src: '/editorial/africa-ai-governance/governance.webp',
+        alt: {
+          fr: 'Réunion internationale consacrée à la gouvernance numérique et à la place de l’Afrique dans les décisions technologiques.',
+          en: 'International meeting on digital governance and Africa’s place in technology decision-making.',
+        },
+        caption: {
+          fr: 'Illustration éditoriale. Les règles peuvent donner du pouvoir, mais leur portée dépend aussi du poids économique et technologique de ceux qui les fixent.',
+          en: 'Editorial illustration. Rules can create leverage, but their reach also depends on the economic and technological weight behind them.',
+        },
+      },
+      {
+        heading: {
+          fr: 'Les infrastructures donnent du poids aux règles',
+          en: 'Infrastructure gives rules more weight',
+        },
+        src: '/editorial/africa-ai-governance/compute.webp',
+        alt: {
+          fr: 'Équipe technique africaine travaillant dans un centre de données moderne.',
+          en: 'African technical team working inside a modern data centre.',
+        },
+        caption: {
+          fr: 'Illustration éditoriale. Sans capacité de calcul, d’hébergement et d’exploitation, une politique d’IA reste dépendante d’infrastructures contrôlées ailleurs.',
+          en: 'Editorial illustration. Without compute, hosting and operational capacity, AI policy remains dependent on infrastructure controlled elsewhere.',
+        },
+      },
+    ],
+  }
 }
 
 export function getEditorialVisuals(slug?: string | null) {
