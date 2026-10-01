@@ -14,6 +14,10 @@ import { freellmapiArticle } from '@/editorial/freellmapi'
 import { cloudflareContainersArticle } from '@/editorial/cloudflare-containers-cross-tenant'
 import { dangoteLamuRefineryArticle } from '@/editorial/dangote-lamu-refinery'
 import { kempinskiDoualaArticle } from '@/editorial/kempinski-douala'
+import { internetCameroonPeeringArticle } from '@/editorial/internet-cameroon-peering'
+import { africaAiGovernanceArticle } from '@/editorial/africa-ai-governance'
+import { nvidiaCudaHuaweiArticle } from '@/editorial/nvidia-cuda-huawei-deepseek'
+import { stablecoinsCfaArticle } from '@/editorial/stablecoins-cfa-cemac'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -28,6 +32,10 @@ const importableArticles = [
   cloudflareContainersArticle,
   dangoteLamuRefineryArticle,
   kempinskiDoualaArticle,
+  internetCameroonPeeringArticle,
+  africaAiGovernanceArticle,
+  nvidiaCudaHuaweiArticle,
+  stablecoinsCfaArticle,
 ]
 
 export default async function ImportCybastionPage() {
