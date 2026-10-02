@@ -16,9 +16,9 @@ const copy = {
     message: 'Message',
     submit: 'Envoyer le message',
     loading: 'Envoi en cours…',
-    successTitle: 'Message reçu.',
+    successTitle: 'Merci, votre message a bien été envoyé.',
     success:
-      'Votre message a été enregistré par Trigenys Insights. Nous pourrons le vérifier depuis notre espace éditorial.',
+      'Nous l’avons bien reçu. Si votre demande nécessite une réponse, nous vous contacterons à l’adresse e-mail indiquée.',
     error: "Le message n'a pas pu être envoyé. Réessayez dans quelques instants.",
     privacy:
       'N’envoyez pas de mot de passe, de donnée bancaire ou de document confidentiel par ce formulaire.',
@@ -39,9 +39,9 @@ const copy = {
     message: 'Message',
     submit: 'Send message',
     loading: 'Sending…',
-    successTitle: 'Message received.',
+    successTitle: 'Thanks, your message has been sent.',
     success:
-      'Your message has been saved by Trigenys Insights and can be reviewed from our editorial workspace.',
+      'We’ve received it. If your message needs a reply, we’ll contact you at the email address you provided.',
     error: 'The message could not be sent. Please try again in a moment.',
     privacy:
       'Do not send passwords, banking information or confidential documents through this form.',

@@ -38,7 +38,10 @@ export function contactEmailConfigured() {
   return Boolean(smtpConfig().password)
 }
 
-export async function sendContactNotification(contact: ContactRequest) {
+export async function sendContactNotification(
+  contact: ContactRequest,
+  delivery: { stored: boolean },
+) {
   const config = smtpConfig()
 
   if (!config.password) {
@@ -59,7 +62,7 @@ export async function sendContactNotification(contact: ContactRequest) {
     'Message:',
     contact.message,
     '',
-    'Le formulaire a aussi été enregistré dans Payload CMS.',
+    `Archivage Payload CMS: ${delivery.stored ? 'OK' : 'ÉCHEC'}`,
   ]
     .filter((line): line is string => line !== null)
     .join('\n')

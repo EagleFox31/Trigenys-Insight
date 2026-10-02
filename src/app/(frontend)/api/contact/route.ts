@@ -21,27 +21,6 @@ async function ensureContactForm() {
     collection: 'forms',
     data: {
       title: CONTACT_FORM_TITLE,
-      fields: [
-        { blockType: 'text', name: 'name', label: 'Name', required: true },
-        { blockType: 'email', name: 'email', label: 'Email', required: true },
-        {
-          blockType: 'select',
-          name: 'topic',
-          label: 'Topic',
-          required: true,
-          options: [
-            { label: 'Correction', value: 'correction' },
-            { label: 'Primary source', value: 'source' },
-            { label: 'Story signal', value: 'signal' },
-            { label: 'Partnership / press', value: 'partnership' },
-            { label: 'General', value: 'general' },
-          ],
-        },
-        { blockType: 'text', name: 'sourceUrl', label: 'Source URL', required: false },
-        { blockType: 'textarea', name: 'message', label: 'Message', required: true },
-        { blockType: 'text', name: 'locale', label: 'Locale', required: true },
-      ],
-      submitButtonLabel: 'Send',
       confirmationType: 'message',
     },
     overrideAccess: true,
@@ -87,7 +66,7 @@ export async function POST(request: Request) {
 
   if (contactEmailConfigured()) {
     try {
-      await sendContactNotification(contact)
+      await sendContactNotification(contact, { stored })
       emailSent = true
     } catch (error) {
       console.error('Trigenys Insights: contact email notification failed.', error)
