@@ -6,7 +6,7 @@ import type { ContactRequest, ContactTopic } from '@/utilities/contact'
 const SMTP_HOST = 'mail.spacemail.com'
 const SMTP_PORT = 465
 const DEFAULT_SMTP_USER = 'jennifer@trigenys.com'
-const DEFAULT_FROM = 'contact@trigenys.com'
+const DEFAULT_FROM = 'jennifer@trigenys.com'
 const DEFAULT_TO = 'contact@trigenys.com'
 
 const topicLabels: Record<ContactTopic, { fr: string; en: string }> = {

@@ -56,36 +56,56 @@ export async function POST(request: Request) {
   }
 
   const payload = await getPayload({ config: configPromise })
-  const form = await ensureContactForm()
-
-  await payload.create({
-    collection: 'form-submissions',
-    data: {
-      form: form.id,
-      submissionData: [
-        { field: 'name', value: contact.name },
-        { field: 'email', value: contact.email },
-        { field: 'topic', value: contact.topic },
-        { field: 'sourceUrl', value: contact.sourceUrl || '' },
-        { field: 'message', value: contact.message },
-        { field: 'locale', value: contact.locale },
-      ],
-    },
-    overrideAccess: true,
-  })
-
+  let stored = false
   let emailSent = false
+
+  try {
+    const form = await ensureContactForm()
+
+    await payload.create({
+      collection: 'form-submissions',
+      data: {
+        form: form.id,
+        submissionData: [
+          { field: 'name', value: contact.name },
+          { field: 'email', value: contact.email },
+          { field: 'topic', value: contact.topic },
+          { field: 'sourceUrl', value: contact.sourceUrl || '' },
+          { field: 'message', value: contact.message },
+          { field: 'locale', value: contact.locale },
+        ],
+      },
+      overrideAccess: true,
+    })
+
+    stored = true
+  } catch (error) {
+    // Storage should not block the email notification. The two delivery paths are
+    // intentionally independent so a temporary CMS issue does not lose a message.
+    console.error('Trigenys Insights: contact submission storage failed.', error)
+  }
 
   if (contactEmailConfigured()) {
     try {
       await sendContactNotification(contact)
       emailSent = true
     } catch (error) {
-      // The submission is already stored in Payload, so a temporary SMTP failure must
-      // not lose the reader's message.
       console.error('Trigenys Insights: contact email notification failed.', error)
     }
+  } else {
+    console.error('Trigenys Insights: contact email is not configured.')
   }
 
-  return Response.json({ emailSent, ok: true }, { status: 201 })
+  if (!stored && !emailSent) {
+    return Response.json(
+      {
+        error: 'Contact delivery failed.',
+        emailSent,
+        stored,
+      },
+      { status: 503 },
+    )
+  }
+
+  return Response.json({ emailSent, ok: true, stored }, { status: 201 })
 }
