@@ -62,7 +62,7 @@ export function buildNewsSitemapXml(entries: NewsSitemapEntry[], fallback: Ordin
     <loc>${escapeXml(entry.loc)}</loc>${entry.lastModified ? `
     <lastmod>${escapeXml(entry.lastModified)}</lastmod>` : ''}
   </url>`)
-        .join('\\n')
+        .join('\n')
     : ''
 
   const content = urls || ordinaryUrls
