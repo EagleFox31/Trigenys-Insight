@@ -89,6 +89,7 @@ const getNewsSitemapEntries = unstable_cache(
             title: true,
             slug: true,
             publishedAt: true,
+            updatedAt: true,
           },
         })
 
@@ -96,7 +97,7 @@ const getNewsSitemapEntries = unstable_cache(
           if (!post?.slug || !post?.title || !post?.publishedAt) continue
           ordinaryEntries.push({
             loc: absoluteCanonicalURL(`/${locale}/posts/${post.slug}`),
-            lastModified: post.publishedAt,
+            lastModified: post.updatedAt,
           })
         }
       }
