@@ -77,7 +77,8 @@ const getNewsSitemapEntries = unstable_cache(
           fallbackLocale: false,
           locale,
           sort: '-publishedAt',
-          limit: 20,
+          // Reserve places for each language in the maximum 20 older URLs.
+          limit: 10,
           pagination: false,
           where: {
             and: [
@@ -102,6 +103,10 @@ const getNewsSitemapEntries = unstable_cache(
         }
       }
     }
+
+    ordinaryEntries.sort(
+      (a, b) => new Date(b.lastModified || 0).getTime() - new Date(a.lastModified || 0).getTime(),
+    )
 
     return { newsEntries, ordinaryEntries }
   },
