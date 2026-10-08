@@ -3,7 +3,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 
 import { absoluteCanonicalURL } from '@/seo/structuredData'
-import { buildNewsSitemapXml, isWithinGoogleNewsWindow, type NewsSitemapEntry } from '@/seo/newsSitemap'
+import { buildNewsSitemapXml, isWithinGoogleNewsWindow, type NewsSitemapEntry, type OrdinarySitemapEntry } from '@/seo/newsSitemap'
 
 const getNewsSitemapEntries = unstable_cache(
   async () => {
@@ -57,12 +57,54 @@ const getNewsSitemapEntries = unstable_cache(
       }
     }
 
-    return entries.sort(
+    const newsEntries = entries.sort(
       (a, b) =>
         new Date(b.publicationDate).getTime() - new Date(a.publicationDate).getTime(),
     )
+
+    // Google's News rules require fresh articles for <news:news>. A gap in
+    // publishing otherwise causes an entirely empty submitted sitemap.
+    // Google also permits ordinary URLs without News metadata after 48h.
+    // Use a small set of older, published URLs only when no fresh news exists.
+    const ordinaryEntries: OrdinarySitemapEntry[] = []
+    if (newsEntries.length === 0) {
+      for (const locale of locales) {
+        const older = await payload.find({
+          collection: 'posts',
+          overrideAccess: false,
+          draft: false,
+          depth: 0,
+          fallbackLocale: false,
+          locale,
+          sort: '-publishedAt',
+          limit: 20,
+          pagination: false,
+          where: {
+            and: [
+              { _status: { equals: 'published' } },
+              { publishedAt: { less_than: cutoff } },
+            ],
+          },
+          select: {
+            title: true,
+            slug: true,
+            publishedAt: true,
+          },
+        })
+
+        for (const post of older.docs) {
+          if (!post?.slug || !post?.title || !post?.publishedAt) continue
+          ordinaryEntries.push({
+            loc: absoluteCanonicalURL(`/${locale}/posts/${post.slug}`),
+            lastModified: post.publishedAt,
+          })
+        }
+      }
+    }
+
+    return { newsEntries, ordinaryEntries }
   },
-  ['news-sitemap-v1'],
+  ['news-sitemap-v2'],
   {
     tags: ['news-sitemap'],
     revalidate: 3600,
@@ -70,8 +112,8 @@ const getNewsSitemapEntries = unstable_cache(
 )
 
 export async function GET() {
-  const entries = await getNewsSitemapEntries()
-  const xml = buildNewsSitemapXml(entries)
+  const { newsEntries, ordinaryEntries } = await getNewsSitemapEntries()
+  const xml = buildNewsSitemapXml(newsEntries, ordinaryEntries)
 
   return new Response(xml, {
     headers: {
