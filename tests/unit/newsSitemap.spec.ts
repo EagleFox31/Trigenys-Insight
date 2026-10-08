@@ -48,4 +48,52 @@ describe('Google News sitemap helpers', () => {
     )
     expect(xml).toContain('<news:title>Tech &amp; Business &lt; Cameroun</news:title>')
   })
+
+  it('keeps ordinary older URLs without Google News metadata when no fresh articles exist', () => {
+    const xml = buildNewsSitemapXml([], [
+      {
+        loc: 'https://insight.trigenys.com/fr/posts/ancien-article?a=1&b=2',
+        lastModified: '2026-09-30T08:30:00.000Z',
+      },
+      {
+        loc: 'https://insight.trigenys.com/en/posts/old-article',
+        lastModified: '2026-09-30T08:30:00.000Z',
+      },
+    ])
+
+    expect(xml).toContain('<loc>https://insight.trigenys.com/fr/posts/ancien-article?a=1&amp;b=2</loc>')
+    expect(xml).toContain('<loc>https://insight.trigenys.com/en/posts/old-article</loc>')
+    expect(xml).toContain('<lastmod>2026-09-30T08:30:00.000Z</lastmod>')
+    expect(xml).not.toContain('<news:news>')
+    expect(xml.match(/<url>/g)).toHaveLength(2)
+    expect(xml).not.toContain('vercel.app')
+  })
+
+  it('never mixes stale ordinary URLs with fresh Google News entries', () => {
+    const xml = buildNewsSitemapXml(
+      [{
+        loc: 'https://insight.trigenys.com/fr/posts/nouveau',
+        language: 'fr',
+        publicationDate: '2026-10-08T12:00:00.000Z',
+        title: 'Un nouveau billet',
+      }],
+      [{ loc: 'https://insight.trigenys.com/fr/posts/ancien' }],
+    )
+    expect(xml).toContain('<news:news>')
+    expect(xml).toContain('/fr/posts/nouveau')
+    expect(xml).not.toContain('/fr/posts/ancien')
+    expect(xml.match(/<url>/g)).toHaveLength(1)
+  })
+
+  it('bounds the ordinary fallback size and preserves valid XML escaping', () => {
+    const fallback = Array.from({ length: 35 }, (_, index) => ({
+      loc: 'https://insight.trigenys.com/fr/posts/ancien-'+index,
+      lastModified: '2026-09-20T09:00:00Z',
+    }))
+    const xml = buildNewsSitemapXml([], fallback)
+    expect(xml.match(/<url>/g)).toHaveLength(20)
+    expect(xml).not.toContain('ancien-34')
+    expect(xml.trimEnd().endsWith('</urlset>')).toBe(true)
+  })
+
 })
