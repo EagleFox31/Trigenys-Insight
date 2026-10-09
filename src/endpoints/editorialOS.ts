@@ -2,6 +2,8 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 
 import type { Endpoint } from 'payload'
 
+import type { Post } from '@/payload-types'
+
 const TOKEN_SHA256 = '823fc4481572586f035973801b493d85ba24f9df1489fe929fc088aff8953005'
 
 type EditorialOSRequest = {
@@ -98,6 +100,10 @@ export const editorialOSEndpoint: Endpoint = {
       return Response.json({ error: 'unauthorized' }, { status: 401 })
     }
 
+    if (!req.json) {
+      return Response.json({ error: 'invalid_json' }, { status: 400 })
+    }
+
     let input: EditorialOSRequest
     try {
       input = (await req.json()) as EditorialOSRequest
@@ -148,38 +154,48 @@ export const editorialOSEndpoint: Endpoint = {
       )
     }
 
-    const document = {
+    const document: Pick<
+      Post,
+      'title' | 'excerpt' | 'content' | 'slug' | 'authors' | 'categories' | '_status'
+    > &
+      Partial<Post> = {
       title: input.title,
       excerpt: (input.excerpt || input.body.replace(/\s+/g, ' ').trim()).slice(0, 320),
-      content: lexicalDocument(input.body),
+      content: lexicalDocument(input.body) as Post['content'],
       slug,
       authors: [authors.docs[0].id],
       categories: [categories.docs[0].id],
-      meta: metaFrom(input.metadata),
-      _status: input.operation === 'publish' ? ('published' as const) : ('draft' as const),
+      meta: metaFrom(input.metadata) as Post['meta'],
+      _status: input.operation === 'publish' ? 'published' : 'draft',
     }
 
     const existingDoc = existing.docs[0]
-    const stored = existingDoc
-      ? await req.payload.update({
-          collection: 'posts',
-          id: existingDoc.id,
-          data: document,
-          locale: input.locale,
-          draft: input.operation === 'draft',
-          overrideAccess: true,
-        })
-      : await req.payload.create({
-          collection: 'posts',
-          data: document,
-          locale: input.locale,
-          draft: input.operation === 'draft',
-          overrideAccess: true,
-        })
+    let storedId: Post['id']
+
+    if (existingDoc) {
+      const stored = await req.payload.update({
+        collection: 'posts',
+        id: existingDoc.id,
+        data: document,
+        locale: input.locale,
+        draft: input.operation === 'draft',
+        overrideAccess: true,
+      })
+      storedId = stored.id
+    } else {
+      const stored = await req.payload.create({
+        collection: 'posts',
+        data: document,
+        locale: input.locale,
+        draft: input.operation === 'draft',
+        overrideAccess: true,
+      })
+      storedId = stored.id
+    }
 
     return Response.json({
       ok: true,
-      id: stored.id,
+      id: storedId,
       slug,
       status: input.operation === 'publish' ? 'PUBLISHED' : 'DRAFT',
       url: input.operation === 'publish' ? `/${input.locale}/posts/${slug}` : null,
