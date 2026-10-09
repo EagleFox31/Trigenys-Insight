@@ -10,6 +10,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 
@@ -95,23 +96,23 @@ export function NewsRadarClient({ initialRuns, operatorName }: Props) {
   return (
     <main className="radar-shell">
       <aside className="radar-sidebar">
-        <a className="radar-brand" href="/admin">
+        <Link className="radar-brand" href="/admin">
           <span className="radar-brand__mark">T</span>
           <span>
             <strong>TRIGENYS</strong>
             <em>INSIGHTS</em>
           </span>
-        </a>
+        </Link>
 
         <nav className="radar-nav" aria-label="Navigation éditoriale">
-          <a className="radar-nav__item radar-nav__item--active" href="/editorial/news-radar">
+          <Link className="radar-nav__item radar-nav__item--active" href="/editorial/news-radar">
             <Sparkles size={18} />
             News Radar
-          </a>
-          <a className="radar-nav__item" href="/admin">
+          </Link>
+          <Link className="radar-nav__item" href="/admin">
             <FilePenLine size={18} />
             Articles & CMS
-          </a>
+          </Link>
         </nav>
 
         <div className="radar-sidebar__footer">
