@@ -43,7 +43,13 @@ export function LoginForm() {
         return
       }
 
-      router.replace('/admin')
+      const requested = new URLSearchParams(window.location.search).get('redirect')
+      const destination =
+        requested && requested.startsWith('/') && !requested.startsWith('//')
+          ? requested
+          : '/admin'
+
+      router.replace(destination)
       router.refresh()
     } catch {
       setError('Le serveur est momentanément inaccessible. Vérifie ta connexion et réessaie.')
