@@ -41,7 +41,7 @@ export function filterChartPoints(
 }
 
 /** Escape both CSV delimiters and spreadsheet formula execution. */
-function safeCsvField(value: string, separator: string): string {
+function safeCsvField(value: string): string {
   const noFormula = /^[\s\u0000-\u001f]*[=+\-@]/.test(value) ? `'${value}` : value
   return `"${noFormula.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`
 }
@@ -58,12 +58,12 @@ export function chartToCsv(
   const separator = locale === 'fr' ? ';' : ','
   const headers = locale === 'fr' ? ['Catégorie', 'Valeur', 'Unité'] : ['Category', 'Value', 'Unit']
   const lines = [
-    headers.map((value) => safeCsvField(value, separator)).join(separator),
+    headers.map((value) => safeCsvField(value)).join(separator),
     ...points.map((point) =>
       [
-        safeCsvField(point.label, separator),
+        safeCsvField(point.label),
         Number.isFinite(point.value) ? String(point.value) : '',
-        safeCsvField(metric.unit, separator),
+        safeCsvField(metric.unit),
       ].join(separator),
     ),
   ]
