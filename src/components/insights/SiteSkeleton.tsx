@@ -159,9 +159,8 @@ function GenericSkeleton() {
   )
 }
 
-export function SiteSkeleton({ pathnameOverride }: { pathnameOverride?: string } = {}) {
-  const currentPathname = usePathname()
-  const pathname = pathnameOverride ?? currentPathname
+export function SiteSkeleton() {
+  const pathname = usePathname()
   const locale = pathname?.startsWith('/en') ? 'en' : 'fr'
   const label = locale === 'en' ? 'Loading content' : 'Chargement du contenu'
 

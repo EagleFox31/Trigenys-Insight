@@ -7,7 +7,6 @@ import { Fraunces, Inter } from 'next/font/google'
 import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
-import { NavigationSkeleton } from '@/components/insights/NavigationSkeleton'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
@@ -41,7 +40,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Providers>
           <AdminBar adminBarProps={{ preview: isEnabled }} />
           <Header />
-          <NavigationSkeleton />
           {children}
           <Footer />
           <PostHogScript />

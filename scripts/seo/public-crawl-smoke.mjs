@@ -2,10 +2,10 @@
 
 // Zero-dependency HTTP smoke test for search engine accessibility.
 // Usage: node scripts/seo/public-crawl-smoke.mjs [https://insight.trigenys.com]
-// Pass a preview deployment URL to test its routes while still enforcing the
-// production canonical URLs emitted by the site.
+// Preview routes must still emit production canonical URLs.
 const base = new URL(process.argv[2] || process.env.SEO_SMOKE_BASE_URL || 'https://insight.trigenys.com')
 const canonicalHost = 'insight.trigenys.com'
+const crawlerAgent = 'OAI-SearchBot/1.0 (+https://platform.openai.com/docs/bots)'
 const failures = []
 
 function assert(condition, message) {
@@ -17,10 +17,10 @@ function assert(condition, message) {
   }
 }
 
-async function request(path) {
+async function request(path, userAgent = crawlerAgent) {
   const url = new URL(path, base)
   const response = await fetch(url, {
-    headers: { 'User-Agent': 'TrigenysSEO-P0-Smoke/1.0' },
+    headers: { 'User-Agent': userAgent },
     signal: AbortSignal.timeout(20000),
     redirect: 'follow',
   })
@@ -68,7 +68,7 @@ async function main() {
     const { text: homeHTML } = await request(`/${locale}`)
     const visibleHome = documentWithoutScripts(homeHTML)
     assert(/<h1\b/i.test(visibleHome), `${locale} homepage has a server-rendered H1`)
-    assert(!/class="site-skeleton(?:\s|")/i.test(visibleHome), `${locale} homepage does not stream a global loading skeleton`)
+    assert(!/class="site-skeleton(?:\s|")/i.test(visibleHome), `${locale} crawler does not receive global placeholder markup`)
 
     const article = articleURLs.find((url) => new URL(url).pathname.startsWith(`/${locale}/posts/`))
     if (!article) {
@@ -81,7 +81,7 @@ async function main() {
     assert(/<article\b/i.test(visibleArticle), `${locale} article body is in the HTML response`)
     assert(/article-reading-main/.test(visibleArticle), `${locale} article reading content is in the HTML response`)
     assert(/<h1\b/i.test(visibleArticle), `${locale} article heading is in the HTML response`)
-    assert(!/class="site-skeleton(?:\s|")/i.test(visibleArticle), `${locale} article does not stream a global loading skeleton`)
+    assert(!/class="site-skeleton(?:\s|")/i.test(visibleArticle), `${locale} crawler does not receive global placeholder markup`)
     assert(/rel="canonical"/.test(articleHTML) && articleHTML.includes(article), `${locale} article carries its canonical URL`)
   }
 }
