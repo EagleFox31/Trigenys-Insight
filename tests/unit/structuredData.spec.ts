@@ -4,6 +4,7 @@ import type { Post } from '@/payload-types'
 import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
+  buildAuthorProfileJsonLd,
   buildBreadcrumbJsonLd,
   buildJsonLdGraph,
   buildSiteIdentityJsonLd,
@@ -228,5 +229,44 @@ describe('structured data', () => {
     expect(absoluteCanonicalURL('fr/posts/test')).toBe(
       'https://insight.trigenys.com/fr/posts/test',
     )
+  })
+})
+
+describe('author profile structured data', () => {
+  it('builds ProfilePage + Person from public profile fields only', () => {
+    const data = buildAuthorProfileJsonLd({
+      locale: 'fr',
+      slug: 'jane-doe',
+      profile: {
+        name: 'Jane Doe',
+        jobTitle: ' Rédactrice en chef ',
+        bio: 'Analyste des paiements.',
+        expertise: ['Paiements', ' '],
+        profileLinks: [{ url: 'https://www.linkedin.com/in/jane' }, { url: 'http://insecure.example' }],
+      },
+    })
+
+    expect(data).toMatchObject({
+      '@type': 'ProfilePage',
+      '@id': 'https://insight.trigenys.com/fr/authors/jane-doe#profile',
+      inLanguage: 'fr-FR',
+      mainEntity: {
+        '@type': 'Person',
+        '@id': 'https://insight.trigenys.com/fr/authors/jane-doe#person',
+        name: 'Jane Doe',
+        jobTitle: 'Rédactrice en chef',
+        description: 'Analyste des paiements.',
+        knowsAbout: ['Paiements'],
+        sameAs: ['https://www.linkedin.com/in/jane'],
+        worksFor: { '@id': ORGANIZATION_ID },
+      },
+    })
+  })
+
+  it('omits empty optional properties', () => {
+    const data = buildAuthorProfileJsonLd({ locale: 'en', slug: 'x', profile: { name: 'X' } })
+    for (const key of ['jobTitle', 'description', 'knowsAbout', 'sameAs']) {
+      expect(data.mainEntity).not.toHaveProperty(key)
+    }
   })
 })

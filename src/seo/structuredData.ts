@@ -238,6 +238,54 @@ export function buildFaqJsonLd({
   }
 }
 
+export type PublicAuthorProfile = {
+  name: string
+  jobTitle?: string | null
+  bio?: string | null
+  expertise?: string[] | null
+  profileLinks?: { url?: string | null }[] | null
+}
+
+/** ProfilePage + Person for a public author page; only public profile fields. */
+export function buildAuthorProfileJsonLd({
+  locale,
+  slug,
+  profile,
+}: {
+  locale: SiteLocale
+  slug: string
+  profile: PublicAuthorProfile
+}) {
+  const canonicalURL = absoluteCanonicalURL(`/${locale}/authors/${slug}`)
+  const sameAs = (profile.profileLinks || [])
+    .map((link) => link?.url?.trim())
+    .filter((url): url is string => Boolean(url && /^https:\/\//i.test(url)))
+  const expertise = (profile.expertise || []).map((topic) => topic.trim()).filter(Boolean)
+
+  const person: Record<string, unknown> = {
+    '@type': 'Person',
+    '@id': `${canonicalURL}#person`,
+    name: profile.name,
+    url: canonicalURL,
+    worksFor: { '@id': ORGANIZATION_ID },
+  }
+
+  if (profile.jobTitle?.trim()) person.jobTitle = profile.jobTitle.trim()
+  if (profile.bio?.trim()) person.description = profile.bio.trim()
+  if (expertise.length > 0) person.knowsAbout = expertise
+  if (sameAs.length > 0) person.sameAs = sameAs
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    '@id': `${canonicalURL}#profile`,
+    url: canonicalURL,
+    inLanguage: locale === 'fr' ? 'fr-FR' : 'en',
+    isPartOf: { '@id': WEBSITE_ID },
+    mainEntity: person,
+  }
+}
+
 export function buildJsonLdGraph(
   ...documents: Array<Record<string, unknown> | null | undefined>
 ) {

@@ -476,6 +476,15 @@ export interface ResearchSource {
 export interface User {
   id: number;
   name?: string | null;
+  jobTitle?: string | null;
+  bio?: string | null;
+  expertise?: string[] | null;
+  profileLinks?:
+    | {
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -1516,6 +1525,15 @@ export interface NewsletterSubscribersSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  jobTitle?: T;
+  bio?: T;
+  expertise?: T;
+  profileLinks?:
+    | T
+    | {
+        url?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
