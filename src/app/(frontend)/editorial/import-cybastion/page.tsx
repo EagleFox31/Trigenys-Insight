@@ -68,7 +68,7 @@ export default async function ImportCybastionPage() {
             <p className="mt-4 max-w-[760px] text-[15px] leading-7 text-[#62686d]">
               CITS 2026, transferts internationaux, Driivio et MORENA. Cet import ajoute uniquement
               les quatre brouillons FR + EN avec les sources cliquables dans le texte,
-              les métadonnées SEO et les graphiques interactifs. Rien n'est publié automatiquement.
+              les métadonnées SEO et les graphiques interactifs. Rien n&apos;est publié automatiquement.
             </p>
             <div className="mt-6 grid gap-3">
               {october11EditorialArticles.map(article => (
@@ -83,7 +83,7 @@ export default async function ImportCybastionPage() {
               ))}
             </div>
             <p className="mt-5 text-sm text-[#62686d]">
-              L'import est idempotent : les articles existants ne seront pas écrasés.
+              L&apos;import est idempotent : les articles existants ne seront pas écrasés.
               Vérifie les données et ajoute les images de couverture dans Payload avant de publier.
             </p>
             <ImportOctober11Button />
