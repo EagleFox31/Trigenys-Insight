@@ -114,6 +114,61 @@ export const Posts: CollectionConfig<'posts'> = {
           label: 'Content',
         },
         {
+          // Short, factual, quotable material that answer engines can lift
+          // verbatim. Both fields are optional and only rendered when filled.
+          fields: [
+            {
+              name: 'keyTakeaways',
+              type: 'array',
+              label: 'À retenir',
+              labels: { singular: 'Point clé', plural: 'Points clés' },
+              localized: true,
+              maxRows: 5,
+              admin: {
+                description:
+                  '3 à 5 constats factuels et autonomes, compréhensibles sans lire l’article. Remplace la lecture rapide générée automatiquement.',
+                initCollapsed: true,
+              },
+              fields: [
+                {
+                  name: 'text',
+                  type: 'textarea',
+                  maxLength: 280,
+                  required: true,
+                },
+              ],
+            },
+            {
+              name: 'faq',
+              type: 'array',
+              label: 'Questions fréquentes',
+              labels: { singular: 'Question', plural: 'Questions' },
+              localized: true,
+              maxRows: 8,
+              admin: {
+                description:
+                  'Questions que se pose réellement le lecteur, avec une réponse directe de 1 à 3 phrases. Affichées en fin d’article.',
+                initCollapsed: true,
+              },
+              fields: [
+                {
+                  name: 'question',
+                  type: 'text',
+                  maxLength: 200,
+                  required: true,
+                },
+                {
+                  name: 'answer',
+                  type: 'textarea',
+                  maxLength: 800,
+                  required: true,
+                },
+              ],
+            },
+          ],
+          label: 'Réponses clés',
+        },
+        {
           fields: [
             {
               name: 'relatedPosts',

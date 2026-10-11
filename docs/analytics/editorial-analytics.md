@@ -132,6 +132,25 @@ This keeps retries and repeated submissions from inflating conversion totals.
 
 Raw events are not automatically "unique readers". Distinct-user language must only be used when the provider/report explicitly uses a distinct visitor/session measure.
 
+## AI answer-engine traffic (GEO)
+
+Two signals measure how the publication performs in AI answer engines.
+
+**Readers referred by an AI answer engine (PostHog).** Right after `posthog.init`, the bootstrap classifies the landing page's referrer host and `utm_source` (rules in `src/lib/analytics/aiReferrer.ts`: ChatGPT, Perplexity, Gemini, Copilot, Claude, DeepSeek, Mistral, Meta AI, Grok). On a match it:
+
+- registers the session property `ai_referrer` (e.g. `chatgpt`), so every event of that visit — page views, `article_view`, reading milestones, `source_click` — can be broken down by answer engine;
+- captures one `ai_referral_landing` event with `ai_referrer` and `landing_path`.
+
+Useful PostHog insights: `ai_referral_landing` trend by `ai_referrer`; `article_view` filtered on `ai_referrer` is set, broken down by `slug`; read-through (`article_read_75` / `article_view`) for AI-referred vs. other sessions.
+
+**AI crawler hits (hosting logs).** The proxy and the `/llms.txt`, `/llms-full.txt` and `/{locale}/posts/{slug}.md` handlers write one JSON log line per request from a known AI crawler (`src/seo/aiCrawlers.ts`):
+
+```json
+{"event":"ai_crawler_hit","crawler":"GPTBot","path":"/fr/posts/example"}
+```
+
+On Vercel, filter the runtime logs on `ai_crawler_hit`. Responses served from the CDN cache (for example `/llms.txt` within its `s-maxage`) do not reach the handler and are not logged, so treat these counts as a lower bound and a trend, not an exact total.
+
 ## Environment and privacy rules
 
 - localhost: disabled;

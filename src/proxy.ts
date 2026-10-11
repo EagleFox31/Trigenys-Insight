@@ -2,6 +2,8 @@ import { defaultLocale, isSiteLocale } from '@/i18n/config'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
+import { logAiCrawlerHit } from '@/seo/aiCrawlers'
+
 function nextWithLocale(request: NextRequest, locale: 'fr' | 'en') {
   const headers = new Headers(request.headers)
   headers.set('x-trigenys-locale', locale)
@@ -10,6 +12,7 @@ function nextWithLocale(request: NextRequest, locale: 'fr' | 'en') {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  logAiCrawlerHit(request.headers.get('user-agent'), pathname)
   const hasPayloadSession = request.cookies.has('payload-token')
 
   if (pathname === '/admin/login') {

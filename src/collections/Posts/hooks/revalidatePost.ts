@@ -9,10 +9,12 @@ import {
   indexNowPostFingerprint,
   submitIndexNowUrls,
 } from '@/seo/indexNow'
+import { LLMS_CACHE_TAG } from '@/seo/llms'
 
 function revalidateEditorialSitemaps() {
   revalidateTag('posts-sitemap', 'max')
   revalidateTag('news-sitemap', 'max')
+  revalidateTag(LLMS_CACHE_TAG, 'max')
 }
 
 // These are the public URLs, not just the legacy /posts route. Keep landing

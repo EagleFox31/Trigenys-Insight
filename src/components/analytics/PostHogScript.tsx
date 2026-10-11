@@ -1,5 +1,6 @@
 import Script from 'next/script'
 
+import { aiReferralBootstrap } from '@/lib/analytics/aiReferrer'
 import { isEditorialAnalyticsEnabled } from '@/lib/analytics/runtime'
 
 function postHogBootstrap(projectToken: string, apiHost: string) {
@@ -17,7 +18,7 @@ posthog.init(${token}, {
   disable_session_recording: true,
   person_profiles: 'identified_only'
 });
-`
+${aiReferralBootstrap()}`
 }
 
 export function PostHogScript() {

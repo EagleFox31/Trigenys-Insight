@@ -51,6 +51,15 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   redirects,
+  async rewrites() {
+    return [
+      {
+        // Markdown rendition of an article for AI agents (see /llms.txt).
+        source: '/:locale(fr|en)/posts/:slug.md',
+        destination: '/markdown/:locale/:slug',
+      },
+    ]
+  },
   turbopack: {
     root: path.resolve(dirname),
   },

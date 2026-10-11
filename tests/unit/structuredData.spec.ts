@@ -4,6 +4,7 @@ import type { Post } from '@/payload-types'
 import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
+  buildAuthorProfileJsonLd,
   buildBreadcrumbJsonLd,
   buildJsonLdGraph,
   buildSiteIdentityJsonLd,
@@ -38,17 +39,75 @@ function makePost(overrides: Partial<Post> = {}): Post {
   }
 }
 
+describe('article citations', () => {
+  it('exposes populated public sources as schema.org citations', () => {
+    const post = makePost({
+      sources: [
+        {
+          id: 7,
+          title: ' Rapport BEAC 2024 ',
+          publisher: 'BEAC',
+          url: 'https://www.beac.int/rapport-2024',
+          publishedAt: '2025-06-01T00:00:00.000Z',
+          accessedAt: '2026-10-01T00:00:00.000Z',
+          notes: 'internal registry note',
+          updatedAt: '2026-10-01T00:00:00.000Z',
+          createdAt: '2026-10-01T00:00:00.000Z',
+        },
+        42,
+        {
+          id: 8,
+          title: 'Unsafe',
+          url: 'javascript:alert(1)',
+          accessedAt: '2026-10-01T00:00:00.000Z',
+          updatedAt: '2026-10-01T00:00:00.000Z',
+          createdAt: '2026-10-01T00:00:00.000Z',
+        },
+      ],
+    })
+
+    const data = buildArticleJsonLd({ locale: 'fr', post, slug: post.slug })
+
+    expect(data.citation).toEqual([
+      {
+        '@type': 'CreativeWork',
+        name: 'Rapport BEAC 2024',
+        url: 'https://www.beac.int/rapport-2024',
+        publisher: { '@type': 'Organization', name: 'BEAC' },
+        datePublished: '2025-06-01T00:00:00.000Z',
+      },
+    ])
+    expect(JSON.stringify(data)).not.toContain('internal registry note')
+  })
+
+  it('omits citation when the post has no public source', () => {
+    const post = makePost({ sources: [3] })
+    expect(buildArticleJsonLd({ locale: 'en', post, slug: post.slug })).not.toHaveProperty(
+      'citation',
+    )
+  })
+})
+
 describe('structured data', () => {
   it('uses the production Trigenys Insights identity', () => {
     const data = buildSiteIdentityJsonLd()
 
     expect(SITE_IDENTITY.url).toBe('https://insight.trigenys.com')
     expect(data['@graph'][0]).toMatchObject({
-      '@type': 'Organization',
+      '@type': 'NewsMediaOrganization',
       '@id': ORGANIZATION_ID,
       name: 'Trigenys Insights',
       url: 'https://insight.trigenys.com',
+      foundingLocation: { address: { addressLocality: 'Douala', addressCountry: 'CM' } },
+      areaServed: { name: 'Africa' },
     })
+    expect(data['@graph'][0]).toHaveProperty('description', expect.any(String))
+    expect(data['@graph'][0]).toHaveProperty('knowsAbout', expect.arrayContaining(['Africa']))
+    expect(data['@graph'][0]).toHaveProperty(
+      'sameAs',
+      expect.arrayContaining(['https://www.linkedin.com/company/145209329/']),
+    )
+    expect(JSON.stringify(data)).not.toContain('/share/')
     expect(data['@graph'][1]).toMatchObject({
       '@type': 'WebSite',
       url: 'https://insight.trigenys.com',
@@ -170,5 +229,44 @@ describe('structured data', () => {
     expect(absoluteCanonicalURL('fr/posts/test')).toBe(
       'https://insight.trigenys.com/fr/posts/test',
     )
+  })
+})
+
+describe('author profile structured data', () => {
+  it('builds ProfilePage + Person from public profile fields only', () => {
+    const data = buildAuthorProfileJsonLd({
+      locale: 'fr',
+      slug: 'jane-doe',
+      profile: {
+        name: 'Jane Doe',
+        jobTitle: ' Rédactrice en chef ',
+        bio: 'Analyste des paiements.',
+        expertise: ['Paiements', ' '],
+        profileLinks: [{ url: 'https://www.linkedin.com/in/jane' }, { url: 'http://insecure.example' }],
+      },
+    })
+
+    expect(data).toMatchObject({
+      '@type': 'ProfilePage',
+      '@id': 'https://insight.trigenys.com/fr/authors/jane-doe#profile',
+      inLanguage: 'fr-FR',
+      mainEntity: {
+        '@type': 'Person',
+        '@id': 'https://insight.trigenys.com/fr/authors/jane-doe#person',
+        name: 'Jane Doe',
+        jobTitle: 'Rédactrice en chef',
+        description: 'Analyste des paiements.',
+        knowsAbout: ['Paiements'],
+        sameAs: ['https://www.linkedin.com/in/jane'],
+        worksFor: { '@id': ORGANIZATION_ID },
+      },
+    })
+  })
+
+  it('omits empty optional properties', () => {
+    const data = buildAuthorProfileJsonLd({ locale: 'en', slug: 'x', profile: { name: 'X' } })
+    for (const key of ['jobTitle', 'description', 'knowsAbout', 'sameAs']) {
+      expect(data.mainEntity).not.toHaveProperty(key)
+    }
   })
 })

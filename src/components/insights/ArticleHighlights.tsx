@@ -5,37 +5,67 @@ import { ArrowDownRight, Sparkles } from 'lucide-react'
 export function ArticleHighlights({
   locale,
   highlights,
+  takeaways = [],
 }: {
   locale: SiteLocale
   highlights: ArticleHighlight[]
+  /** Editor-written takeaways replace the automatic section highlights. */
+  takeaways?: string[]
 }) {
-  if (highlights.length < 2) return null
+  if (takeaways.length === 0 && highlights.length < 2) return null
 
   const copy =
     locale === 'fr'
       ? {
           eyebrow: 'Lecture rapide',
           title: 'Ce qu’il faut retenir',
-          description: 'Trois repères pour entrer dans l’analyse sans perdre le fil.',
+          description:
+            takeaways.length > 0
+              ? 'Les points clés de l’analyse, vérifiés par la rédaction.'
+              : 'Trois repères pour entrer dans l’analyse sans perdre le fil.',
         }
       : {
           eyebrow: 'Quick read',
           title: 'What to take away',
-          description: 'Three anchors to enter the analysis without losing the thread.',
+          description:
+            takeaways.length > 0
+              ? 'The key points of this analysis, checked by the editors.'
+              : 'Three anchors to enter the analysis without losing the thread.',
         }
+
+  const heading = (
+    <div className="article-highlights__heading">
+      <div className="article-highlights__eyebrow">
+        <Sparkles aria-hidden="true" size={15} strokeWidth={1.8} />
+        <span>{copy.eyebrow}</span>
+      </div>
+      <div>
+        <h2 id="article-highlights-title">{copy.title}</h2>
+        <p>{copy.description}</p>
+      </div>
+    </div>
+  )
+
+  if (takeaways.length > 0) {
+    return (
+      <section
+        aria-labelledby="article-highlights-title"
+        className="article-highlights"
+        data-key-takeaways
+      >
+        {heading}
+        <ol className="article-takeaways">
+          {takeaways.map((takeaway) => (
+            <li key={takeaway}>{takeaway}</li>
+          ))}
+        </ol>
+      </section>
+    )
+  }
 
   return (
     <section aria-labelledby="article-highlights-title" className="article-highlights">
-      <div className="article-highlights__heading">
-        <div className="article-highlights__eyebrow">
-          <Sparkles aria-hidden="true" size={15} strokeWidth={1.8} />
-          <span>{copy.eyebrow}</span>
-        </div>
-        <div>
-          <h2 id="article-highlights-title">{copy.title}</h2>
-          <p>{copy.description}</p>
-        </div>
-      </div>
+      {heading}
 
       <div className="article-highlights__grid">
         {highlights.slice(0, 3).map((highlight, index) => (
