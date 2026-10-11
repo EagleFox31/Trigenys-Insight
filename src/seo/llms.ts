@@ -1,4 +1,5 @@
 import type { SiteLocale } from '@/i18n/config'
+import { editorialRubrics, localizedRubricPath } from '@/editorial/rubrics'
 import { getFaqItems, getKeyTakeaways } from '@/seo/answerContent'
 import { isPublicLocalizedPost, type PublicSitemapPost } from '@/seo/postsSitemap'
 import { absoluteCanonicalURL, SITE_IDENTITY } from '@/seo/structuredData'
@@ -141,9 +142,17 @@ function day(value?: string | null) {
   return value ? value.slice(0, 10) : undefined
 }
 
+const EDITORIAL_DESKS = editorialRubrics
+  .map((rubric) =>
+    '- ' + rubric.title.en + ': ' +
+    absoluteCanonicalURL(localizedRubricPath(rubric, 'en')) +
+    ' (FR: ' + absoluteCanonicalURL(localizedRubricPath(rubric, 'fr')) + ')',
+  )
+  .join('\n')
+
 const HEADER = `# ${SITE_IDENTITY.name}
 
-> ${SITE_IDENTITY.name} is a bilingual independent publication focused on technology, business, information systems and Africa. We publish source-backed analysis designed to explain what developments mean, how systems work, and what decision-makers should watch next.
+> ${SITE_IDENTITY.name} is an independent bilingual publication covering AI, technology, gaming, finance, education, African-made products and society. We provide sourced analysis, practical guides and original African perspectives in English and French.
 
 Canonical site: ${SITE_IDENTITY.url}
 
@@ -154,10 +163,7 @@ Canonical site: ${SITE_IDENTITY.url}
 
 ## Editorial desks
 
-- Technology
-- Business
-- Information Systems
-- Africa
+${EDITORIAL_DESKS}
 
 ## Article archives
 
