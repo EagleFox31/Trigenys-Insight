@@ -23,18 +23,23 @@ describe('SEO discovery hardening', () => {
     })
   })
 
-  it('keeps llms.txt concise and canonical', async () => {
-    const llms = await readFile(path.join(process.cwd(), 'public', 'llms.txt'), 'utf8')
+  it('names AI answer-engine crawlers explicitly in robots.txt', async () => {
+    const { createRequire } = await import('node:module')
+    const require = createRequire(import.meta.url)
+    const config = require('../../next-sitemap.config.cjs')
+    const policies = config.robotsTxtOptions.policies as Array<{
+      userAgent: string
+      allow?: string
+      disallow?: string
+    }>
 
-    expect(llms).toContain('Canonical site: https://insight.trigenys.com')
-    expect(llms).toContain('https://insight.trigenys.com/fr/posts')
-    expect(llms).toContain('https://insight.trigenys.com/en/posts')
-    expect(llms).toContain('https://insight.trigenys.com/pages-sitemap.xml')
-    expect(llms).toContain('https://insight.trigenys.com/posts-sitemap.xml')
-    expect(llms).not.toContain('vercel.app')
-    expect(llms).not.toContain('/admin')
+    for (const agent of ['OAI-SearchBot', 'GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended']) {
+      expect(policies).toContainEqual({ userAgent: agent, allow: '/', disallow: '/admin/*' })
+    }
+    expect(config.robotsTxtOptions.additionalSitemaps).toContain(
+      'https://insight.trigenys.com/news-sitemap.xml',
+    )
   })
-
 
   it('keeps large-image Googlebot previews on published article metadata', async () => {
     const articlePage = await readFile(
