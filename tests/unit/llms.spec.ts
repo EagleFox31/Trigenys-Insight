@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildLlmsFullTxt, buildLlmsTxt, lexicalToPlainText, type LlmsPost } from '@/seo/llms'
+import {
+  buildLlmsFullTxt,
+  buildLlmsTxt,
+  lexicalToPlainText,
+  renderPostMarkdown,
+  type LlmsPost,
+} from '@/seo/llms'
 
 function text(value: string) {
   return { type: 'text', text: value }
@@ -142,5 +148,40 @@ describe('buildLlmsFullTxt', () => {
     expect(output.length).toBeLessThanOrEqual(1501)
     expect(output).toContain('/fr/posts/post-19')
     expect(output).not.toContain('/fr/posts/post-0\n')
+  })
+})
+
+describe('renderPostMarkdown', () => {
+  it('adds authors, localized takeaways and FAQ sections around the body', () => {
+    const output = renderPostMarkdown('fr', {
+      ...post(),
+      title: 'QR CEMAC',
+      slug: 'qr-cemac',
+      excerpt: 'Ce que change le QR communautaire.',
+      populatedAuthors: [{ name: 'Rédaction' }],
+      keyTakeaways: [{ text: 'Le QR est interopérable.' }],
+      faq: [{ question: 'Qui opère le switch ?', answer: 'Le GIMAC.' }, { question: 'Vide ?' }],
+    })
+
+    expect(output).toContain('Authors: Rédaction')
+    expect(output).toContain('Publisher: Trigenys Insights')
+    expect(output).toContain('## À retenir\n\n- Le QR est interopérable.')
+    expect(output).toContain('## Questions fréquentes\n\n### Qui opère le switch ?\n\nLe GIMAC.')
+    expect(output).not.toContain('Vide ?')
+    expect(output.indexOf('À retenir')).toBeLessThan(
+      output.indexOf('Le QR communautaire est lancé.'),
+    )
+    expect(output.indexOf('Questions fréquentes')).toBeGreaterThan(output.indexOf('BEAC'))
+  })
+
+  it('uses English section labels for English articles', () => {
+    const output = renderPostMarkdown('en', {
+      ...post(),
+      title: 'CEMAC QR',
+      slug: 'cemac-qr',
+      excerpt: 'What changes.',
+      keyTakeaways: [{ text: 'Interoperable.' }],
+    })
+    expect(output).toContain('## Key takeaways')
   })
 })

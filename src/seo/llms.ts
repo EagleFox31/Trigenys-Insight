@@ -1,4 +1,5 @@
 import type { SiteLocale } from '@/i18n/config'
+import { getFaqItems, getKeyTakeaways } from '@/seo/answerContent'
 import { isPublicLocalizedPost, type PublicSitemapPost } from '@/seo/postsSitemap'
 import { absoluteCanonicalURL, SITE_IDENTITY } from '@/seo/structuredData'
 
@@ -12,6 +13,9 @@ export type LlmsPost = PublicSitemapPost & {
   publishedAt?: string | null
   categories?: unknown[] | null
   sources?: unknown[] | null
+  populatedAuthors?: { name?: string | null }[] | null
+  keyTakeaways?: { text?: string | null }[] | null
+  faq?: { question?: string | null; answer?: string | null }[] | null
 }
 
 export type LlmsPostsByLocale = Record<SiteLocale, LlmsPost[]>
@@ -194,18 +198,38 @@ export function buildLlmsTxt(postsByLocale: LlmsPostsByLocale, limitPerLocale = 
   return `${sections.join('\n\n')}\n`
 }
 
-function renderFullPost(
+const SECTION_LABELS: Record<SiteLocale, { takeaways: string; faq: string; sources: string }> = {
+  fr: { takeaways: 'À retenir', faq: 'Questions fréquentes', sources: 'Sources' },
+  en: { takeaways: 'Key takeaways', faq: 'Frequently asked questions', sources: 'Sources' },
+}
+
+/**
+ * Markdown rendition of a published article for agents and answer engines:
+ * metadata, editor takeaways, body, FAQ and public sources. Used by
+ * llms-full.txt and by the per-article .md endpoint.
+ */
+export function renderPostMarkdown(
   locale: SiteLocale,
   post: LlmsPost & { title: string; slug: string; excerpt: string },
 ) {
+  const labels = SECTION_LABELS[locale]
+  const authors = (post.populatedAuthors || [])
+    .map((author) => author?.name?.trim())
+    .filter((name): name is string => Boolean(name))
+
   const meta = [
     `URL: ${postURL(locale, post.slug)}`,
     `Language: ${locale}`,
+    authors.length > 0 && `Authors: ${authors.join(', ')}`,
     day(post.publishedAt) && `Published: ${day(post.publishedAt)}`,
     day(post.updatedAt) && `Updated: ${day(post.updatedAt)}`,
     categoryTitles(post.categories).length > 0 &&
       `Desk: ${categoryTitles(post.categories).join(', ')}`,
+    `Publisher: ${SITE_IDENTITY.name}`,
   ].filter(Boolean)
+
+  const takeaways = getKeyTakeaways(post as Parameters<typeof getKeyTakeaways>[0])
+  const faq = getFaqItems(post as Parameters<typeof getFaqItems>[0])
 
   const sources = publicSources(post.sources).map((source) =>
     [`- ${oneLine(source.title)}`, source.publisher?.trim(), source.url]
@@ -217,8 +241,14 @@ function renderFullPost(
     `# ${oneLine(post.title)}`,
     meta.join('\n'),
     `> ${oneLine(post.excerpt)}`,
+    takeaways.length > 0
+      ? `## ${labels.takeaways}\n\n${takeaways.map((item) => `- ${item}`).join('\n')}`
+      : '',
     lexicalToPlainText(post.content),
-    sources.length > 0 ? `## Sources\n\n${sources.join('\n')}` : '',
+    faq.length > 0
+      ? `## ${labels.faq}\n\n${faq.map((item) => `### ${item.question}\n\n${item.answer}`).join('\n\n')}`
+      : '',
+    sources.length > 0 ? `## ${labels.sources}\n\n${sources.join('\n')}` : '',
   ]
     .filter(Boolean)
     .join('\n\n')
@@ -243,7 +273,7 @@ export function buildLlmsFullTxt(postsByLocale: LlmsPostsByLocale, maxChars = LL
 
   let output = intro
   for (const { locale, post } of entries) {
-    const block = `\n\n---\n\n${renderFullPost(locale, post)}`
+    const block = `\n\n---\n\n${renderPostMarkdown(locale, post)}`
     if (output.length + block.length > maxChars) continue
     output += block
   }

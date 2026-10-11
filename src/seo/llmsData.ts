@@ -32,7 +32,16 @@ async function loadPublishedPosts(limit: number, withBody: boolean): Promise<Llm
         content: true,
         publishedAt: true,
         updatedAt: true,
-        ...(withBody ? { categories: true, sources: true } : {}),
+        ...(withBody
+          ? {
+              categories: true,
+              sources: true,
+              populatedAuthors: true,
+              authors: true,
+              keyTakeaways: true,
+              faq: true,
+            }
+          : {}),
       },
     })
 
