@@ -250,6 +250,25 @@ export interface Post {
     };
     [k: string]: unknown;
   };
+  /**
+   * 3 à 5 constats factuels et autonomes, compréhensibles sans lire l’article. Remplace la lecture rapide générée automatiquement.
+   */
+  keyTakeaways?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Questions que se pose réellement le lecteur, avec une réponse directe de 1 à 3 phrases. Affichées en fin d’article.
+   */
+  faq?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
   relatedPosts?: (number | Post)[] | null;
   categories: (number | Category)[];
   meta?: {
@@ -1287,6 +1306,19 @@ export interface PostsSelect<T extends boolean = true> {
   excerpt?: T;
   heroImage?: T;
   content?: T;
+  keyTakeaways?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
   relatedPosts?: T;
   categories?: T;
   meta?:

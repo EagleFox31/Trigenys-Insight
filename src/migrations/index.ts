@@ -2,6 +2,7 @@ import * as migration_20260909_073929 from './20260909_073929'
 import * as migration_20260909_075327 from './20260909_075327'
 import * as migration_20260909_075411 from './20260909_075411'
 import * as migration_20260910_202858_add_media_prefix from './20260910_202858_add_media_prefix'
+import * as migration_20261011_232139_add_post_answer_fields from './20261011_232139_add_post_answer_fields'
 
 export const migrations = [
   {
@@ -23,5 +24,10 @@ export const migrations = [
     up: migration_20260910_202858_add_media_prefix.up,
     down: migration_20260910_202858_add_media_prefix.down,
     name: '20260910_202858_add_media_prefix',
+  },
+  {
+    up: migration_20261011_232139_add_post_answer_fields.up,
+    down: migration_20261011_232139_add_post_answer_fields.down,
+    name: '20261011_232139_add_post_answer_fields',
   },
 ]

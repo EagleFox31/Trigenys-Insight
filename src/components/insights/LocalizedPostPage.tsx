@@ -11,6 +11,7 @@ import RichText from '@/components/RichText'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { PostHero } from '@/heros/PostHero'
 import { ArticleHighlights } from '@/components/insights/ArticleHighlights'
+import { ArticleFaq } from '@/components/insights/ArticleFaq'
 import { ArticleBodyEnhancer } from '@/components/insights/ArticleBodyEnhancer'
 import { ArticleTableOfContents } from '@/components/insights/ArticleTableOfContents'
 import { extractArticleHighlights } from '@/components/insights/articleEditorial'
@@ -20,11 +21,13 @@ import {
   absoluteCanonicalURL,
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
+  buildFaqJsonLd,
   buildJsonLdGraph,
   mediaURL,
   serializeJsonLd,
   SITE_IDENTITY,
 } from '@/seo/structuredData'
+import { getFaqItems, getKeyTakeaways } from '@/seo/answerContent'
 
 async function queryPostBySlug({
   locale,
@@ -73,6 +76,8 @@ export async function LocalizedPostPage({
 
   const t = getMessages(locale).post
   const highlights = extractArticleHighlights(post.content)
+  const takeaways = getKeyTakeaways(post)
+  const faqItems = getFaqItems(post)
   const visibleSources = post.sources?.filter((source) => typeof source === 'object') || []
   const articleJsonLd =
     !draft && post._status === 'published'
@@ -86,8 +91,14 @@ export async function LocalizedPostPage({
           { name: post.title, path: `/${locale}/posts/${decodedSlug}` },
         ])
       : null
+  const faqJsonLd =
+    !draft && post._status === 'published'
+      ? buildFaqJsonLd({ locale, post, slug: decodedSlug })
+      : null
   const pageJsonLd =
-    articleJsonLd && breadcrumbJsonLd ? buildJsonLdGraph(articleJsonLd, breadcrumbJsonLd) : null
+    articleJsonLd && breadcrumbJsonLd
+      ? buildJsonLdGraph(articleJsonLd, breadcrumbJsonLd, faqJsonLd)
+      : null
 
   return (
     <article className="pb-20">
@@ -113,10 +124,12 @@ export async function LocalizedPostPage({
           />
 
           <main className="article-reading-main" data-article-reading-main>
-            <ArticleHighlights highlights={highlights} locale={locale} />
+            <ArticleHighlights highlights={highlights} locale={locale} takeaways={takeaways} />
 
             <RichText className="article-content" data={post.content} enableGutter={false} />
             <ArticleBodyEnhancer locale={locale} slug={decodedSlug} />
+
+            <ArticleFaq items={faqItems} locale={locale} />
 
 
             {visibleSources.length > 0 && (
@@ -232,6 +245,7 @@ export async function localizedPostMetadata({
     alternates: {
       canonical: canonicalURL,
       languages,
+      types: draft ? undefined : { 'text/markdown': `${canonicalURL}.md` },
     },
     openGraph: {
       type: 'article',
