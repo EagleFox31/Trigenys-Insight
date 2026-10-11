@@ -15,6 +15,17 @@ function revalidateEditorialSitemaps() {
   revalidateTag('news-sitemap', 'max')
 }
 
+// These are the public URLs, not just the legacy /posts route. Keep landing
+// pages and article archives fresh when published content changes.
+function revalidatePublicPostPaths(slug: string) {
+  revalidatePath(`/posts/${slug}`)
+  for (const locale of ['fr', 'en'] as const) {
+    revalidatePath(`/${locale}/posts/${slug}`)
+    revalidatePath(`/${locale}/posts`)
+    revalidatePath(`/${locale}`)
+  }
+}
+
 async function getLocalizedPostUrls({
   payload,
   id,
@@ -70,22 +81,20 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = async ({
   req: { payload, context },
 }) => {
   if (!context.disableRevalidate) {
-    if (doc._status === 'published') {
-      const path = `/posts/${doc.slug}`
+    const wasPublished = previousDoc._status === 'published'
+    const isPublished = doc._status === 'published'
 
-      payload.logger.info(`Revalidating post at path: ${path}`)
+    if (isPublished || wasPublished) {
+      if (isPublished && doc.slug) {
+        payload.logger.info(`Revalidating published post: ${doc.slug}`)
+        revalidatePublicPostPaths(doc.slug)
+      }
 
-      revalidatePath(path)
-      revalidateEditorialSitemaps()
-    }
+      // Also invalidate the old canonical URLs after a rename or unpublish.
+      if (wasPublished && previousDoc.slug && (!isPublished || previousDoc.slug !== doc.slug)) {
+        revalidatePublicPostPaths(previousDoc.slug)
+      }
 
-    // If the post was previously published, we need to revalidate the old path
-    if (previousDoc._status === 'published' && doc._status !== 'published') {
-      const oldPath = `/posts/${previousDoc.slug}`
-
-      payload.logger.info(`Revalidating old post at path: ${oldPath}`)
-
-      revalidatePath(oldPath)
       revalidateEditorialSitemaps()
     }
   }
@@ -134,9 +143,7 @@ export const revalidateDelete: CollectionAfterDeleteHook<Post> = async ({
   req: { payload, context },
 }) => {
   if (!context.disableRevalidate) {
-    const path = `/posts/${doc?.slug}`
-
-    revalidatePath(path)
+    if (doc?.slug) revalidatePublicPostPaths(doc.slug)
     revalidateEditorialSitemaps()
   }
 
