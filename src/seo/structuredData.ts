@@ -1,4 +1,4 @@
-import type { Media, Post } from '@/payload-types'
+import type { Media, Post, ResearchSource } from '@/payload-types'
 import type { SiteLocale } from '@/i18n/config'
 import { authorSlug } from '@/utilities/authorSlug'
 
@@ -6,7 +6,14 @@ export const SITE_IDENTITY = {
   name: 'Trigenys Insights',
   url: 'https://insight.trigenys.com',
   logoPath: '/trigenys-insights-logo-512.png',
+  description:
+    'Independent, bilingual publication of source-backed analysis on technology, business, information systems and Africa, published from Douala, Cameroon.',
+  topics: ['Technology', 'Business', 'Information systems', 'Cybersecurity', 'Africa'],
 } as const
+
+// Official public profiles of the publication. Leave empty until each URL is
+// confirmed: answer engines use sameAs to reconcile the entity across the web.
+export const SITE_SAME_AS: readonly string[] = []
 
 export const ORGANIZATION_ID = `${SITE_IDENTITY.url}/#organization`
 export const WEBSITE_ID = `${SITE_IDENTITY.url}/#website`
@@ -32,10 +39,23 @@ export function buildSiteIdentityJsonLd() {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization',
+        '@type': 'NewsMediaOrganization',
         '@id': ORGANIZATION_ID,
         name: SITE_IDENTITY.name,
         url: SITE_IDENTITY.url,
+        description: SITE_IDENTITY.description,
+        foundingLocation: {
+          '@type': 'Place',
+          name: 'Douala, Cameroon',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: 'Douala',
+            addressCountry: 'CM',
+          },
+        },
+        areaServed: { '@type': 'Place', name: 'Africa' },
+        knowsAbout: [...SITE_IDENTITY.topics],
+        ...(SITE_SAME_AS.length > 0 ? { sameAs: [...SITE_SAME_AS] } : {}),
         logo: {
           '@type': 'ImageObject',
           url: absoluteCanonicalURL(SITE_IDENTITY.logoPath),
@@ -48,6 +68,7 @@ export function buildSiteIdentityJsonLd() {
         '@id': WEBSITE_ID,
         url: SITE_IDENTITY.url,
         name: SITE_IDENTITY.name,
+        description: SITE_IDENTITY.description,
         publisher: {
           '@id': ORGANIZATION_ID,
         },
@@ -73,6 +94,37 @@ export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]) {
       item: absoluteCanonicalURL(item.path),
     })),
   }
+}
+
+function isPublicSource(source: unknown): source is ResearchSource {
+  return (
+    typeof source === 'object' &&
+    source !== null &&
+    typeof (source as ResearchSource).url === 'string' &&
+    /^https?:\/\//i.test((source as ResearchSource).url) &&
+    Boolean((source as ResearchSource).title?.trim())
+  )
+}
+
+/**
+ * Public citations for an article. Only bibliographic fields are exposed;
+ * internal registry notes stay out of the markup.
+ */
+export function buildArticleCitations(sources: Post['sources']) {
+  return (sources || []).filter(isPublicSource).map((source) => {
+    const citation: Record<string, unknown> = {
+      '@type': 'CreativeWork',
+      name: source.title.trim(),
+      url: source.url,
+    }
+
+    if (source.publisher?.trim()) {
+      citation.publisher = { '@type': 'Organization', name: source.publisher.trim() }
+    }
+    if (source.publishedAt) citation.datePublished = source.publishedAt
+
+    return citation
+  })
 }
 
 export function buildArticleJsonLd({
@@ -130,7 +182,10 @@ export function buildArticleJsonLd({
     },
   }
 
+  const citations = buildArticleCitations(post.sources)
+
   if (image) jsonLd.image = [image]
+  if (citations.length > 0) jsonLd.citation = citations
   if (authors.length > 0) jsonLd.author = authors
   if (categories && categories.length > 0) {
     jsonLd.articleSection = categories

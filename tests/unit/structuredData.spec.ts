@@ -38,17 +38,72 @@ function makePost(overrides: Partial<Post> = {}): Post {
   }
 }
 
+describe('article citations', () => {
+  it('exposes populated public sources as schema.org citations', () => {
+    const post = makePost({
+      sources: [
+        {
+          id: 7,
+          title: ' Rapport BEAC 2024 ',
+          publisher: 'BEAC',
+          url: 'https://www.beac.int/rapport-2024',
+          publishedAt: '2025-06-01T00:00:00.000Z',
+          accessedAt: '2026-10-01T00:00:00.000Z',
+          notes: 'internal registry note',
+          updatedAt: '2026-10-01T00:00:00.000Z',
+          createdAt: '2026-10-01T00:00:00.000Z',
+        },
+        42,
+        {
+          id: 8,
+          title: 'Unsafe',
+          url: 'javascript:alert(1)',
+          accessedAt: '2026-10-01T00:00:00.000Z',
+          updatedAt: '2026-10-01T00:00:00.000Z',
+          createdAt: '2026-10-01T00:00:00.000Z',
+        },
+      ],
+    })
+
+    const data = buildArticleJsonLd({ locale: 'fr', post, slug: post.slug })
+
+    expect(data.citation).toEqual([
+      {
+        '@type': 'CreativeWork',
+        name: 'Rapport BEAC 2024',
+        url: 'https://www.beac.int/rapport-2024',
+        publisher: { '@type': 'Organization', name: 'BEAC' },
+        datePublished: '2025-06-01T00:00:00.000Z',
+      },
+    ])
+    expect(JSON.stringify(data)).not.toContain('internal registry note')
+  })
+
+  it('omits citation when the post has no public source', () => {
+    const post = makePost({ sources: [3] })
+    expect(buildArticleJsonLd({ locale: 'en', post, slug: post.slug })).not.toHaveProperty(
+      'citation',
+    )
+  })
+})
+
 describe('structured data', () => {
   it('uses the production Trigenys Insights identity', () => {
     const data = buildSiteIdentityJsonLd()
 
     expect(SITE_IDENTITY.url).toBe('https://insight.trigenys.com')
     expect(data['@graph'][0]).toMatchObject({
-      '@type': 'Organization',
+      '@type': 'NewsMediaOrganization',
       '@id': ORGANIZATION_ID,
       name: 'Trigenys Insights',
       url: 'https://insight.trigenys.com',
+      foundingLocation: { address: { addressLocality: 'Douala', addressCountry: 'CM' } },
+      areaServed: { name: 'Africa' },
     })
+    expect(data['@graph'][0]).toHaveProperty('description', expect.any(String))
+    expect(data['@graph'][0]).toHaveProperty('knowsAbout', expect.arrayContaining(['Africa']))
+    // sameAs is only emitted once official profiles are configured.
+    expect(data['@graph'][0]).not.toHaveProperty('sameAs')
     expect(data['@graph'][1]).toMatchObject({
       '@type': 'WebSite',
       url: 'https://insight.trigenys.com',
