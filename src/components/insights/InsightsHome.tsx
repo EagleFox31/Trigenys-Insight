@@ -9,6 +9,7 @@ import Link from 'next/link'
 import React from 'react'
 
 import { NewsletterForm } from './NewsletterForm'
+import { editorialRubrics, localizedRubricPath, rubricMatchesCategory, type EditorialRubricId } from '@/editorial/rubrics'
 import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpressionBoundary'
 import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 import type { ArticlePlacement } from '@/lib/analytics/events'
@@ -64,15 +65,10 @@ function categorySlug(post: Post) {
   return category && typeof category === 'object' ? category.slug || '' : ''
 }
 
-function postMatchesChannel(post: Post, channel: string) {
-  const slug = categorySlug(post)
-
-  if (channel === 'technology') return slug === 'technology'
-  if (channel === 'business') return slug === 'business'
-  if (channel === 'systems') return slug === 'information-systems'
-  if (channel === 'africa') return slug === 'africa'
-
-  return false
+function postMatchesChannel(post: Post, channel: EditorialRubricId) {
+  return post.categories?.some(
+    (item) => Boolean(item && typeof item === 'object' && rubricMatchesCategory(channel, item.slug)),
+  ) ?? false
 }
 
 function ArticleCardOverlay({
@@ -124,32 +120,13 @@ export function InsightsHome({
     latestAfterCompact.length >= 2 ? latestAfterCompact : latestCandidates.slice(0, 5)
   const trending = remaining.slice(0, 3)
 
-  const channels = [
-    {
-      color: '#e07520',
-      description: t.pillars.technology.description,
-      id: 'technology',
-      title: t.pillars.technology.title,
-    },
-    {
-      color: '#15355a',
-      description: t.pillars.business.description,
-      id: 'business',
-      title: t.pillars.business.title,
-    },
-    {
-      color: '#2c5f7a',
-      description: t.pillars.systems.description,
-      id: 'systems',
-      title: t.pillars.systems.title,
-    },
-    {
-      color: '#5e7a3a',
-      description: t.pillars.africa.description,
-      id: 'africa',
-      title: t.pillars.africa.title,
-    },
-  ]
+  const channels = editorialRubrics.map((rubric) => ({
+    color: rubric.color,
+    description: rubric.description[locale],
+    id: rubric.id,
+    title: rubric.title[locale],
+    path: localizedRubricPath(rubric, locale),
+  }))
 
   if (!featured) {
     return (
@@ -536,7 +513,7 @@ export function InsightsHome({
                   <p className={styles.channelLabel}>
                     {t.newsroom.deskPrefix} {channel.title}
                   </p>
-                  <h3>{channel.title}</h3>
+                  <h3><Link href={channel.path}>{channel.title}</Link></h3>
                   <p className={styles.channelDescription}>{channel.description}</p>
 
                   {channelPost ? (

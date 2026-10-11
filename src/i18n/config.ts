@@ -1,3 +1,5 @@
+import { localizedSectionSwitchPath } from '@/editorial/rubrics'
+
 export const siteLocales = ['fr', 'en'] as const
 
 export type SiteLocale = (typeof siteLocales)[number]
@@ -19,6 +21,8 @@ export function localeFromPathname(pathname: string): SiteLocale {
 }
 
 export function swapLocalePath(pathname: string, locale: SiteLocale) {
+  const rubricPath = localizedSectionSwitchPath(pathname, locale)
+  if (rubricPath) return rubricPath
   const segments = pathname.split('/').filter(Boolean)
 
   if (segments.length > 0 && isSiteLocale(segments[0])) {

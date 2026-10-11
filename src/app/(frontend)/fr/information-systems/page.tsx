@@ -1,7 +1,6 @@
-import { LocalizedDeskPage, localizedDeskMetadata } from '@/components/insights/LocalizedDeskPage'
+import { permanentRedirect } from 'next/navigation'
 
+// Backstop for old links; next.config also installs a 308 at the edge.
 export default function Page() {
-  return <LocalizedDeskPage locale="fr" desk="information-systems" />
+  permanentRedirect('/fr/tech-ia')
 }
-
-export const metadata = localizedDeskMetadata('fr', 'information-systems')
