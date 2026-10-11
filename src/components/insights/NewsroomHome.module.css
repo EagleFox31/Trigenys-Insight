@@ -436,8 +436,7 @@
   border-top: 4px solid var(--channel-color);
 }
 
- .channel:nth-child(3n) { border-right: 0; }
-.channel:nth-child(n + 4) { border-top-width: 1px; }
+.channel:nth-child(3n) { border-right: 0; }
 
 .channelLabel {
   margin: 0 0 18px;
@@ -545,7 +544,6 @@
 
   .channel:nth-child(n) { border-right: 1px solid var(--border); }
   .channel:nth-child(2n) { border-right: 0; }
-  .channel:nth-child(n + 3) { border-top-width: 1px; }
 
   .deskGrid {
     gap: 38px;
