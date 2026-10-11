@@ -102,8 +102,11 @@ describe('structured data', () => {
     })
     expect(data['@graph'][0]).toHaveProperty('description', expect.any(String))
     expect(data['@graph'][0]).toHaveProperty('knowsAbout', expect.arrayContaining(['Africa']))
-    // sameAs is only emitted once official profiles are configured.
-    expect(data['@graph'][0]).not.toHaveProperty('sameAs')
+    expect(data['@graph'][0]).toHaveProperty(
+      'sameAs',
+      expect.arrayContaining(['https://www.linkedin.com/company/145209329/']),
+    )
+    expect(JSON.stringify(data)).not.toContain('/share/')
     expect(data['@graph'][1]).toMatchObject({
       '@type': 'WebSite',
       url: 'https://insight.trigenys.com',

@@ -1,6 +1,8 @@
 import type { Media, Post, ResearchSource } from '@/payload-types'
 import type { SiteLocale } from '@/i18n/config'
 import { authorSlug } from '@/utilities/authorSlug'
+import { getFaqItems, getKeyTakeaways } from '@/seo/answerContent'
+import { socialProfiles } from '@/Footer/socialProfiles'
 
 export const SITE_IDENTITY = {
   name: 'Trigenys Insights',
@@ -11,9 +13,12 @@ export const SITE_IDENTITY = {
   topics: ['Technology', 'Business', 'Information systems', 'Cybersecurity', 'Africa'],
 } as const
 
-// Official public profiles of the publication. Leave empty until each URL is
-// confirmed: answer engines use sameAs to reconcile the entity across the web.
-export const SITE_SAME_AS: readonly string[] = []
+// Official public profiles (the verified ones shown in the footer). Answer
+// engines use sameAs to reconcile the entity across the web, so share/redirect
+// links are left out: only stable profile URLs belong here.
+export const SITE_SAME_AS: readonly string[] = socialProfiles
+  .map((profile) => profile.url)
+  .filter((url) => !new URL(url).pathname.startsWith('/share/'))
 
 export const ORGANIZATION_ID = `${SITE_IDENTITY.url}/#organization`
 export const WEBSITE_ID = `${SITE_IDENTITY.url}/#website`
@@ -183,9 +188,11 @@ export function buildArticleJsonLd({
   }
 
   const citations = buildArticleCitations(post.sources)
+  const takeaways = getKeyTakeaways(post)
 
   if (image) jsonLd.image = [image]
   if (citations.length > 0) jsonLd.citation = citations
+  if (takeaways.length > 0) jsonLd.abstract = takeaways.join(' ')
   if (authors.length > 0) jsonLd.author = authors
   if (categories && categories.length > 0) {
     jsonLd.articleSection = categories
@@ -193,6 +200,42 @@ export function buildArticleJsonLd({
   }
 
   return jsonLd
+}
+
+/**
+ * FAQPage for the questions rendered at the end of the article. Only emitted
+ * when the page visibly shows the same questions and answers.
+ */
+export function buildFaqJsonLd({
+  locale,
+  post,
+  slug,
+}: {
+  locale: SiteLocale
+  post: Pick<Post, 'faq'>
+  slug: string
+}) {
+  const items = getFaqItems(post)
+  if (items.length === 0) return null
+
+  const canonicalURL = absoluteCanonicalURL(`/${locale}/posts/${slug}`)
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${canonicalURL}#faq`,
+    url: canonicalURL,
+    inLanguage: locale === 'fr' ? 'fr-FR' : 'en',
+    isPartOf: { '@id': WEBSITE_ID },
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  }
 }
 
 export function buildJsonLdGraph(
