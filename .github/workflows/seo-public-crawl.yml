@@ -1,0 +1,32 @@
+name: SEO public crawl smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 08:17 UTC = 09:17 in Cameroon (UTC+1).
+    - cron: '17 8 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-public-crawl-smoke
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    name: Validate production FR/EN crawlability
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check public article HTML and SEO endpoints
+        run: node scripts/seo/public-crawl-smoke.mjs https://insight.trigenys.com
