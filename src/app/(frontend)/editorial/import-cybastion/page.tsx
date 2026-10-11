@@ -1,5 +1,7 @@
 import { ImportCybastionButton } from '@/components/insights/ImportCybastionButton'
 import { ImportEditorialLaunchPackButton } from '@/components/insights/ImportEditorialLaunchPackButton'
+import { ImportOctober11Button } from '@/components/insights/ImportOctober11Button'
+import { october11EditorialArticles } from '@/editorial/october-11-2026'
 import { UpdateArticleReadabilityButton } from '@/components/insights/UpdateArticleReadabilityButton'
 import { RefreshSeptemberEditorialButton } from '@/components/insights/RefreshSeptemberEditorialButton'
 import { cybastionArticleMetadata, cybastionArticleSources } from '@/editorial/cybastion-data-center'
@@ -56,6 +58,37 @@ export default async function ImportCybastionPage() {
         </h1>
 
         <div className="grid gap-8">
+          <section className="rounded-md border border-emerald-200 bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
+            <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#1f6852]">
+              Édition du 11 octobre 2026 · Import ciblé
+            </p>
+            <h2 className="m-0 font-[var(--font-fraunces)] text-[clamp(28px,4vw,42px)] font-semibold leading-[1.08] tracking-[-0.035em] text-[#102f52]">
+              Quatre nouveaux articles pour Trigenys Insight.
+            </h2>
+            <p className="mt-4 max-w-[760px] text-[15px] leading-7 text-[#62686d]">
+              CITS 2026, transferts internationaux, Driivio et MORENA. Cet import ajoute uniquement
+              les quatre brouillons FR + EN avec les sources cliquables dans le texte,
+              les métadonnées SEO et les graphiques interactifs. Rien n&apos;est publié automatiquement.
+            </p>
+            <div className="mt-6 grid gap-3">
+              {october11EditorialArticles.map(article => (
+                <div key={article.slug} className="rounded-md border border-border bg-[#fafaf7] px-5 py-4">
+                  <p className="m-0 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#8a8e91]">
+                    {article.primaryCategory} · {article.readingTime} min · FR + EN
+                  </p>
+                  <p className="mb-0 mt-2 font-[var(--font-fraunces)] text-lg font-semibold text-[#102f52]">
+                    {article.fr.title}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-sm text-[#62686d]">
+              L&apos;import est idempotent : les articles existants ne seront pas écrasés.
+              Vérifie les données et ajoute les images de couverture dans Payload avant de publier.
+            </p>
+            <ImportOctober11Button />
+          </section>
+
           <section className="rounded-md border border-border bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
             <p className="eyebrow">Consommer camerounais · Comparatif FR + EN</p>
             <h2 className="mt-3 font-[var(--font-fraunces)] text-3xl font-semibold text-[#102f52]">{whispArticle.fr.title}</h2>

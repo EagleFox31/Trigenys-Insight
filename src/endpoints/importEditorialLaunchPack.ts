@@ -1,5 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
+import { october11EditorialArticles } from '@/editorial/october-11-2026'
+import { createSourcedEditorialDocument } from '@/editorial/sourced-markdown-lexical'
 
 import {
   createEditorialLexicalDocument,
@@ -149,10 +151,12 @@ export async function importEditorialLaunchPack({
   payload,
   req,
   onlySlug,
+  onlySlugs,
 }: {
   payload: Payload
   req: PayloadRequest
   onlySlug?: string
+  onlySlugs?: string[]
 }) {
   if (!req.user) {
     throw new Error('An authenticated editor is required to import the editorial launch pack.')
@@ -173,8 +177,10 @@ export async function importEditorialLaunchPack({
     title: string
   }> = []
 
-  for (const article of [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle, cloudflareContainersArticle, dangoteLamuRefineryArticle, kempinskiDoualaArticle, internetCameroonPeeringArticle, africaAiGovernanceArticle, nvidiaCudaHuaweiArticle, stablecoinsCfaArticle].filter(
-    (item) => !onlySlug || item.slug === onlySlug,
+  const standardArticles = [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle, cloudflareContainersArticle, dangoteLamuRefineryArticle, kempinskiDoualaArticle, internetCameroonPeeringArticle, africaAiGovernanceArticle, nvidiaCudaHuaweiArticle, stablecoinsCfaArticle]
+  const candidates = onlySlugs ? [...standardArticles, ...october11EditorialArticles] : standardArticles
+  for (const article of candidates.filter(
+    (item) => (!onlySlug || item.slug === onlySlug) && (!onlySlugs || onlySlugs.includes(item.slug)),
   )) {
     const existing = await payload.find({
       collection: 'posts',
@@ -229,7 +235,9 @@ export async function importEditorialLaunchPack({
           _status: 'draft',
           authors: [req.user.id],
           categories: articleCategoryIds,
-          content: createEditorialLexicalDocument(article.fr.content, article.chart && { marker: article.chart.marker, data: article.chart.fr }),
+          content: article.id.startsWith('2026-10-11-')
+            ? createSourcedEditorialDocument(article.fr.content, article.chart && { marker: article.chart.marker, data: article.chart.fr })
+            : createEditorialLexicalDocument(article.fr.content, article.chart && { marker: article.chart.marker, data: article.chart.fr }),
           editorsPick: article.editorsPick,
           excerpt: article.fr.excerpt,
           featured: article.featured,
@@ -272,7 +280,9 @@ export async function importEditorialLaunchPack({
         collection: 'posts',
         id: post.id,
         data: {
-          content: createEditorialLexicalDocument(article.en.content, article.chart && { marker: article.chart.marker, data: article.chart.en }),
+          content: article.id.startsWith('2026-10-11-')
+            ? createSourcedEditorialDocument(article.en.content, article.chart && { marker: article.chart.marker, data: article.chart.en })
+            : createEditorialLexicalDocument(article.en.content, article.chart && { marker: article.chart.marker, data: article.chart.en }),
           excerpt: article.en.excerpt,
           meta: {
             description: article.en.metaDescription,
