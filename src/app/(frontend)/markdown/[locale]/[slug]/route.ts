@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 
 import { isSiteLocale } from '@/i18n/config'
+import { logAiCrawlerHit } from '@/seo/aiCrawlers'
 import { renderPostMarkdown } from '@/seo/llms'
 import { isPublicLocalizedPost } from '@/seo/postsSitemap'
 import { absoluteCanonicalURL } from '@/seo/structuredData'
@@ -9,9 +10,10 @@ import { absoluteCanonicalURL } from '@/seo/structuredData'
 // Served publicly as /{locale}/posts/{slug}.md through a rewrite in next.config.
 type Args = { params: Promise<{ locale: string; slug: string }> }
 
-export async function GET(_request: Request, { params }: Args) {
+export async function GET(request: Request, { params }: Args) {
   const { locale, slug: rawSlug } = await params
   const slug = decodeURIComponent(rawSlug)
+  logAiCrawlerHit(request.headers.get('user-agent'), `/${locale}/posts/${slug}.md`)
 
   if (!isSiteLocale(locale)) return new Response('Not found', { status: 404 })
 
