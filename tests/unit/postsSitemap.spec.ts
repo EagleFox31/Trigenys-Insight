@@ -35,7 +35,7 @@ describe('localized public article sitemap', () => {
         { slug: 'fr-only', title: null, excerpt: null, content: null },
         { slug: 'missing-excerpt', title: 'Title', excerpt: '', content: {} },
         { slug: 'missing-content', title: 'Title', excerpt: 'Summary', content: null },
-        { slug: 'missing-slug', title: 'Title', excerpt: 'Summary', content: {} },
+        { slug: null, title: 'Title', excerpt: 'Summary', content: {} },
         { slug: 'complete', title: 'Title', excerpt: 'Summary', content: {}, updatedAt: now },
       ],
       now,
