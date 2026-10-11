@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 export const metadata: Metadata = {
   description:
-    'Recherche et analyses indépendantes sur la technologie, la cybersécurité, le business et les systèmes numériques.',
+    'Actualités, enquêtes et analyses bilingues sur l’IA, le gaming, la finance, l’éducation et l’innovation africaine.',
   metadataBase: new URL(getServerSideURL()),
   title: {
     default: 'Trigenys Insights',

@@ -1,3 +1,4 @@
+import { sectionForCategorySlug } from '@/editorial/rubrics'
 import type { Category, Post } from '@/payload-types'
 import type { SiteLocale } from './config'
 
@@ -33,7 +34,8 @@ const kindLabels: Record<SiteLocale, Record<string, string>> = {
 
 export function categoryLabel(category: number | Category | null | undefined, locale: SiteLocale) {
   if (!category || typeof category !== 'object') return locale === 'fr' ? 'Analyse' : 'Analysis'
-  return categoryLabels[locale][category.slug] || category.title || (locale === 'fr' ? 'Analyse' : 'Analysis')
+  const editorialRubric = sectionForCategorySlug(category.slug)
+  return editorialRubric?.title[locale] || categoryLabels[locale][category.slug] || category.title || (locale === 'fr' ? 'Analyse' : 'Analysis')
 }
 
 export function primaryCategoryLabel(post: Post, locale: SiteLocale) {

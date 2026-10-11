@@ -9,8 +9,12 @@ export const SITE_IDENTITY = {
   url: 'https://insight.trigenys.com',
   logoPath: '/trigenys-insights-logo-512.png',
   description:
-    'Independent, bilingual publication of source-backed analysis on technology, business, information systems and Africa, published from Douala, Cameroon.',
-  topics: ['Technology', 'Business', 'Information systems', 'Cybersecurity', 'Africa'],
+    'Independent bilingual publication on AI, gaming, business and finance, education and careers, African products and society, published from Douala, Cameroon.',
+  topics: [
+    'Technology', 'Artificial intelligence', 'Cybersecurity', 'Information systems',
+    'Gaming', 'Digital culture', 'Business', 'Finance', 'Fintech',
+    'Education', 'Scholarships', 'IT careers', 'African startups', 'Society', 'Africa',
+  ],
 } as const
 
 // Official public profiles (the verified ones shown in the footer). Answer

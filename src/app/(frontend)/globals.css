@@ -2401,3 +2401,20 @@ a {
     top: 15px;
   }
 }
+
+/* Navigation for six editorial desks: full-width desktop links plus accessible mobile menu. */
+.site-header__nav { gap: clamp(8px, 1vw, 17px); }
+.site-header__nav a { font-size: 11px; white-space: nowrap; }
+.site-header__menu-toggle { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid #d7d8d5; border-radius: 8px; color: #102f52; background: #fff; }
+.site-header__mobile-nav { display: none; }
+@media (max-width: 1180px) {
+  .site-header__nav { display: none; }
+  .site-header__inner { grid-template-columns: 1fr auto; }
+  .site-header__menu-toggle { display: inline-flex; }
+  .site-header__mobile-nav.is-open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; padding: 14px max(20px, calc((100vw - 1160px) / 2)) 20px; border-top: 1px solid #dfded7; background: #fafaf7; }
+  .site-header__mobile-nav a { padding: 12px 10px; font-size: 14px; font-weight: 650; color: #102f52; border-bottom: 1px solid #e4e3dd; }
+  .site-header__mobile-nav a:hover { color: #bc6316; }
+}
+@media (max-width: 640px) {
+  .site-header__mobile-nav.is-open { grid-template-columns: 1fr; }
+}

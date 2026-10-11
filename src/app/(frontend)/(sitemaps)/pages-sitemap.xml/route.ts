@@ -4,15 +4,11 @@ import config from '@payload-config'
 import { unstable_cache } from 'next/cache'
 
 import { SITE_IDENTITY } from '@/seo/structuredData'
+import { editorialRubrics, localizedRubricPath } from '@/editorial/rubrics'
 
 const localizedEditorialPaths = [
   '',
   '/posts',
-  '/technology',
-  '/business',
-  '/information-systems',
-  '/africa',
-  '/consommer-local',
   '/consommer-local/cameroun',
   '/consommer-local/afrique',
   '/methodology',
@@ -47,12 +43,16 @@ const getPagesSitemap = unstable_cache(
     const dateFallback = new Date().toISOString()
     const locales = ['fr', 'en'] as const
 
-    const localizedEditorialPages = locales.flatMap((locale) =>
-      localizedEditorialPaths.map((path) => ({
+    const localizedEditorialPages = locales.flatMap((locale) => [
+      ...localizedEditorialPaths.map((path) => ({
         loc: `${SITE_URL}/${locale}${path}`,
         lastmod: dateFallback,
       })),
-    )
+      ...editorialRubrics.map((rubric) => ({
+        loc: `${SITE_URL}${localizedRubricPath(rubric, locale)}`,
+        lastmod: dateFallback,
+      })),
+    ])
 
     // Generic CMS pages are not localized yet, so keep their canonical legacy URLs.
     const cmsPages = results.docs
@@ -66,9 +66,10 @@ const getPagesSitemap = unstable_cache(
 
     return [...localizedEditorialPages, ...cmsPages]
   },
-  ['pages-sitemap-v3'],
+  ['pages-sitemap-v4'],
   {
     tags: ['pages-sitemap'],
+    revalidate: 86400,
   },
 )
 

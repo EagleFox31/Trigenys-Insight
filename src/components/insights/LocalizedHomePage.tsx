@@ -38,8 +38,8 @@ export function localizedHomeMetadata(locale: SiteLocale): Metadata {
   return {
     title: 'Trigenys Insights — Research for better decisions',
     description: french
-      ? 'Recherche et analyses indépendantes sur la technologie, la cybersécurité, le business et les systèmes numériques en Afrique.'
-      : 'Independent research and analysis on technology, cybersecurity, business and digital systems in Africa.',
+      ? 'Actualités et analyses sur l’IA, le gaming, la finance, les études, les carrières et les innovations africaines.'
+      : 'Original African perspectives on AI, gaming, digital culture, money, education, tech careers and innovation.',
     alternates: {
       canonical: `/${locale}`,
       languages: {
