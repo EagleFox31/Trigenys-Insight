@@ -107,3 +107,13 @@ export function localizedSectionSwitchPath(pathname: string, target: SiteLocale)
   )
   return rubric ? localizedRubricPath(rubric, target) : null
 }
+
+/**
+ * An explicit canonical category supersedes legacy aliases. Without one, older
+ * posts remain discoverable via legacy categories until reviewed in Payload.
+ */
+export function postBelongsToRubric(id: EditorialRubricId, slugs: readonly string[]) {
+  const canonical = editorialRubrics.find((rubric) => slugs.includes(rubric.id))
+  if (canonical) return canonical.id === id
+  return slugs.some((slug) => rubricMatchesCategory(id, slug))
+}

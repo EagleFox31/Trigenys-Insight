@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { postBelongsToRubric } from '@/editorial/rubrics'
 import {
   classifyExistingPost,
   classificationForSlug,
@@ -7,6 +8,15 @@ import {
 } from '@/editorial/postReclassification'
 
 describe('Curated legacy-safe editorial post reclassification', () => {
+  it('does not cross-list a reviewed gaming story under its legacy technology/business labels', () => {
+    const labels = ['gaming-culture', 'technology', 'business']
+    expect(postBelongsToRubric('gaming-culture', labels)).toBe(true)
+    expect(postBelongsToRubric('tech-ai', labels)).toBe(false)
+    expect(postBelongsToRubric('business-finance', labels)).toBe(false)
+    expect(postBelongsToRubric('tech-ai', ['technology', 'business'])).toBe(true)
+    expect(postBelongsToRubric('business-finance', ['technology', 'business'])).toBe(true)
+  })
+
   it('has one reviewed canonical primary section for every inventoried article', () => {
     expect(Object.keys(curatedPostRubrics)).toHaveLength(21)
     expect(classificationForSlug('fc-27-prix-performances-et-achat-avant-la-sortie')?.id).toBe('gaming-culture')
