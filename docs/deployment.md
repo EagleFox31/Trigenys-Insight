@@ -14,6 +14,14 @@ Never use the production connection for local development or preview deployments
 
 `DATABASE_URL` uses the pooled hostname, while `DATABASE_URL_UNPOOLED` uses the direct hostname. The `db:migrate*` commands set `PAYLOAD_MIGRATING=true` so Payload selects the direct connection. Schema push is disabled; all changes use committed Payload migrations.
 
+## Automatic migrations on deploy
+
+Vercel runs the `vercel-build` script instead of `build` when it exists: `pnpm run db:migrate && pnpm run build`. Every deployment therefore applies pending Payload migrations to the Neon branch of its own environment (Preview → development branch, Production → production branch) over `DATABASE_URL_UNPOOLED`, before `next build`. Already-applied migrations are skipped, so a deploy without schema changes is a no-op for the database. If a migration fails, the build fails and the previous deployment keeps serving traffic.
+
+Requirements: `DATABASE_URL_UNPOOLED`, `DATABASE_URL` and `PAYLOAD_SECRET` must be available to the build in each Vercel environment, and the project's *Build Command* setting must be left on its default (an override bypasses `vercel-build`).
+
+Migrations must stay backward compatible with the deployment still serving traffic (additive changes first, removals in a later release), because the database is migrated before the new code goes live.
+
 ## Initial migration verification — 2026-09-09
 
 Payload generated `20260909_073929` from the editorial collections, followed by two integrity migrations for authorship, research-source uniqueness, and query indexes. Development and production each contain 92 tables and all three `payload_migrations` records.
