@@ -64,6 +64,14 @@ async function main() {
     'News sitemap URLs point to the canonical host',
   )
 
+  const { text: pagesXML } = await request('/pages-sitemap.xml')
+  assert(pagesXML.includes('<urlset'), 'pages sitemap returns a URL set')
+  const pageURLs = sitemapLocs(pagesXML)
+  assert(
+    pageURLs.every((url) => new URL(url).host === canonicalHost),
+    'pages sitemap URLs point to the canonical host',
+  )
+
   for (const locale of ['fr', 'en']) {
     const { text: homeHTML } = await request(`/${locale}`)
     const visibleHome = documentWithoutScripts(homeHTML)
@@ -83,6 +91,15 @@ async function main() {
     assert(/<h1\b/i.test(visibleArticle), `${locale} article heading is in the HTML response`)
     assert(!/class="site-skeleton(?:\s|")/i.test(visibleArticle), `${locale} crawler does not receive global placeholder markup`)
     assert(/rel="canonical"/.test(articleHTML) && articleHTML.includes(article), `${locale} article carries its canonical URL`)
+
+    const author = pageURLs.find((url) => new URL(url).pathname.startsWith(`/${locale}/authors/`))
+    assert(Boolean(author), `${locale} pages sitemap lists at least one author profile`)
+    if (!author) continue
+
+    const { text: authorHTML } = await request(new URL(author).pathname)
+    const visibleAuthor = documentWithoutScripts(authorHTML)
+    assert(/<h1\b/i.test(visibleAuthor), `${locale} author profile heading is in the HTML response`)
+    assert(/rel="canonical"/.test(authorHTML) && authorHTML.includes(author), `${locale} author profile carries its canonical URL`)
   }
 }
 

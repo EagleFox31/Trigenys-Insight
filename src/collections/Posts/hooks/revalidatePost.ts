@@ -14,6 +14,8 @@ import { LLMS_CACHE_TAG } from '@/seo/llms'
 function revalidateEditorialSitemaps() {
   revalidateTag('posts-sitemap', 'max')
   revalidateTag('news-sitemap', 'max')
+  // Author profile URLs in the pages sitemap are derived from published posts.
+  revalidateTag('pages-sitemap', 'max')
   revalidateTag(LLMS_CACHE_TAG, 'max')
 }
 

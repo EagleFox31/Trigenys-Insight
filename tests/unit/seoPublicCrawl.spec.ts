@@ -31,6 +31,8 @@ describe('P0: public crawl entry points', () => {
     expect(script).toContain('posts-sitemap.xml')
     expect(script).toContain('article-reading-main')
     expect(script).toContain('rel="canonical"')
+    expect(script).toContain('pages-sitemap.xml')
+    expect(script).toContain('/authors/')
   })
 })
 
