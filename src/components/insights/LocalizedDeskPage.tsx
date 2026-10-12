@@ -6,7 +6,7 @@ import { getPayload } from 'payload'
 import { CollectionArchive } from '@/components/CollectionArchive'
 import type { CardPostData } from '@/components/Card'
 import type { SiteLocale } from '@/i18n/config'
-import { getEditorialRubric, localizedRubricPath, type EditorialRubricId } from '@/editorial/rubrics'
+import { getEditorialRubric, localizedRubricPath, postBelongsToRubric, type EditorialRubricId } from '@/editorial/rubrics'
 import { absoluteCanonicalURL, buildBreadcrumbJsonLd, serializeJsonLd } from '@/seo/structuredData'
 
 export async function LocalizedDeskPage({
@@ -55,7 +55,14 @@ export async function LocalizedDeskPage({
       },
       select: { title: true, slug: true, categories: true, meta: true },
     })
-    posts = result.docs.filter((post) => Boolean(post.title && post.slug))
+    posts = result.docs.filter((post) => {
+      if (!post.title || !post.slug) return false
+      const slugs = (post.categories || [])
+        .filter((cat) => cat && typeof cat === 'object')
+        .map((cat) => (typeof cat === 'object' && cat ? cat.slug : ''))
+        .filter((slug): slug is string => Boolean(slug))
+      return postBelongsToRubric(desk, slugs)
+    })
   }
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([

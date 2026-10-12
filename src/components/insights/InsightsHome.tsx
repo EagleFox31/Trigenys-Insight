@@ -9,7 +9,7 @@ import Link from 'next/link'
 import React from 'react'
 
 import { NewsletterForm } from './NewsletterForm'
-import { editorialRubrics, localizedRubricPath, rubricMatchesCategory, type EditorialRubricId } from '@/editorial/rubrics'
+import { editorialRubrics, localizedRubricPath, postBelongsToRubric, type EditorialRubricId } from '@/editorial/rubrics'
 import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpressionBoundary'
 import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 import type { ArticlePlacement } from '@/lib/analytics/events'
@@ -66,9 +66,11 @@ function categorySlug(post: Post) {
 }
 
 function postMatchesChannel(post: Post, channel: EditorialRubricId) {
-  return post.categories?.some(
-    (item) => Boolean(item && typeof item === 'object' && rubricMatchesCategory(channel, item.slug)),
-  ) ?? false
+  const slugs = (post.categories || [])
+    .filter((item) => item && typeof item === 'object')
+    .map((item) => (typeof item === 'object' && item ? item.slug : ''))
+    .filter((slug): slug is string => Boolean(slug))
+  return postBelongsToRubric(channel, slugs)
 }
 
 function ArticleCardOverlay({
