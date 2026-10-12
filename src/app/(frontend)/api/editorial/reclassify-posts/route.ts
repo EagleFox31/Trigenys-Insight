@@ -55,9 +55,11 @@ export async function POST(request: Request): Promise<Response> {
     })
 
     const rows = result.docs.map((post) => {
-      const current = (post.categories || [])
-        .filter((cat) => typeof cat === 'object' && cat !== null && typeof cat.slug === 'string')
-        .map((cat) => ({ id: cat.id, slug: cat.slug }))
+      const current = (post.categories || []).flatMap((cat) =>
+        typeof cat === 'object' && cat !== null && typeof cat.slug === 'string'
+          ? [{ id: cat.id, slug: cat.slug }]
+          : [],
+      )
       const planned = classifyExistingPost(post.slug, current, categoriesBySlug)
       return {
         id: post.id,
@@ -67,7 +69,7 @@ export async function POST(request: Request): Promise<Response> {
         published: post._status === 'published',
         previous: current.map((cat) => cat.slug),
         status: planned.status,
-        target: 'rubric' in planned ? planned.rubric.id : null,
+        target: 'rubric' in planned ? planned.rubric?.id ?? null : null,
         categories: 'categories' in planned ? planned.categories : null,
       }
     })
