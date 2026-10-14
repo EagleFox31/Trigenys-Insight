@@ -45,6 +45,7 @@ export const articleSchema = z
     body: text.max(200000),
     authors: z.array(id).min(1).max(10).optional(),
     categories: z.array(id).min(1).max(10).optional(),
+    relatedPosts: z.array(id).max(12).optional(),
     heroImage: id.optional(),
     images: z
       .array(z.object({ marker, media: id }).strict())
@@ -138,6 +139,7 @@ export const updatePostSchema = getPostSchema
     excerpt: text.max(320).optional(),
     seoDescription: text.max(500).optional(),
     categories: z.array(id).min(1).max(10).optional(),
+    relatedPosts: z.array(id).max(12).optional(),
     status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
     expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
   })
@@ -150,6 +152,7 @@ export type UpdatePostResult = {
   status: 'DRAFT' | 'PUBLISHED'
   updatedAt: string
   url: string | null
+  relatedPosts: number[]
 }
 
 export const referenceSchema = z.object({ locale: locale.default('fr') }).strict()

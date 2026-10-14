@@ -21,7 +21,7 @@ export const editorialSlug = (key: string) =>
 
 async function requireReferences(
   req: PayloadRequest,
-  collection: 'users' | 'categories' | 'media' | 'research-sources',
+  collection: 'users' | 'categories' | 'media' | 'research-sources' | 'posts',
   ids: number[],
 ) {
   if (!ids.length) return
@@ -36,6 +36,14 @@ async function requireReferences(
   const found = new Set(result.docs.map((doc) => doc.id))
   if (ids.some((id) => !found.has(id)))
     throw new EditorialError(422, `invalid_${collection}_reference`)
+}
+async function validateRelatedPosts(req: PayloadRequest, ids: number[] | undefined, ownId?: number) {
+  if (ids === undefined) return undefined
+  const unique = [...new Set(ids)]
+  if (ownId !== undefined && unique.includes(ownId))
+    throw new EditorialError(422, 'self_related_post')
+  await requireReferences(req, 'posts', unique)
+  return unique
 }
 
 export async function executeEditorialOperation(
@@ -154,6 +162,7 @@ export async function executeEditorialOperation(
       input.excerpt === undefined &&
       input.seoDescription === undefined &&
       input.categories === undefined &&
+      input.relatedPosts === undefined &&
       input.status === undefined
     ) {
       throw new EditorialError(400, 'empty_update')
@@ -165,7 +174,9 @@ export async function executeEditorialOperation(
       throw new EditorialError(409, 'stale_update')
     }
     if (input.categories) await requireReferences(req, 'categories', input.categories)
+    const relatedPosts = await validateRelatedPosts(req, input.relatedPosts, previous.id)
     const data: Partial<Post> = {
+      ...(relatedPosts !== undefined ? { relatedPosts } : {}),
       ...(input.status ? { _status: input.status === 'PUBLISHED' ? 'published' : 'draft' } : {}),
       ...(input.categories ? { categories: [...new Set(input.categories)] } : {}),
       ...(input.title !== undefined ? { title: input.title } : {}),
@@ -192,6 +203,7 @@ export async function executeEditorialOperation(
       status: stored._status === 'published' ? 'PUBLISHED' : 'DRAFT',
       updatedAt: stored.updatedAt,
       url: stored._status === 'published' ? `/${input.locale}/posts/${stored.slug}` : null,
+      relatedPosts: (stored.relatedPosts ?? []).map((post) => typeof post === 'number' ? post : post.id),
     }
   }
   if (validateMarkers(input).length) throw new EditorialError(422, 'invalid_content_markers')
@@ -237,6 +249,7 @@ export async function executeEditorialOperation(
     ...(input.metadata?.seo?.image ? [input.metadata.seo.image] : []),
   ])
   await requireReferences(req, 'research-sources', input.sources ?? [])
+  const relatedPosts = await validateRelatedPosts(req, input.relatedPosts, previous?.id)
   const seo = input.metadata?.seo
   const content = createAutomationContent(input)
   const document: Partial<Post> &
@@ -253,6 +266,7 @@ export async function executeEditorialOperation(
     slug,
     authors,
     categories,
+    ...(relatedPosts !== undefined ? { relatedPosts } : {}),
     _status: input.operation === 'publish' ? 'published' : 'draft',
     ...(input.heroImage !== undefined ? { heroImage: input.heroImage } : {}),
     ...(seo

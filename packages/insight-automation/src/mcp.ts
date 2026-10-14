@@ -91,7 +91,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:write']),
       description:
-        'Update selected title, excerpt, SEO description, category IDs or explicit publication status on an existing article. Provide exactly one of postId or idempotencyKey. Categories replaces the entire category list; its first item is the primary category. Omitted fields and status are preserved. Never creates an article. Send expectedUpdatedAt from a recent get_post response to reject a stale edit. Set status only when the user requests a publication status change or restoration.',
+        'Update selected title, excerpt, SEO description, category IDs, relatedPosts or explicit publication status on an existing article. Provide exactly one of postId or idempotencyKey. Categories replaces the category list; its first item is primary. relatedPosts replaces the ordered list of linked article IDs (max 12); [] clears it. Omitted fields and status are preserved. Related IDs must exist and cannot include the article itself. Never creates an article. Send expectedUpdatedAt from a recent get_post response to reject a stale edit. Set status only when the user requests a publication status change or restoration.',
       inputSchema: updatePostSchema.shape,
       annotations: write,
     },
@@ -124,7 +124,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:write']),
       description:
-        'Create or revise a draft. Body supports ## headings, HTTPS Markdown links, bold and italics. Put [[CHART:name]] and [[IMAGE:name]] markers in separate paragraphs and provide their definitions. Use the same idempotencyKey across revisions and translations. Prefer this tool unless publication was explicitly requested.',
+        'Create or revise a draft. Body supports ## headings, HTTPS Markdown links, bold and italics. Put [[CHART:name]] and [[IMAGE:name]] markers in separate paragraphs and provide their definitions. relatedPosts selects an ordered list of existing linked article IDs (max 12); [] clears the list, omission preserves it. Use the same idempotencyKey across revisions and translations. Prefer this tool unless publication was explicitly requested.',
       inputSchema: articleSchema.shape,
       annotations: write,
     },
@@ -135,7 +135,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:write', 'editorial:publish']),
       description:
-        'Publish an article immediately, making it public. Call only when the user explicitly asks to publish. Send the complete article and the same idempotencyKey used for its draft. Publishing status is shared across FR/EN; create both translations as drafts before publishing.',
+        'Publish an article immediately, making it public. Call only when the user explicitly asks to publish. Send the complete article and the same idempotencyKey used for its draft. relatedPosts selects existing linked article IDs in display order (max 12); omission preserves the selection, [] clears it. Publishing status is shared across FR/EN; create both translations as drafts before publishing.',
       inputSchema: articleSchema.shape,
       annotations: write,
     },

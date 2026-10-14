@@ -226,3 +226,16 @@ atomic revision lease, so orchestrators should serialize concurrent edits. Empty
 updates are rejected. The authenticated workspace `/editorial/automation` loads
 the existing FR/EN summaries and submits targeted MCP updates, then reads them
 back through the SDK to verify preservation of the rich content and cover.
+# Articles liés (Related Posts)
+
+`relatedPosts` est disponible dans `insight_create_draft`, `insight_publish` et `insight_update_post`, ainsi que dans les méthodes correspondantes du SDK. Il s'agit d'une liste ordonnée de 0 à 12 identifiants d'articles existants. Les doublons sont supprimés en conservant la première occurrence ; un article ne peut pas se référencer lui-même.
+
+Omettre ce champ conserve la sélection actuelle. Envoyer `[]` vide la sélection. Les références peuvent viser des brouillons pour préparer une publication ; seuls les articles accessibles au lecteur peuvent être affichés sur le site public.
+
+Exemple de modification ciblée :
+
+```json
+{"postId": 8, "locale": "fr", "relatedPosts": [14, 24], "expectedUpdatedAt": "<updatedAt obtenu par insight_get_post>"}
+```
+
+Cette modification utilise le droit OAuth `editorial:write` et conserve le contenu, l'image et le statut si ces champs sont omis. Les liens ne sont pas réciproques automatiquement : la sélection de A ne modifie pas celle de B. Le champ est partagé entre les versions linguistiques du même article.
