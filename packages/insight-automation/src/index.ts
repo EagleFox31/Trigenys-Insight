@@ -25,12 +25,14 @@ export class InsightAPIError extends Error {
 export class InsightClient {
   private readonly endpoint: string
   private readonly fetcher: typeof fetch
-  private readonly token: string
+  private readonly token: string | undefined
+  private readonly credentials: RequestCredentials
   private readonly timeoutMs: number
 
   constructor(options: {
     baseURL: string
-    token: string
+    token?: string
+    session?: boolean
     fetch?: typeof fetch
     timeoutMs?: number
   }) {
@@ -50,7 +52,15 @@ export class InsightClient {
     ) {
       throw new Error('baseURL must be an origin without credentials, path, query or fragment')
     }
-    if (!options.token.trim()) throw new Error('A publishing token is required')
+    if (!options.token?.trim() && !options.session)
+      throw new Error('A publishing token or editorial session is required')
+    if (
+      options.session &&
+      (typeof window === 'undefined' || url.origin !== window.location.origin)
+    ) {
+      throw new Error('Session authentication is only available in a same-origin browser')
+    }
+    this.credentials = options.session ? 'same-origin' : 'omit'
     this.endpoint = `${url.origin}/api/editorial-os`
     this.fetcher = options.fetch ?? fetch
     this.token = options.token
@@ -66,9 +76,10 @@ export class InsightClient {
     const response = await this.fetcher(this.endpoint, {
       method: 'POST',
       redirect: 'error',
+      credentials: this.credentials,
       signal: AbortSignal.timeout(this.timeoutMs),
       headers: {
-        Authorization: `Bearer ${this.token}`,
+        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },

@@ -14,11 +14,17 @@ be connected to ChatGPT simply by pasting its URL.
 
 ## Authentication
 
-Both HTTP endpoints require `Authorization: Bearer <publishing-token>`. Existing
+Service clients on both HTTP endpoints require `Authorization: Bearer <publishing-token>`. Existing
 Editorial OS credentials continue to work without configuration changes. To rotate
 the credential, generate a long random secret and put only its SHA-256 hex digest
 in the server variable `INSIGHT_PUBLISHING_TOKEN_SHA256`. Setting it replaces the
 legacy credential, so update existing Editorial OS clients at the same time.
+
+The existing authenticated Payload editorial session can also be used by the same-origin
+browser workspace at `/editorial/automation`. Session calls require an authenticated
+editor and an Origin matching `NEXT_PUBLIC_SERVER_URL`; missing or foreign origins
+are rejected. The browser SDK uses `session: true`, keeps cookies same-origin and
+contains no service token. This does not add new editor permissions.
 
 Keep the original secret in your client secret manager as `INSIGHT_PUBLISHING_TOKEN`.
 Never put it in Git, browser JavaScript, tool arguments or an article. This is a

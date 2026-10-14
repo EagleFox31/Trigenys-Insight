@@ -1,14 +1,17 @@
 import type { Endpoint } from 'payload'
 import { operationSchema } from '../../packages/insight-automation/src/schema'
 import { readEditorialJSON } from '@/automation/requestBody'
-import { authorizedEditorialRequest } from '@/automation/auth'
+import { authorizedEditorialRequest, authorizedEditorialSession } from '@/automation/auth'
 import { EditorialError, executeEditorialOperation } from '@/automation/service'
 
 export const editorialOSEndpoint: Endpoint = {
   path: '/editorial-os',
   method: 'post',
   handler: async (req) => {
-    if (!authorizedEditorialRequest(req.headers.get('authorization'))) {
+    if (
+      !authorizedEditorialRequest(req.headers.get('authorization')) &&
+      !authorizedEditorialSession(req)
+    ) {
       return Response.json({ error: 'unauthorized' }, { status: 401 })
     }
     let json: unknown

@@ -3,7 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import config from '@payload-config'
 import { createInsightMCPServer } from '../../../../packages/insight-automation/src/mcp'
 import { operationSchema } from '../../../../packages/insight-automation/src/schema'
-import { authorizedEditorialRequest } from '@/automation/auth'
+import { authorizedEditorialRequest, authorizedEditorialSession } from '@/automation/auth'
 import { EditorialError, executeEditorialOperation } from '@/automation/service'
 
 export const runtime = 'nodejs'
@@ -12,7 +12,14 @@ export const maxDuration = 60
 
 export async function POST(request: Request): Promise<Response> {
   if (!authorizedEditorialRequest(request.headers.get('authorization'))) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
+    if (!request.headers.get('cookie') || !request.headers.get('origin')) {
+      return Response.json({ error: 'unauthorized' }, { status: 401 })
+    }
+    const payload = await getPayload({ config })
+    const { user } = await payload.auth({ headers: request.headers })
+    if (!authorizedEditorialSession({ headers: request.headers, user })) {
+      return Response.json({ error: 'unauthorized' }, { status: 401 })
+    }
   }
   // Bearer clients can omit Origin. Browser requests must be same-origin or explicitly allowed.
   const origin = request.headers.get('origin')

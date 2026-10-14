@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@payload-config', () => ({ default: {} }))
 vi.mock('payload', () => ({
   getPayload: vi.fn(async () => ({
+    auth: async () => ({ user: { id: 1 } }),
     find: async () => ({ docs: [{ id: 1, name: 'Author', email: 'private@example.com' }] }),
     logger: { error: vi.fn() },
   })),
@@ -29,6 +30,7 @@ function request(body: unknown, headers: Record<string, string> = {}) {
 }
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.stubEnv('NEXT_PUBLIC_SERVER_URL', 'https://insight.example')
   vi.stubEnv('INSIGHT_PUBLISHING_TOKEN_SHA256', createHash('sha256').update(token).digest('hex'))
 })
 afterEach(() => vi.unstubAllEnvs())
@@ -71,6 +73,20 @@ describe('hosted MCP route', () => {
     const json = await response.json()
     expect(json.result.structuredContent.docs).toEqual([{ id: 1, name: 'Author' }])
     expect(getPayload).toHaveBeenCalledTimes(1)
+  })
+  it('accepts the existing editorial session only from the canonical origin', async () => {
+    const body = { jsonrpc: '2.0', id: 4, method: 'tools/list' }
+    const headers = {
+      Authorization: '',
+      Origin: 'https://insight.example',
+      Cookie: 'payload-token=test-session-fixture',
+    }
+    const response = await POST(request(body, headers))
+    expect(response.status).toBe(200)
+    expect((await response.json()).result.tools).toHaveLength(7)
+    expect(
+      (await POST(request(body, { ...headers, Origin: 'https://foreign.example' }))).status,
+    ).toBe(401)
   })
   it('rejects unsupported GET and DELETE transports', async () => {
     expect((await GET()).status).toBe(405)

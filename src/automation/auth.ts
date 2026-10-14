@@ -1,3 +1,4 @@
+import type { PayloadRequest } from 'payload'
 import { createHash, timingSafeEqual } from 'node:crypto'
 
 // Preserve the existing Editorial OS integration until its token is rotated.
@@ -9,4 +10,17 @@ export function authorizedEditorialRequest(authorization: string | null): boolea
   if (!/^[a-f0-9]{64}$/i.test(expected)) return false
   const actual = createHash('sha256').update(authorization.slice(7).trim()).digest()
   return timingSafeEqual(actual, Buffer.from(expected, 'hex'))
+}
+
+export function authorizedEditorialSession(req: Pick<PayloadRequest, 'headers' | 'user'>): boolean {
+  if (!req.user) return false
+  const origin = req.headers.get('origin')
+  if (!origin) return false
+  const configuredURL = process.env.NEXT_PUBLIC_SERVER_URL
+  if (!configuredURL) return false
+  try {
+    return new URL(origin).origin === new URL(configuredURL).origin
+  } catch {
+    return false
+  }
 }

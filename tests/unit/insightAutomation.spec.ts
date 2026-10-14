@@ -10,7 +10,7 @@ import { InsightClient, InsightAPIError } from '../../packages/insight-automatio
 import { createInsightMCPServer } from '../../packages/insight-automation/src/mcp'
 import { articleSchema, operationSchema } from '../../packages/insight-automation/src/schema'
 import { editorialOSEndpoint } from '@/endpoints/editorialOS'
-import { authorizedEditorialRequest } from '@/automation/auth'
+import { authorizedEditorialRequest, authorizedEditorialSession } from '@/automation/auth'
 import { createAutomationContent } from '@/automation/content'
 
 const token = 'automation-test-only-token'
@@ -96,6 +96,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
 })
 
 describe('publishing API and SDK contract', () => {
@@ -260,6 +261,59 @@ describe('publishing API and SDK contract', () => {
   it('validates chart constraints and does not accept arbitrary Lexical or HTML', () => {
     expect(articleSchema.safeParse({ ...article, content: { root: {} } }).success).toBe(false)
     expect(operationSchema.safeParse({ ...article, operation: 'delete' }).success).toBe(false)
+  })
+})
+
+describe('editorial session authentication', () => {
+  it('requires an authenticated editor and the canonical Origin', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SERVER_URL', 'https://insight.example')
+    const user = { id: 1 } as PayloadRequest['user']
+    expect(
+      authorizedEditorialSession({
+        user,
+        headers: new Headers({ Origin: 'https://insight.example' }),
+      }),
+    ).toBe(true)
+    expect(
+      authorizedEditorialSession({
+        user,
+        headers: new Headers({ Origin: 'https://other.example' }),
+      }),
+    ).toBe(false)
+    expect(
+      authorizedEditorialSession({
+        user: null,
+        headers: new Headers({ Origin: 'https://insight.example' }),
+      }),
+    ).toBe(false)
+    expect(authorizedEditorialSession({ user, headers: new Headers() })).toBe(false)
+    const { db } = setup()
+    const req = Object.assign(
+      new Request('https://insight.example/api/editorial-os', {
+        method: 'POST',
+        headers: { Origin: 'https://insight.example' },
+        body: JSON.stringify({ ...article, operation: 'draft' }),
+      }),
+      { user, payload: db.payload },
+    ) as unknown as PayloadRequest
+    expect((await editorialOSEndpoint.handler(req)).status).toBe(200)
+  })
+  it('keeps session cookies same-origin and never sends a token from the browser', async () => {
+    vi.stubGlobal('window', { location: { origin: 'https://insight.example' } })
+    const fetcher = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
+      Response.json({ ok: true, docs: [] }),
+    )
+    const client = new InsightClient({
+      baseURL: 'https://insight.example',
+      session: true,
+      fetch: fetcher,
+    })
+    await client.listAuthors()
+    expect(fetcher.mock.calls[0]?.[1]).toMatchObject({ credentials: 'same-origin' })
+    expect(fetcher.mock.calls[0]?.[1]?.headers).not.toHaveProperty('Authorization')
+    expect(() => new InsightClient({ baseURL: 'https://other.example', session: true })).toThrow(
+      'same-origin',
+    )
   })
 })
 
