@@ -62,7 +62,7 @@ export class InsightClient {
     }
     this.credentials = options.session ? 'same-origin' : 'omit'
     this.endpoint = `${url.origin}/api/editorial-os`
-    this.fetcher = options.fetch ?? fetch
+    this.fetcher = options.fetch ?? fetch.bind(globalThis)
     this.token = options.token
     this.timeoutMs = options.timeoutMs ?? 30000
   }

@@ -298,6 +298,14 @@ describe('editorial session authentication', () => {
     ) as unknown as PayloadRequest
     expect((await editorialOSEndpoint.handler(req)).status).toBe(200)
   })
+  it('binds the native browser fetch to its global context', async () => {
+    vi.stubGlobal('fetch', function (this: unknown) {
+      if (this !== globalThis) throw new TypeError('Illegal invocation')
+      return Promise.resolve(Response.json({ ok: true, docs: [] }))
+    })
+    const client = new InsightClient({ baseURL: 'https://insight.example', token })
+    await expect(client.listAuthors()).resolves.toMatchObject({ ok: true })
+  })
   it('keeps session cookies same-origin and never sends a token from the browser', async () => {
     vi.stubGlobal('window', { location: { origin: 'https://insight.example' } })
     const fetcher = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
