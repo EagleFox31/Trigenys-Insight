@@ -24,5 +24,5 @@ export default defineConfig([
       ],
     },
   },
-  globalIgnores(['.next/**', 'src/payload-types.ts', 'src/payload-generated-schema.ts']),
+  globalIgnores(['packages/*/dist/**', '.next/**', 'src/payload-types.ts', 'src/payload-generated-schema.ts']),
 ])

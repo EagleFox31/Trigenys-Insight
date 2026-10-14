@@ -1,0 +1,35 @@
+{
+  "name": "@trigenys/insight-automation",
+  "version": "0.1.0",
+  "description": "TypeScript SDK and MCP server for Trigenys Insight publishing",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./mcp": "./dist/mcp.js",
+    "./schema": "./dist/schema.js"
+  },
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "trigenys-insight-mcp": "./dist/stdio.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3",
+    "@types/node": "^22.19.9"
+  }
+}

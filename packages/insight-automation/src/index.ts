@@ -1,0 +1,108 @@
+import {
+  operationSchema,
+  validateMarkers,
+  type ArticleInput,
+  type EditorialOperationInput,
+  type UploadInput,
+  type SourceInput,
+  type PublicationResult,
+  type MediaResult,
+  type ReferenceResult,
+  type PostResult,
+} from './schema.ts'
+export * from './schema.ts'
+
+export class InsightAPIError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+  ) {
+    super(`Trigenys Insight: ${code} (HTTP ${status})`)
+    this.name = 'InsightAPIError'
+  }
+}
+
+export class InsightClient {
+  private readonly endpoint: string
+  private readonly fetcher: typeof fetch
+  private readonly token: string
+  private readonly timeoutMs: number
+
+  constructor(options: {
+    baseURL: string
+    token: string
+    fetch?: typeof fetch
+    timeoutMs?: number
+  }) {
+    const url = new URL(options.baseURL)
+    if (
+      url.protocol !== 'https:' &&
+      !(url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
+    ) {
+      throw new Error('Use HTTPS, or HTTP on localhost for development')
+    }
+    if (
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      (url.pathname !== '/' && url.pathname !== '')
+    ) {
+      throw new Error('baseURL must be an origin without credentials, path, query or fragment')
+    }
+    if (!options.token.trim()) throw new Error('A publishing token is required')
+    this.endpoint = `${url.origin}/api/editorial-os`
+    this.fetcher = options.fetch ?? fetch
+    this.token = options.token
+    this.timeoutMs = options.timeoutMs ?? 30000
+  }
+
+  async request<T = Record<string, unknown>>(input: EditorialOperationInput): Promise<T> {
+    const parsed = operationSchema.parse(input)
+    if (parsed.operation === 'draft' || parsed.operation === 'publish') {
+      const errors = validateMarkers(parsed)
+      if (errors.length) throw new Error(errors.join('; '))
+    }
+    const response = await this.fetcher(this.endpoint, {
+      method: 'POST',
+      redirect: 'error',
+      signal: AbortSignal.timeout(this.timeoutMs),
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(parsed),
+    })
+    const result = await response.json().catch(() => null)
+    if (!response.ok) {
+      const code = result && typeof result.error === 'string' ? result.error : 'request_failed'
+      throw new InsightAPIError(response.status, code)
+    }
+    if (!result || result.ok !== true)
+      throw new InsightAPIError(response.status, 'invalid_response')
+    return result as T
+  }
+
+  createDraft(input: ArticleInput) {
+    return this.request<PublicationResult>({ ...input, operation: 'draft' })
+  }
+  publish(input: ArticleInput) {
+    return this.request<PublicationResult>({ ...input, operation: 'publish' })
+  }
+  uploadMedia(input: UploadInput) {
+    return this.request<MediaResult>({ ...input, operation: 'upload-media' })
+  }
+  upsertSource(input: SourceInput) {
+    return this.request<{ ok: true; id: number }>({ ...input, operation: 'upsert-source' })
+  }
+  getPost(idempotencyKey: string, locale: 'fr' | 'en' = 'fr') {
+    return this.request<PostResult>({ operation: 'get-post', idempotencyKey, locale })
+  }
+  listCategories(locale: 'fr' | 'en' = 'fr') {
+    return this.request<ReferenceResult>({ operation: 'list-categories', locale })
+  }
+  listAuthors() {
+    return this.request<ReferenceResult>({ operation: 'list-authors' })
+  }
+}

@@ -17,6 +17,15 @@ Trigenys Insights is both a public publication and an editorial platform. The pu
 
 Payload lives inside the Next.js application: the public publication is served at `/`, the editorial workspace at `/admin`, and the REST and GraphQL APIs under `/api`.
 
+## Publishing automation
+
+The authenticated `/api/editorial-os` API supports drafts, immediate publication,
+FR/EN content, verified media uploads, inline image and chart blocks, author/category
+selection, source references, SEO, takeaways and FAQs. The same contract is exposed
+as a TypeScript SDK and an MCP server (stdio or `/api/mcp` Streamable HTTP).
+
+Read [the automation guide](docs/publishing-automation.md) for setup and examples.
+
 ## Editorial model
 
 - `posts`: localized articles with drafts, scheduled publishing, SEO, reading time, featured state and traceable sources
