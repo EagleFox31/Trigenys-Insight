@@ -1,6 +1,7 @@
 import type { SiteLocale } from '@/i18n/config'
 import { withLocale } from '@/i18n/config'
 import { categoryLabel, formatPostDate } from '@/i18n/content'
+import { localizedRubricPath, sectionForCategorySlug } from '@/editorial/rubrics'
 import { getMessages } from '@/i18n/messages'
 import { ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
@@ -50,12 +51,14 @@ export const PostHero: React.FC<{
           {categories?.map((category, index) => {
             if (typeof category === 'object' && category !== null) {
               const isLast = index === categories.length - 1
+              const rubric = sectionForCategorySlug(category.slug)
+              const categoryPath = rubric
+                ? localizedRubricPath(rubric, locale)
+                : withLocale(locale, `/${category.slug}`)
 
               return (
                 <React.Fragment key={category.id || index}>
-                  <Link href={withLocale(locale, `/${category.slug}`)}>
-                    {categoryLabel(category, locale)}
-                  </Link>
+                  <Link href={categoryPath}>{categoryLabel(category, locale)}</Link>
                   {!isLast && <React.Fragment> · </React.Fragment>}
                 </React.Fragment>
               )

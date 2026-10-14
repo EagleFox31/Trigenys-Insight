@@ -5,6 +5,7 @@ import React, { Fragment } from 'react'
 import type { Post } from '@/payload-types'
 import type { SiteLocale } from '@/i18n/config'
 import { withLocale } from '@/i18n/config'
+import { localizedRubricPath, sectionForCategorySlug } from '@/editorial/rubrics'
 import { categoryLabel } from '@/i18n/content'
 import type { ArticlePlacement } from '@/lib/analytics/events'
 
@@ -71,9 +72,12 @@ export const Card: React.FC<{
     )
 
   const article = (
-    <article className={cn('insights-card relative cursor-pointer overflow-hidden bg-card', className)}>
-      {slug && relationTo && (
-        placement ? (
+    <article
+      className={cn('insights-card relative cursor-pointer overflow-hidden bg-card', className)}
+    >
+      {slug &&
+        relationTo &&
+        (placement ? (
           <TrackedArticleLink
             aria-hidden="true"
             className="absolute inset-0 z-10"
@@ -90,8 +94,7 @@ export const Card: React.FC<{
           <Link aria-hidden="true" className="absolute inset-0 z-10" href={href} tabIndex={-1}>
             <span className="sr-only">{titleToUse}</span>
           </Link>
-        )
-      )}
+        ))}
       <div className="insights-card__media relative w-full">
         {!metaImage && <div className="insights-card__placeholder">TI</div>}
         {metaImage && typeof metaImage !== 'string' && <Media resource={metaImage} size="33vw" />}
@@ -102,6 +105,15 @@ export const Card: React.FC<{
             {categories?.map((category, index) => {
               if (typeof category === 'object') {
                 const isLast = index === categories.length - 1
+                const rubric = sectionForCategorySlug(category.slug)
+                const categoryPath =
+                  category.slug === 'consommer-camerounais'
+                    ? withLocale(locale, '/consommer-local/cameroun')
+                    : category.slug === 'consommer-africain'
+                      ? withLocale(locale, '/consommer-local/afrique')
+                      : rubric
+                        ? localizedRubricPath(rubric, locale)
+                        : withLocale(locale, `/${category.slug}`)
                 const label = category.slug
                   ? categoryLabel(category as never, locale)
                   : category.title || (locale === 'fr' ? 'Analyse' : 'Analysis')
@@ -109,17 +121,7 @@ export const Card: React.FC<{
                 return (
                   <Fragment key={index}>
                     {category.slug ? (
-                      <Link
-                        className="relative z-20"
-                        href={withLocale(
-                          locale,
-                          category.slug === 'consommer-camerounais'
-                            ? '/consommer-local/cameroun'
-                            : category.slug === 'consommer-africain'
-                              ? '/consommer-local/afrique'
-                              : `/${category.slug}`,
-                        )}
-                      >
+                      <Link className="relative z-20" href={categoryPath}>
                         {label}
                       </Link>
                     ) : (
