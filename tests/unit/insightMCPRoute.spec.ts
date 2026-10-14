@@ -1,16 +1,19 @@
 // @vitest-environment node
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+const { verifyOAuth } = vi.hoisted(() => ({ verifyOAuth: vi.fn(async (): Promise<{ userId: number; scopes: string[] } | null> => ({ userId: 1, scopes: ['editorial:read'] })) }))
 
 vi.mock('@payload-config', () => ({ default: {} }))
 vi.mock('payload', () => ({
   getPayload: vi.fn(async () => ({
     auth: async () => ({ user: { id: 1 } }),
+    findByID: async () => ({ id: 1, name: 'Editor' }),
     find: async () => ({ docs: [{ id: 1, name: 'Author', email: 'private@example.com' }] }),
     logger: { error: vi.fn() },
   })),
   createLocalReq: vi.fn(async (_options, payload) => ({ payload })),
 }))
+vi.mock('@/automation/oauth/store', () => ({ oauthBackend: vi.fn(async () => ({ oauth: { verify: verifyOAuth } })) }))
 import { getPayload } from 'payload'
 import { POST, GET, DELETE } from '@/app/api/mcp/route'
 
@@ -37,7 +40,9 @@ afterEach(() => vi.unstubAllEnvs())
 
 describe('hosted MCP route', () => {
   it('blocks invalid credentials and foreign browser origins before opening Payload', async () => {
-    expect((await POST(request({}, { Authorization: 'Bearer wrong' }))).status).toBe(401)
+    const denied = await POST(request({}, { Authorization: 'Bearer wrong' }))
+    expect(denied.status).toBe(401)
+    expect(denied.headers.get('WWW-Authenticate')).toContain('oauth-protected-resource/api/mcp')
     expect((await POST(request({}, { Origin: 'https://untrusted.example' }))).status).toBe(403)
     expect(getPayload).not.toHaveBeenCalled()
   })
@@ -57,7 +62,9 @@ describe('hosted MCP route', () => {
     expect(response.status).toBe(200)
     expect((await response.json()).result.serverInfo.name).toBe('trigenys-insight')
     const tools = await POST(request({ jsonrpc: '2.0', id: 2, method: 'tools/list' }))
-    expect((await tools.json()).result.tools).toHaveLength(8)
+    const listed = (await tools.json()).result.tools
+    expect(listed).toHaveLength(8)
+    expect(listed.find((tool: { name: string }) => tool.name === 'insight_publish')._meta.securitySchemes).toEqual([{ type: 'oauth2', scopes: ['editorial:write', 'editorial:publish'] }])
     expect(getPayload).not.toHaveBeenCalled()
   })
   it('calls a tool on a fresh HTTP request and keeps private author fields out of the result', async () => {
@@ -88,8 +95,27 @@ describe('hosted MCP route', () => {
       (await POST(request(body, { ...headers, Origin: 'https://foreign.example' }))).status,
     ).toBe(401)
   })
+  it('accepts OAuth read access and returns an auth challenge before a write can reach the database', async () => {
+    const headers = { Authorization: `Bearer ins_oauth_${'a'.repeat(43)}` }
+    const authors = await POST(request({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'insight_list_authors', arguments: {} } }, headers))
+    expect((await authors.json()).result.structuredContent.docs).toEqual([{ id: 1, name: 'Author' }])
+    vi.clearAllMocks()
+    const response = await POST(request({ jsonrpc: '2.0', id: 6, method: 'tools/call', params: { name: 'insight_update_post', arguments: { postId: 8, categories: [11] } } }, headers))
+    const body = await response.json()
+    expect(body.result.isError).toBe(true)
+    expect(body.result._meta['mcp/www_authenticate'][0]).toContain('insufficient_scope')
+    expect(getPayload).not.toHaveBeenCalled()
+  })
   it('rejects unsupported GET and DELETE transports', async () => {
-    expect((await GET()).status).toBe(405)
+    expect((await GET()).status).toBe(401)
     expect((await DELETE()).status).toBe(405)
+  })
+  it('rejects expired OAuth tokens and fails closed when authentication storage is unavailable', async () => {
+    const headers = { Authorization: `Bearer ins_oauth_${'a'.repeat(43)}` }
+    verifyOAuth.mockResolvedValueOnce(null)
+    expect((await POST(request({}, headers))).status).toBe(401)
+    verifyOAuth.mockRejectedValueOnce(new Error('Database unavailable'))
+    expect((await POST(request({}, headers))).status).toBe(503)
+    expect(getPayload).not.toHaveBeenCalled()
   })
 })
