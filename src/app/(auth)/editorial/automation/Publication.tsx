@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { EditSummary } from './EditSummary'
+import { EditCategories } from './EditCategories'
 import { useRef, useState } from 'react'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
@@ -155,6 +156,7 @@ export function AutomationPublication({ authorId }: { authorId: number }) {
         </div>
       )}
       <EditSummary />
+      <EditCategories />
       <section
         aria-label="Journal de publication"
         className="mt-8 rounded-lg border border-slate-200 p-6"

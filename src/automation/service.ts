@@ -127,10 +127,13 @@ export async function executeEditorialOperation(
     })
     return { ok: true, id: media.id, url: media.url ?? null, reused: false }
   }
-  const slug = editorialSlug(input.idempotencyKey)
+  const byID = input.operation === 'get-post' || input.operation === 'update-post'
+  if (byID && Boolean(input.idempotencyKey) === Boolean(input.postId))
+    throw new EditorialError(400, 'provide_exactly_one_post_identifier')
+  const slug = editorialSlug(input.idempotencyKey ?? '')
   const existing = await payload.find({
     collection: 'posts',
-    where: { slug: { equals: slug } },
+    where: byID && input.postId ? { id: { equals: input.postId } } : { slug: { equals: slug } },
     limit: 1,
     depth: 0,
     draft: true,
@@ -149,7 +152,9 @@ export async function executeEditorialOperation(
     if (
       input.title === undefined &&
       input.excerpt === undefined &&
-      input.seoDescription === undefined
+      input.seoDescription === undefined &&
+      input.categories === undefined &&
+      input.status === undefined
     ) {
       throw new EditorialError(400, 'empty_update')
     }
@@ -159,7 +164,10 @@ export async function executeEditorialOperation(
     ) {
       throw new EditorialError(409, 'stale_update')
     }
+    if (input.categories) await requireReferences(req, 'categories', input.categories)
     const data: Partial<Post> = {
+      ...(input.status ? { _status: input.status === 'PUBLISHED' ? 'published' : 'draft' } : {}),
+      ...(input.categories ? { categories: [...new Set(input.categories)] } : {}),
       ...(input.title !== undefined ? { title: input.title } : {}),
       ...(input.excerpt !== undefined ? { excerpt: input.excerpt } : {}),
       ...(input.seoDescription !== undefined
@@ -172,7 +180,7 @@ export async function executeEditorialOperation(
       data,
       locale: input.locale,
       fallbackLocale: false,
-      draft: previous._status !== 'published',
+      draft: (input.status ? input.status !== 'PUBLISHED' : previous._status !== 'published'),
       depth: 0,
       overrideAccess: true,
       req,

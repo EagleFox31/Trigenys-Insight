@@ -127,7 +127,8 @@ export const sourceSchema = z
   .strict()
 export const getPostSchema = z
   .object({
-    idempotencyKey: text.max(200),
+    idempotencyKey: text.max(200).optional(),
+    postId: id.optional(),
     locale: locale.default('fr'),
   })
   .strict()
@@ -136,6 +137,8 @@ export const updatePostSchema = getPostSchema
     title: text.max(500).optional(),
     excerpt: text.max(320).optional(),
     seoDescription: text.max(500).optional(),
+    categories: z.array(id).min(1).max(10).optional(),
+    status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
     expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
   })
   .strict()

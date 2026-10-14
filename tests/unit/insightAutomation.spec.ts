@@ -171,6 +171,23 @@ describe('publishing API and SDK contract', () => {
     ).rejects.toMatchObject({ status: 409 })
     expect(db.posts[0].excerpt).toBe('Un résumé concret.')
   })
+  it('updates categories of an existing CMS draft by ID, validates references and keeps its content', async () => {
+    const { db, client } = setup()
+    db.posts.push({ id: 8, slug: 'existing-cms-article', _status: 'draft', categories: [5], title: 'Whisp', content: { root: { children: [] } }, heroImage: 3 })
+    const before = structuredClone(db.posts[0])
+    const result = await client.updatePost({ postId: 8, categories: [2, 2] })
+    expect(result).toMatchObject({ id: 8, status: 'DRAFT', slug: 'existing-cms-article' })
+    expect(db.posts[0]).toEqual({ ...before, categories: [2] })
+    expect((await client.getPostById(8)).post.id).toBe(8)
+    await expect(client.updatePost({ postId: 8, categories: [999] })).rejects.toMatchObject({ status: 422 })
+    await expect(client.updatePost({ postId: 8, categories: [] })).rejects.toMatchObject({ name: 'ZodError' })
+    await expect(client.updatePost({ categories: [2] })).rejects.toMatchObject({ status: 400 })
+    await expect(client.updatePost({ postId: 8, idempotencyKey: 'ambiguous', categories: [2] })).rejects.toMatchObject({ status: 400 })
+    expect(db.posts[0].categories).toEqual([2])
+    await client.updatePost({ postId: 8, categories: [2], status: 'PUBLISHED' })
+    expect(db.posts[0]._status).toBe('published')
+    expect(db.posts[0].content).toEqual(before.content)
+  })
   it('retains the old text-only request format and chooses defaults only on creation', async () => {
     const { db, client } = setup()
     const { authors: _a, categories: _c, ...legacy } = article

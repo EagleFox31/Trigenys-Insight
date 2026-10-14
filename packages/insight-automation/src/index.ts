@@ -115,6 +115,9 @@ export class InsightClient {
   updatePost(input: UpdatePostInput) {
     return this.request<UpdatePostResult>({ ...input, operation: 'update-post' })
   }
+  getPostById(postId: number, locale: 'fr' | 'en' = 'fr') {
+    return this.request<PostResult>({ operation: 'get-post', postId, locale })
+  }
   listCategories(locale: 'fr' | 'en' = 'fr') {
     return this.request<ReferenceResult>({ operation: 'list-categories', locale })
   }

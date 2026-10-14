@@ -72,7 +72,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_get_post',
     {
       description:
-        'Read an automation article by its stable idempotency key, including its draft content.',
+        'Read an existing article, including draft content. Provide exactly one identifier: postId for any CMS article, or idempotencyKey for an automation article.',
       inputSchema: getPostSchema.shape,
       annotations: read,
     },
@@ -82,7 +82,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_update_post',
     {
       description:
-        'Update only the title, excerpt or SEO description of an existing automation article. Omitted fields, rich content, media, sources and publication status are preserved. Never creates an article. Send expectedUpdatedAt from a recent get_post response to reject a stale edit.',
+        'Update selected title, excerpt, SEO description, category IDs or explicit publication status on an existing article. Provide exactly one of postId or idempotencyKey. Categories replaces the entire category list; its first item is the primary category. Omitted fields and status are preserved. Never creates an article. Send expectedUpdatedAt from a recent get_post response to reject a stale edit. Set status only when the user requests a publication status change or restoration.',
       inputSchema: updatePostSchema.shape,
       annotations: write,
     },
