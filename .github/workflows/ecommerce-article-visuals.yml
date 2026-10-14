@@ -1,0 +1,116 @@
+name: Build ecommerce article brand visuals
+on:
+  push:
+    paths:
+      - ".github/workflows/ecommerce-article-visuals.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install Pillow requests
+      - name: Build cover and section images from real website icons
+        run: |
+          python - <<'PY'
+          from PIL import Image,ImageDraw,ImageFont,ImageOps
+          from io import BytesIO
+          from pathlib import Path
+          import requests, math
+          OUT=Path("public/editorial/ecommerce-cameroun-2026")
+          OUT.mkdir(parents=True,exist_ok=True)
+          brands=[
+            ("Glotelho","glotelho.cm"),
+            ("Iziway","iziway.cm"),
+            ("KiKUU","kikuu.com"),
+            ("Santa Lucia","complexesantalucia.com"),
+            ("Zrali","zrali.com"),
+            ("KamerMall","kamermall.shop"),
+            ("Xeption","xeptionetwork.shop"),
+            ("Facebook","facebook.com"),
+            ("Instagram","instagram.com"),
+            ("TikTok","tiktok.com"),
+            ("WhatsApp","whatsapp.com"),
+            ("Snapchat","snapchat.com"),
+          ]
+          session=requests.Session()
+          session.headers.update({"User-Agent":"Mozilla/5.0 (compatible; Trigenys-Insight/1.0; editorial-graphics)"})
+          assets={}
+          for name,domain in brands:
+            try:
+              r=session.get("https://www.google.com/s2/favicons",params={"domain":domain,"sz":"256"},timeout=18)
+              r.raise_for_status()
+              im=Image.open(BytesIO(r.content)).convert("RGBA")
+              if min(im.size)<16: raise ValueError("Too small")
+              assets[name]=im
+              print(name,im.size)
+            except Exception as err:
+              print("Missing icon",name,str(err))
+          FONT="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+          BOLD="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+          def font(size,bold=False):
+            return ImageFont.truetype(BOLD if bold else FONT,size)
+          BG="#101321"
+          CELL="#202639"
+          WHITE="#F5F5F7"
+          SOFT="#A5AEC6"
+          PURPLE="#A08CFF"
+          def rounded(draw,bbox,radius,fill,outline=None,width=1):
+            draw.rounded_rectangle(bbox,radius=radius,fill=fill,outline=outline,width=width)
+          def tile(im,xy,w,h,name):
+            x,y=xy
+            d=ImageDraw.Draw(im)
+            rounded(d,(x,y,x+w,y+h),24,CELL,outline="#3B4158",width=2)
+            icon=assets.get(name)
+            if icon is not None:
+              size=min(78,int(h*.35))
+              icon.thumbnail((size,size),Image.Resampling.LANCZOS)
+              ico_x=x+(w-icon.width)//2
+              ico_y=y+21
+              # White backdrop keeps favicons legible, even for transparent icons
+              rounded(d,(ico_x-8,ico_y-8,ico_x+icon.width+8,ico_y+icon.height+8),14,"#FFFFFF")
+              im.paste(icon,(ico_x,ico_y),icon)
+            label_size=28 if len(name)<11 else 22
+            b=d.textbbox((0,0),name,font=font(label_size,True))
+            d.text((x+(w-(b[2]-b[0]))//2,y+h-59),name,font=font(label_size,True),fill=WHITE)
+          def top(im,kicker,title,sub):
+            d=ImageDraw.Draw(im)
+            d.text((82,65),kicker,font=font(20,True),fill=PURPLE)
+            d.text((82,112),title,font=font(52,True),fill=WHITE)
+            d.text((84,189),sub,font=font(24),fill=SOFT)
+          def image(filename,title,sub,items):
+            im=Image.new("RGB",(1600,900),BG)
+            top(im,"TRIGENYS INSIGHT  /  DOSSIER CAMEROUN",title,sub)
+            cols=4 if len(items)>4 else len(items)
+            cols=max(1,cols)
+            rows=math.ceil(len(items)/cols)
+            gap=24
+            width=int((1436-gap*(cols-1))/cols)
+            height=min(230,int((540-gap*(rows-1))/rows))
+            start_y=290+(540-(rows*height+gap*(rows-1)))//2
+            for i,n in enumerate(items):
+              tile(im,(82+(i%cols)*(width+gap),start_y+(i//cols)*(height+gap)),width,height,n)
+            ImageDraw.Draw(im).text((84,855),"Identités visuelles : icônes publiques des sites et réseaux cités.",font=font(17),fill=SOFT)
+            im.save(OUT/filename,format="WEBP",quality=88,method=6)
+            print(filename,(OUT/filename).stat().st_size)
+          image("hero.webp","E-commerce au Cameroun","Plateformes, challengers et commerce social",["Glotelho","Iziway","KiKUU","Zrali","KamerMall","Xeption","Facebook","TikTok"])
+          image("plateformes.webp","Les plateformes établies","Trois approches de l'achat en ligne",["Glotelho","Iziway","KiKUU"])
+          image("hybride.webp","La distribution hybride","La relation client se digitalise par étapes",["Santa Lucia","WhatsApp"])
+          image("challengers.webp","La nouvelle génération","Mode, marketplace locale et électronique",["Zrali","KamerMall","Xeption"])
+          image("social.webp","Les boutiques communautaires","L'audience devient un véritable canal de vente",["Facebook","Instagram","TikTok","Snapchat","WhatsApp"])
+          PY
+      - name: Commit article visuals
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/editorial/ecommerce-cameroun-2026
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: add ecommerce Cameroon editorial brand visuals"
+            git push
+          fi
