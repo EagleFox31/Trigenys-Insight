@@ -9,6 +9,7 @@ import {
   type UpdatePostResult,
 } from '../../../../../packages/insight-automation/src/index'
 import { portfolioArticle } from '@/editorial/github-portfolio'
+import { sameArticleContent } from '@/editorial/sameArticleContent'
 
 export function EditSummary() {
   const [pending, setPending] = useState(false)
@@ -69,7 +70,7 @@ export function EditSummary() {
         if (
           after.post.excerpt !== (locale === 'fr' ? fr : en) ||
           after.post._status !== before.post._status ||
-          JSON.stringify(after.post.content) !== JSON.stringify(before.post.content) ||
+          !sameArticleContent(before.post.content, after.post.content) ||
           after.post.heroImage !== before.post.heroImage
         ) {
           throw new Error('La vérification après modification a échoué')
