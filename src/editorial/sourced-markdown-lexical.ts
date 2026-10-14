@@ -33,13 +33,15 @@ function inlineNodes(markdown: string): unknown[] {
 
 export function createSourcedEditorialDocument(
   source: string,
-  chart?: { marker: string; data: EditorialChartInput },
+  chart?: { marker: string; data: EditorialChartInput } | Array<{ marker: string; data: EditorialChartInput }>,
 ): Post['content'] {
+  const chartByMarker = new Map((Array.isArray(chart) ? chart : chart ? [chart] : []).map(entry => [entry.marker, entry.data]))
   const paragraphs = source.trim().split(/\n\s*\n/).map(p => p.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean)
   const children = paragraphs.map(block => {
-    if (chart && block === chart.marker) {
+    const chartData = chartByMarker.get(block)
+    if (chartData) {
       return { type: 'block', version: 2, format: '',
-        fields: { blockType: 'chart', ...chart.data } }
+        fields: { blockType: 'chart', ...chartData } }
     }
     const heading = block.match(/^(#{2,4})\s+(.+)$/)
     if (heading) {

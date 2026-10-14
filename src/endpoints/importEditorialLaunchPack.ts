@@ -1,6 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
 import { october11EditorialArticles } from '@/editorial/october-11-2026'
+import { geminiArgonArticle } from '@/editorial/gemini-4-argon-rounds-2026'
 import { createSourcedEditorialDocument } from '@/editorial/sourced-markdown-lexical'
 
 import {
@@ -178,7 +179,7 @@ export async function importEditorialLaunchPack({
   }> = []
 
   const standardArticles = [...editorialLaunchArticles, learningAiBackwardsArticle, fc27Article, whispArticle, cfaoArticle, freellmapiArticle, cloudflareContainersArticle, dangoteLamuRefineryArticle, kempinskiDoualaArticle, internetCameroonPeeringArticle, africaAiGovernanceArticle, nvidiaCudaHuaweiArticle, stablecoinsCfaArticle]
-  const candidates = onlySlugs ? [...standardArticles, ...october11EditorialArticles] : standardArticles
+  const candidates = onlySlugs ? [...standardArticles, ...october11EditorialArticles, geminiArgonArticle] : standardArticles
   for (const article of candidates.filter(
     (item) => (!onlySlug || item.slug === onlySlug) && (!onlySlugs || onlySlugs.includes(item.slug)),
   )) {
@@ -235,8 +236,10 @@ export async function importEditorialLaunchPack({
           _status: 'draft',
           authors: [req.user.id],
           categories: articleCategoryIds,
-          content: article.id.startsWith('2026-10-11-')
-            ? createSourcedEditorialDocument(article.fr.content, article.chart && { marker: article.chart.marker, data: article.chart.fr })
+          content: (article.id.startsWith('2026-10-11-') || article.slug === geminiArgonArticle.slug)
+            ? createSourcedEditorialDocument(article.fr.content, article.slug === geminiArgonArticle.slug
+              ? geminiArgonArticle.charts.map(chart => ({ marker: chart.marker, data: chart.fr }))
+              : article.chart && { marker: article.chart.marker, data: article.chart.fr })
             : createEditorialLexicalDocument(article.fr.content, article.chart && { marker: article.chart.marker, data: article.chart.fr }),
           editorsPick: article.editorsPick,
           excerpt: article.fr.excerpt,
@@ -280,8 +283,10 @@ export async function importEditorialLaunchPack({
         collection: 'posts',
         id: post.id,
         data: {
-          content: article.id.startsWith('2026-10-11-')
-            ? createSourcedEditorialDocument(article.en.content, article.chart && { marker: article.chart.marker, data: article.chart.en })
+          content: (article.id.startsWith('2026-10-11-') || article.slug === geminiArgonArticle.slug)
+            ? createSourcedEditorialDocument(article.en.content, article.slug === geminiArgonArticle.slug
+              ? geminiArgonArticle.charts.map(chart => ({ marker: chart.marker, data: chart.en }))
+              : article.chart && { marker: article.chart.marker, data: article.chart.en })
             : createEditorialLexicalDocument(article.en.content, article.chart && { marker: article.chart.marker, data: article.chart.en }),
           excerpt: article.en.excerpt,
           meta: {

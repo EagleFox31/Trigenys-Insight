@@ -1,6 +1,7 @@
 import { ImportCybastionButton } from '@/components/insights/ImportCybastionButton'
 import { ImportEditorialLaunchPackButton } from '@/components/insights/ImportEditorialLaunchPackButton'
 import { ImportOctober11Button } from '@/components/insights/ImportOctober11Button'
+import { ImportGeminiArgonButton } from '@/components/insights/ImportGeminiArgonButton'
 import { october11EditorialArticles } from '@/editorial/october-11-2026'
 import { UpdateArticleReadabilityButton } from '@/components/insights/UpdateArticleReadabilityButton'
 import { RefreshSeptemberEditorialButton } from '@/components/insights/RefreshSeptemberEditorialButton'
@@ -58,6 +59,20 @@ export default async function ImportCybastionPage() {
         </h1>
 
         <div className="grid gap-8">
+          <section className="rounded-md border border-emerald-200 bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
+            <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#1f6852]">
+              Édition du 14 octobre 2026 · Import ciblé
+            </p>
+            <h2 className="m-0 font-[var(--font-fraunces)] text-[clamp(28px,4vw,42px)] font-semibold leading-[1.08] tracking-[-0.035em] text-[#102f52]">
+              Gemini 4 Argon vs Claude et ChatGPT
+            </h2>
+            <p className="mt-4 max-w-[760px] text-[15px] leading-7 text-[#62686d]">
+              Une analyse orientée développeurs et créateurs : quatre rounds avec quatre graphiques
+              interactifs sourcés, plus une version anglaise originale. Import uniquement en brouillon,
+              sans écraser les articles existants. Vérifier le visuel hero avant publication.
+            </p>
+            <ImportGeminiArgonButton />
+          </section>
           <section className="rounded-md border border-emerald-200 bg-white p-8 shadow-[0_20px_50px_rgba(16,47,82,0.07)] md:p-10">
             <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#1f6852]">
               Édition du 11 octobre 2026 · Import ciblé
