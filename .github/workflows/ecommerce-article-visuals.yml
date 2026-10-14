@@ -44,7 +44,7 @@ jobs:
           assets={}
           for name,domain in brands:
             try:
-              r=session.get("https://www.google.com/s2/favicons",params={"domain":domain,"sz":"256"},timeout=18)
+              r=session.get("https://raw.githubusercontent.com/EagleFox31/xeption237/main/public/icons/icon-192x192.png" if name=="Xeption" else "https://www.google.com/s2/favicons",params=None if name=="Xeption" else {"domain":domain,"sz":"256"},timeout=18)
               r.raise_for_status()
               im=Image.open(BytesIO(r.content)).convert("RGBA")
               if min(im.size)<16: raise ValueError("Too small")
