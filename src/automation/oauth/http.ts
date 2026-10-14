@@ -2,8 +2,16 @@ import { digest, OAuthError, oauthURLs } from './core'
 import type { OAuthStore } from './core'
 
 export const privateHeaders = {
-  'Cache-Control': 'no-store', Pragma: 'no-cache', 'Referrer-Policy': 'no-referrer',
+  // no-referrer turns a native form POST's Origin into null. Keep same-origin
+  // submissions identifiable while still withholding referrers from ChatGPT.
+  'Cache-Control': 'no-store', Pragma: 'no-cache', 'Referrer-Policy': 'same-origin',
   'X-Content-Type-Options': 'nosniff',
+}
+export const consentPageHeaders = {
+  ...privateHeaders,
+  'Content-Type': 'text/html; charset=utf-8',
+  // Chromium also checks the callback redirect against form-action.
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://chatgpt.com; frame-ancestors 'none'; base-uri 'none'",
 }
 export function oauthFailure(error: unknown) {
   return Response.json({ error: error instanceof OAuthError ? error.code : 'server_error' }, { status: error instanceof OAuthError ? error.status : 500, headers: privateHeaders })
