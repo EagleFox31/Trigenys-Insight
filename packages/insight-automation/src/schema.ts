@@ -131,6 +131,24 @@ export const getPostSchema = z
     locale: locale.default('fr'),
   })
   .strict()
+export const updatePostSchema = getPostSchema
+  .extend({
+    title: text.max(500).optional(),
+    excerpt: text.max(320).optional(),
+    seoDescription: text.max(500).optional(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .strict()
+export type UpdatePostInput = z.input<typeof updatePostSchema>
+export type UpdatePostResult = {
+  ok: true
+  id: number
+  slug: string
+  status: 'DRAFT' | 'PUBLISHED'
+  updatedAt: string
+  url: string | null
+}
+
 export const referenceSchema = z.object({ locale: locale.default('fr') }).strict()
 
 export const operationSchema = z.discriminatedUnion('operation', [
@@ -139,6 +157,7 @@ export const operationSchema = z.discriminatedUnion('operation', [
   uploadSchema.extend({ operation: z.literal('upload-media') }),
   sourceSchema.extend({ operation: z.literal('upsert-source') }),
   getPostSchema.extend({ operation: z.literal('get-post') }),
+  updatePostSchema.extend({ operation: z.literal('update-post') }),
   referenceSchema.extend({ operation: z.literal('list-categories') }),
   referenceSchema.extend({ operation: z.literal('list-authors') }),
 ])

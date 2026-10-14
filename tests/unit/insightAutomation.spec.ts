@@ -129,6 +129,48 @@ describe('publishing API and SDK contract', () => {
     expect(published.url).toBe(`/fr/posts/${first.slug}`)
     expect((await client.getPost(article.idempotencyKey)).post._status).toBe('published')
   })
+  it('updates only the excerpt and SEO description while preserving the published article', async () => {
+    const { db, client } = setup()
+    const published = await client.publish({
+      ...article,
+      heroImage: 3,
+      metadata: { seo: { title: 'Original SEO', description: 'Original description', image: 3 } },
+    })
+    const before = structuredClone(db.posts[0])
+    db.posts[0].updatedAt = '2026-10-14T08:00:00.000Z'
+    const result = await client.updatePost({
+      idempotencyKey: article.idempotencyKey,
+      excerpt: 'Un résumé concret.',
+      seoDescription: 'Une description concrète.',
+      expectedUpdatedAt: '2026-10-14T08:00:00.000Z',
+    })
+    expect(result.id).toBe(published.id)
+    expect(result.status).toBe('PUBLISHED')
+    expect(db.posts).toHaveLength(1)
+    expect(db.posts[0].excerpt).toBe('Un résumé concret.')
+    expect(db.posts[0].content).toEqual(before.content)
+    expect(db.posts[0].heroImage).toBe(3)
+    expect(db.posts[0].categories).toEqual(before.categories)
+    expect(db.posts[0].meta).toEqual({
+      title: 'Original SEO',
+      description: 'Une description concrète.',
+      image: 3,
+    })
+    await expect(
+      client.updatePost({ idempotencyKey: 'missing', excerpt: 'A summary' }),
+    ).rejects.toMatchObject({ status: 404 })
+    await expect(
+      client.updatePost({ idempotencyKey: article.idempotencyKey }),
+    ).rejects.toMatchObject({ status: 400 })
+    await expect(
+      client.updatePost({
+        idempotencyKey: article.idempotencyKey,
+        excerpt: 'Outdated',
+        expectedUpdatedAt: '2026-10-13T08:00:00.000Z',
+      }),
+    ).rejects.toMatchObject({ status: 409 })
+    expect(db.posts[0].excerpt).toBe('Un résumé concret.')
+  })
   it('retains the old text-only request format and chooses defaults only on creation', async () => {
     const { db, client } = setup()
     const { authors: _a, categories: _c, ...legacy } = article
@@ -389,6 +431,6 @@ describe('MCP protocol', () => {
     expect(init.json.result.serverInfo.name).toBe('trigenys-insight')
     const tools = await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' })
     expect(tools.status).toBe(200)
-    expect(tools.json.result.tools).toHaveLength(7)
+    expect(tools.json.result.tools).toHaveLength(8)
   })
 })

@@ -143,6 +143,49 @@ export async function executeEditorialOperation(
     if (!existing.docs[0]) throw new EditorialError(404, 'post_not_found')
     return { ok: true, post: existing.docs[0] }
   }
+  if (input.operation === 'update-post') {
+    const previous = existing.docs[0]
+    if (!previous) throw new EditorialError(404, 'post_not_found')
+    if (
+      input.title === undefined &&
+      input.excerpt === undefined &&
+      input.seoDescription === undefined
+    ) {
+      throw new EditorialError(400, 'empty_update')
+    }
+    if (
+      input.expectedUpdatedAt &&
+      Date.parse(input.expectedUpdatedAt) !== Date.parse(previous.updatedAt)
+    ) {
+      throw new EditorialError(409, 'stale_update')
+    }
+    const data: Partial<Post> = {
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.excerpt !== undefined ? { excerpt: input.excerpt } : {}),
+      ...(input.seoDescription !== undefined
+        ? { meta: { ...previous.meta, description: input.seoDescription } }
+        : {}),
+    }
+    const stored = await payload.update({
+      collection: 'posts',
+      id: previous.id,
+      data,
+      locale: input.locale,
+      fallbackLocale: false,
+      draft: previous._status !== 'published',
+      depth: 0,
+      overrideAccess: true,
+      req,
+    })
+    return {
+      ok: true,
+      id: stored.id,
+      slug: stored.slug,
+      status: stored._status === 'published' ? 'PUBLISHED' : 'DRAFT',
+      updatedAt: stored.updatedAt,
+      url: stored._status === 'published' ? `/${input.locale}/posts/${stored.slug}` : null,
+    }
+  }
   if (validateMarkers(input).length) throw new EditorialError(422, 'invalid_content_markers')
 
   const previous = existing.docs[0]

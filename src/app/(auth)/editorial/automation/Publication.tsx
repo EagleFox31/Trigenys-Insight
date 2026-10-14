@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { EditSummary } from './EditSummary'
 import { useRef, useState } from 'react'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
@@ -153,6 +154,7 @@ export function AutomationPublication({ authorId }: { authorId: number }) {
           </Link>
         </div>
       )}
+      <EditSummary />
       <section
         aria-label="Journal de publication"
         className="mt-8 rounded-lg border border-slate-200 p-6"

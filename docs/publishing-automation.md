@@ -193,6 +193,7 @@ MCP host. Available tools:
 - `insight_list_categories`
 - `insight_list_authors`
 - `insight_get_post`
+- `insight_update_post`
 - `insight_upsert_source`
 - `insight_upload_media`
 - `insight_create_draft`
@@ -214,3 +215,14 @@ post, 409 concurrent first-write conflict, 413 request/image too large, 422 bad 
 content markers or relationship IDs, 503 missing legacy author/category defaults.
 Unexpected server errors are logged privately and returned as `publication_failed`.
 No database schema migration is required.
+
+## Updating an existing summary
+
+`InsightClient.updatePost({ idempotencyKey, locale, excerpt, seoDescription, expectedUpdatedAt })`
+and `insight_update_post` update only the supplied fields. They never create a post
+and preserve content, media, relationships and publication status. The optional
+`expectedUpdatedAt` rejects an already stale snapshot before writing; it is not an
+atomic revision lease, so orchestrators should serialize concurrent edits. Empty
+updates are rejected. The authenticated workspace `/editorial/automation` loads
+the existing FR/EN summaries and submits targeted MCP updates, then reads them
+back through the SDK to verify preservation of the rich content and cover.

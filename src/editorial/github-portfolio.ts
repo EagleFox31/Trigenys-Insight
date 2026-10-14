@@ -27,7 +27,7 @@ export const portfolioArticle: Record<'fr' | 'en', ArticleInput> = {
     locale: 'fr',
     title: 'Ton GitHub raconte-t-il ce que ton CV promet ?',
     excerpt:
-      'Un portfolio convaincant montre un problème, des décisions et un résultat vérifiable. Comment construire cette preuve quand on débute, au Cameroun ou ailleurs en Afrique.',
+      'Tu postules comme développeur ? Voici comment montrer sur GitHub ce que tu sais faire : choisir un projet utile, expliquer ton code, montrer une démo et répondre aux questions d’un recruteur.',
     categories: [10],
     kind: 'guide',
     readingTime: 6,
@@ -35,7 +35,7 @@ export const portfolioArticle: Record<'fr' | 'en', ArticleInput> = {
       seo: {
         title: 'Portfolio GitHub : prouver ses compétences de développeur',
         description:
-          'Projets, documentation, tests et décisions : construire un portfolio GitHub crédible pour sa carrière de développeur en Afrique.',
+          'Développeur junior : apprends à présenter tes projets GitHub à un recruteur, avec une démo, un README clair et des tests.',
       },
     },
     keyTakeaways: [
@@ -147,7 +147,7 @@ Ton portfolio n’a pas besoin de raconter une carrière que tu n’as pas encor
     locale: 'en',
     title: 'Does your GitHub back up the promises on your CV?',
     excerpt:
-      'A credible developer portfolio connects a problem, engineering decisions and verifiable work. A practical approach for early-career developers across Africa.',
+      'Applying for a developer role? Learn how to choose a useful project, explain your code, show a working demo and make your GitHub profile easier for a recruiter to assess.',
     categories: [10],
     kind: 'guide',
     readingTime: 5,
@@ -155,7 +155,7 @@ Ton portfolio n’a pas besoin de raconter une carrière que tu n’as pas encor
       seo: {
         title: 'GitHub portfolio: show evidence of your developer skills',
         description:
-          'Build a credible developer portfolio with a clear problem, reproducible setup, meaningful tests and honest evidence of your contribution.',
+          'Learn how to present your GitHub projects to a recruiter with a working demo, a clear README and useful tests.',
       },
     },
     keyTakeaways: [

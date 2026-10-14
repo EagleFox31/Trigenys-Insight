@@ -5,6 +5,7 @@ import {
   referenceSchema,
   sourceSchema,
   uploadSchema,
+  updatePostSchema,
   type EditorialOperationInput,
 } from './schema.ts'
 
@@ -76,6 +77,16 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       annotations: read,
     },
     (input) => execute({ ...input, operation: 'get-post' }),
+  )
+  server.registerTool(
+    'insight_update_post',
+    {
+      description:
+        'Update only the title, excerpt or SEO description of an existing automation article. Omitted fields, rich content, media, sources and publication status are preserved. Never creates an article. Send expectedUpdatedAt from a recent get_post response to reject a stale edit.',
+      inputSchema: updatePostSchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'update-post' }),
   )
   server.registerTool(
     'insight_upload_media',

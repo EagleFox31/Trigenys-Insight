@@ -9,6 +9,8 @@ import {
   type MediaResult,
   type ReferenceResult,
   type PostResult,
+  type UpdatePostInput,
+  type UpdatePostResult,
 } from './schema.ts'
 export * from './schema.ts'
 
@@ -109,6 +111,9 @@ export class InsightClient {
   }
   getPost(idempotencyKey: string, locale: 'fr' | 'en' = 'fr') {
     return this.request<PostResult>({ operation: 'get-post', idempotencyKey, locale })
+  }
+  updatePost(input: UpdatePostInput) {
+    return this.request<UpdatePostResult>({ ...input, operation: 'update-post' })
   }
   listCategories(locale: 'fr' | 'en' = 'fr') {
     return this.request<ReferenceResult>({ operation: 'list-categories', locale })

@@ -13,7 +13,7 @@ const categories = await insight.listCategories('fr')
 const authors = await insight.listAuthors()
 ```
 
-Methods: `createDraft`, `publish`, `uploadMedia`, `upsertSource`, `getPost`,
+Methods: `updatePost`, `createDraft`, `publish`, `uploadMedia`, `upsertSource`, `getPost`,
 `listCategories`, `listAuthors`. Input schemas and types are exported. Publishing
 requires a complete article; reuse its idempotency key across retries and FR/EN
 translations. The token is a trusted server credential, never a browser secret.
