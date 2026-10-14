@@ -3,7 +3,6 @@ import { withLocale } from '@/i18n/config'
 import { categoryLabel, formatPostDate } from '@/i18n/content'
 import { localizedRubricPath, sectionForCategorySlug } from '@/editorial/rubrics'
 import { getMessages } from '@/i18n/messages'
-import { ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
@@ -13,6 +12,7 @@ import type { Post } from '@/payload-types'
 import { Media } from '@/components/Media'
 import { authorSlug } from '@/utilities/authorSlug'
 import { ArticleShareButtons } from '@/components/insights/ArticleShareButtons'
+import { ArticleBackLink } from '@/components/insights/ArticleBackLink'
 import { absoluteCanonicalURL } from '@/seo/structuredData'
 import { getEditorialVisuals, localizedEditorialText } from '@/editorial/editorial-visuals'
 
@@ -42,10 +42,7 @@ export const PostHero: React.FC<{
   return (
     <header className="post-hero">
       <div className="insights-shell post-hero__copy">
-        <Link className="post-hero__back" href={withLocale(locale, '/posts')}>
-          <ArrowLeft aria-hidden="true" size={15} strokeWidth={1.8} />
-          {t.back}
-        </Link>
+        <ArticleBackLink locale={locale} />
 
         <div className="story-kicker">
           {categories?.map((category, index) => {
