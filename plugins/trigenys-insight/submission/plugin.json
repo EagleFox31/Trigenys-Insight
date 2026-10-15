@@ -1,0 +1,92 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "dev-6acf85d9d6708191a7462b0b7e9acb95",
+  "version": "1.1.0",
+  "description": "Manage Trigenys Insight drafts, articles, research sources and scheduled publication with an authorized editorial account.",
+  "author": {
+    "name": "Jennifer Aka’a"
+  },
+  "homepage": "https://insight.trigenys.com/en/integrations/chatgpt",
+  "repository": "https://github.com/EagleFox31/Trigenys-Insight",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Trigenys Insight",
+        "shortDescription": "Manage editorial publishing",
+        "longDescription": "Trigenys Insight helps authorized editors manage the existing Trigenys Insight publication from ChatGPT. Read drafts, list authors and categories, create or revise articles, upload images, manage research sources and related articles, publish explicitly requested content, and schedule, reschedule or cancel future publication. Content supports French and English. An existing authorized Trigenys Insight editorial account is required. The plugin does not create accounts or manage unrelated websites, social networks, payments or purchases. Scheduling publishes the latest saved draft and checks due jobs approximately every five minutes, with possible delays.",
+        "developerName": "Jennifer Aka’a",
+        "category": "Productivity",
+        "defaultPrompt": [
+          "Show the authors and categories available for my next article.",
+          "Create a draft from the text I provide.",
+          "Show my scheduled Trigenys Insight articles."
+        ],
+        "websiteURL": "https://insight.trigenys.com/en/integrations/chatgpt",
+        "supportURL": "https://insight.trigenys.com/fr/contact",
+        "logo": "./assets/logo.png",
+        "composerIcon": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "An authorized test editor with at least one author and category. Return available author and category IDs and public names, excluding emails, password hashes and tokens.",
+              "prompt": "Quels auteurs et catégories puis-je utiliser pour mon prochain article ?",
+              "tools_triggered": "insight_list_authors, insight_list_categories",
+              "expected_behavior": "List IDs and names returned by both tools; do not choose or fabricate IDs, and do not reveal private user fields."
+            },
+            {
+              "description": "Use an isolated review environment with sample author/category IDs 1 and 2. The user supplies a short original body and title. Reuse the same idempotency key on a retry.",
+              "prompt": "Crée un brouillon intitulé « Exemple de revue Trigenys » avec ce texte : « Un exemple original destiné à tester le parcours éditorial. » Utilise l’auteur 1 et la catégorie 2. Ne le publie pas.",
+              "tools_triggered": "insight_create_draft",
+              "expected_behavior": "Create a DRAFT, return its real ID/admin link and do not call insight_publish. Repeating the request with the same key does not duplicate the draft."
+            },
+            {
+              "description": "Continue from the created sample draft; read its actual ID and updatedAt first. Existing references and body must be retained.",
+              "prompt": "Remplace seulement le résumé de ce brouillon par « Un exemple concret pour vérifier le parcours éditorial. »",
+              "tools_triggered": "insight_get_post, insight_update_post",
+              "expected_behavior": "Read the actual draft, update excerpt with expectedUpdatedAt, retain content and DRAFT status and report only the confirmed change."
+            },
+            {
+              "description": "Use the same sample draft; choose tomorrow at 09:00 Africa/Douala from the live test date, using an explicit UTC offset. Test account has publication permission.",
+              "prompt": "Programme ce brouillon pour demain à 9 h, heure du Cameroun, puis montre-moi sa programmation.",
+              "tools_triggered": "insight_schedule_post, insight_list_schedules",
+              "expected_behavior": "Queue the existing post at the requested future instant, return the real job ID/date, preserve content and draft status; list the same job and explain best-effort five-minute checks."
+            },
+            {
+              "description": "Continue from the pending sample publication. Only the sample job is cancelled; no article is deleted or unpublished.",
+              "prompt": "Annule la programmation de cet article et vérifie qu’il reste en brouillon.",
+              "tools_triggered": "insight_cancel_schedule, insight_list_schedules, insight_get_post",
+              "expected_behavior": "Cancel only pending publication jobs for that post, show no pending job for it, and confirm its unchanged draft status. If processing already started, surface the conflict instead of claiming success."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Other publishing destinations are unsupported. Explain the limitation; do not call insight_publish, create a draft or claim an external post was sent.",
+              "prompt": "Publie cet article sur LinkedIn et Facebook, mais pas sur Trigenys Insight."
+            },
+            {
+              "description": "The plugin does not expose user administration or credential management. Explain this and do not invoke editorial writes or request an admin password.",
+              "prompt": "Crée un compte administrateur Trigenys et envoie-moi son mot de passe."
+            },
+            {
+              "description": "There is no purchases, money transfer or finance execution tool. Explain the limit without calling the MCP or claiming a payment.",
+              "prompt": "Achète une campagne publicitaire à 50 euros pour cet article avec ma carte."
+            }
+          ]
+        },
+        "commerce": false
+      },
+      "publication": {
+        "countries": [],
+        "release_notes": "Initial public review of the existing authenticated Trigenys Insight MCP, including draft editing, sources, media, related articles and scheduled publication.",
+        "translations": {
+          "fr-FR": {
+            "shortDescription": "Gérez articles et brouillons",
+            "longDescription": "Gérez les contenus de Trigenys Insight depuis ChatGPT avec un compte éditorial autorisé : brouillons, articles, images, sources, catégories, articles liés et publications programmées. La publication exige une demande explicite. La programmation utilise la dernière version enregistrée du brouillon et peut subir un retard. Aucun achat ni paiement n’est proposé."
+          }
+        }
+      }
+    }
+  }
+}

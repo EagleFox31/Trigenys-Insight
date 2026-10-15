@@ -1,0 +1,1154 @@
+{
+  "tools": [
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Cancel all pending publication jobs for an article without changing its content or publication status. Provide exactly one postId or idempotencyKey. A publication already processing cannot be cancelled.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "idempotencyKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "insight_cancel_schedule"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Create or revise a draft. Body supports ## headings, HTTPS Markdown links, bold and italics. Put [[CHART:name]] and [[IMAGE:name]] markers in separate paragraphs and provide their definitions. relatedPosts selects an ordered list of existing linked article IDs (max 12); [] clears the list, omission preserves it. Use the same idempotencyKey across revisions and translations. Prefer this tool unless publication was explicitly requested.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "authors": {
+            "items": {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "body": {
+            "maxLength": 200000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/properties/authors/items"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "charts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "maxLength": 2000,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "marker": {
+                  "$ref": "#/properties/images/items/properties/marker"
+                },
+                "metrics": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "label": {
+                        "maxLength": 200,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "points": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "label": {
+                              "maxLength": 200,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "label",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "maxItems": 12,
+                        "minItems": 2,
+                        "type": "array"
+                      },
+                      "precision": {
+                        "default": 1,
+                        "maximum": 2,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "unit": {
+                        "maxLength": 80,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "unit",
+                      "points"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 5,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "sourceLabel": {
+                  "maxLength": 500,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "sourceUrl": {
+                  "format": "uri",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 300,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "marker",
+                "title",
+                "description",
+                "sourceLabel",
+                "sourceUrl",
+                "metrics"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "editorsPick": {
+            "type": "boolean"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "maxLength": 320,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "faq": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "answer": {
+                  "maxLength": 800,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "question": {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "question",
+                "answer"
+              ],
+              "type": "object"
+            },
+            "maxItems": 8,
+            "type": "array"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "heroImage": {
+            "$ref": "#/properties/authors/items"
+          },
+          "idempotencyKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "images": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "marker": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "pattern": "^\\[\\[(?:CHART|IMAGE):[a-zA-Z0-9_-]+\\]\\]$",
+                  "type": "string"
+                },
+                "media": {
+                  "$ref": "#/properties/authors/items"
+                }
+              },
+              "required": [
+                "marker",
+                "media"
+              ],
+              "type": "object"
+            },
+            "maxItems": 30,
+            "type": "array"
+          },
+          "keyTakeaways": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "maxLength": 280,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "analysis",
+              "guide",
+              "comparison",
+              "field-note"
+            ],
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "properties": {
+              "seo": {
+                "additionalProperties": true,
+                "properties": {
+                  "description": {
+                    "maxLength": 500,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "image": {
+                    "$ref": "#/properties/authors/items"
+                  },
+                  "metaDescription": {
+                    "maxLength": 500,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "metaTitle": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "ownerKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "readingTime": {
+            "maximum": 300,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "relatedPosts": {
+            "items": {
+              "$ref": "#/properties/authors/items"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/properties/authors/items"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "target": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "ownerKey",
+          "target",
+          "locale",
+          "title",
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "insight_create_draft"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read an existing article, including draft content. Provide exactly one identifier: postId for any CMS article, or idempotencyKey for an automation article.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "idempotencyKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "insight_get_post"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List author IDs and public names. No credentials or email addresses are returned.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {},
+        "type": "object"
+      },
+      "name": "insight_list_authors"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List available editorial category IDs and names.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "insight_list_categories"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "List pending, processing and failed article publication jobs, including schedules made in the CMS. Dates are UTC; convert to the requested local time zone for display. Cancelled and completed jobs are excluded. Paginate with page and limit.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 50,
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "type": "integer"
+          },
+          "page": {
+            "$ref": "#/properties/postId",
+            "default": 1
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "insight_list_schedules"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Publish an article immediately, making it public. Call only when the user explicitly asks to publish. Send the complete article and the same idempotencyKey used for its draft. relatedPosts selects existing linked article IDs in display order (max 12); omission preserves the selection, [] clears it. Publishing status is shared across FR/EN; create both translations as drafts before publishing.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "authors": {
+            "items": {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "body": {
+            "maxLength": 200000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/properties/authors/items"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "charts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "maxLength": 2000,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "marker": {
+                  "$ref": "#/properties/images/items/properties/marker"
+                },
+                "metrics": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "label": {
+                        "maxLength": 200,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "points": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "label": {
+                              "maxLength": 200,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "label",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "maxItems": 12,
+                        "minItems": 2,
+                        "type": "array"
+                      },
+                      "precision": {
+                        "default": 1,
+                        "maximum": 2,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "unit": {
+                        "maxLength": 80,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "unit",
+                      "points"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 5,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "sourceLabel": {
+                  "maxLength": 500,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "sourceUrl": {
+                  "format": "uri",
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 300,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "marker",
+                "title",
+                "description",
+                "sourceLabel",
+                "sourceUrl",
+                "metrics"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "editorsPick": {
+            "type": "boolean"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "maxLength": 320,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "faq": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "answer": {
+                  "maxLength": 800,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "question": {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "question",
+                "answer"
+              ],
+              "type": "object"
+            },
+            "maxItems": 8,
+            "type": "array"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "heroImage": {
+            "$ref": "#/properties/authors/items"
+          },
+          "idempotencyKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "images": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "marker": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "pattern": "^\\[\\[(?:CHART|IMAGE):[a-zA-Z0-9_-]+\\]\\]$",
+                  "type": "string"
+                },
+                "media": {
+                  "$ref": "#/properties/authors/items"
+                }
+              },
+              "required": [
+                "marker",
+                "media"
+              ],
+              "type": "object"
+            },
+            "maxItems": 30,
+            "type": "array"
+          },
+          "keyTakeaways": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "maxLength": 280,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "analysis",
+              "guide",
+              "comparison",
+              "field-note"
+            ],
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "properties": {
+              "seo": {
+                "additionalProperties": true,
+                "properties": {
+                  "description": {
+                    "maxLength": 500,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "image": {
+                    "$ref": "#/properties/authors/items"
+                  },
+                  "metaDescription": {
+                    "maxLength": 500,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "metaTitle": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "title": {
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "ownerKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "readingTime": {
+            "maximum": 300,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "relatedPosts": {
+            "items": {
+              "$ref": "#/properties/authors/items"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/properties/authors/items"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "target": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotencyKey",
+          "ownerKey",
+          "target",
+          "locale",
+          "title",
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "insight_publish"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Schedule an existing draft for future publication, or replace its pending publication date. Provide exactly one postId or idempotencyKey, publishAt as ISO 8601 with an explicit UTC offset, and the IANA timeZone (default Africa/Douala). Ask for a date if none was specified. Does not publish immediately or change content. Publishes the latest saved draft and the shared FR/EN publication status. The worker checks about every 5 minutes; execution may be delayed. An already published article is rejected. Use expectedUpdatedAt to reject stale edits.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "expectedUpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "publishAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "timeZone": {
+            "default": "Africa/Douala",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "publishAt"
+        ],
+        "type": "object"
+      },
+      "name": "insight_schedule_post"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Update selected title, excerpt, SEO description, category IDs, relatedPosts or explicit publication status on an existing article. Provide exactly one of postId or idempotencyKey. Categories replaces the category list; its first item is primary. relatedPosts replaces the ordered list of linked article IDs (max 12); [] clears it. Omitted fields and status are preserved. Related IDs must exist and cannot include the article itself. Never creates an article. Send expectedUpdatedAt from a recent get_post response to reject a stale edit. Set status only when the user requests a publication status change or restoration.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/properties/postId"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "excerpt": {
+            "maxLength": 320,
+            "minLength": 1,
+            "type": "string"
+          },
+          "expectedUpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "relatedPosts": {
+            "items": {
+              "$ref": "#/properties/postId"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "seoDescription": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "insight_update_post"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Upload a PNG, JPEG or WebP image (max 3 MiB) from base64 with meaningful alt text. Reuse the returned media ID in heroImage or image markers.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "alt": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dataBase64": {
+            "maxLength": 4194304,
+            "minLength": 1,
+            "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 180,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*\\.(png|jpg|jpeg|webp)$",
+            "type": "string"
+          },
+          "mimeType": {
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "mimeType",
+          "alt",
+          "dataBase64"
+        ],
+        "type": "object"
+      },
+      "name": "insight_upload_media"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Create or update a traceable research source by HTTPS URL. Returns its ID for the article sources array.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "accessedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "language": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en",
+              "other"
+            ],
+            "type": "string"
+          },
+          "notes": {
+            "maxLength": 10000,
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "publisher": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "accessedAt"
+        ],
+        "type": "object"
+      },
+      "name": "insight_upsert_source"
+    }
+  ]
+}
