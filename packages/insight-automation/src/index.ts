@@ -11,6 +11,10 @@ import {
   type PostResult,
   type UpdatePostInput,
   type UpdatePostResult,
+  type SchedulePostInput,
+  type PostSelector,
+  type ScheduleResult,
+  type SchedulesResult,
 } from './schema.ts'
 export * from './schema.ts'
 
@@ -123,5 +127,14 @@ export class InsightClient {
   }
   listAuthors() {
     return this.request<ReferenceResult>({ operation: 'list-authors' })
+  }
+  schedulePost(input: SchedulePostInput) {
+    return this.request<ScheduleResult>({ ...input, operation: 'schedule-post' })
+  }
+  cancelSchedule(input: PostSelector) {
+    return this.request<{ ok: true; postId: number; cancelled: number }>({ ...input, operation: 'cancel-schedule' })
+  }
+  listSchedules(input: { postId?: number; limit?: number; page?: number } = {}) {
+    return this.request<SchedulesResult>({ ...input, operation: 'list-schedules' })
   }
 }

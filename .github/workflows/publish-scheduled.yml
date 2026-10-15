@@ -1,0 +1,46 @@
+name: Publish scheduled articles
+on:
+  schedule:
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-scheduled.yml'
+      - 'src/app/api/editorial/scheduled-publish/**'
+      - 'src/automation/workerAuth.ts'
+permissions:
+  id-token: write
+concurrency:
+  group: scheduled-publications
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Run due publication jobs using a short-lived GitHub identity
+        run: |
+          node --input-type=module <<'JS'
+          const endpoint = 'https://insight.trigenys.com/api/editorial/scheduled-publish';
+          for (let attempt = 0; attempt < 20; attempt++) {
+            const url = new URL(process.env.ACTIONS_ID_TOKEN_REQUEST_URL);
+            url.searchParams.set('audience', endpoint);
+            const identity = await fetch(url, { headers: { Authorization: `Bearer ${process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN}` }, signal: AbortSignal.timeout(15000) });
+            if (!identity.ok) throw new Error(`Identity request failed: ${identity.status}`);
+            const { value } = await identity.json();
+            console.log(`::add-mask::${value}`);
+            const response = await fetch(endpoint, { method: 'POST', redirect: 'error', headers: { Authorization: `Bearer ${value}` }, signal: AbortSignal.timeout(65000) });
+            if (response.ok) {
+              const result = await response.json();
+              console.log(JSON.stringify(result));
+              process.exit(0);
+            }
+            // On a push, Vercel may still be deploying the endpoint.
+            if (![404, 409, 500, 502, 503, 504].includes(response.status)) throw new Error(`Publication worker refused request: ${response.status}`);
+            console.log(`Worker unavailable (${response.status}); retry ${attempt + 1}/20`);
+            await new Promise(resolve => setTimeout(resolve, 30000));
+          }
+          throw new Error('Publication worker unavailable after retries');
+          JS

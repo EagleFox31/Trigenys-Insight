@@ -157,6 +157,24 @@ export type UpdatePostResult = {
 
 export const referenceSchema = z.object({ locale: locale.default('fr') }).strict()
 
+export const schedulePostSchema = getPostSchema.extend({
+  publishAt: z.string().datetime({ offset: true }),
+  timeZone: text.max(100).default('Africa/Douala').refine((value) => {
+    try { new Intl.DateTimeFormat('fr', { timeZone: value }); return true } catch { return false }
+  }, 'Use an IANA time zone, e.g. Africa/Douala'),
+  expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
+}).strict()
+export const listSchedulesSchema = z.object({ postId: id.optional(), limit: id.max(100).default(50), page: id.default(1) }).strict()
+export type SchedulePostInput = z.input<typeof schedulePostSchema>
+export type PostSelector = z.input<typeof getPostSchema>
+export type ScheduleResult = { ok: true; postId: number; jobId: number; publishAt: string; timeZone: string; status: 'SCHEDULED' }
+export type SchedulesResult = {
+  ok: true
+  docs: Array<{ jobId: number; postId: number; publishAt: string | null; status: 'SCHEDULED' | 'PROCESSING' | 'FAILED' }>
+  totalDocs: number
+  hasNextPage: boolean
+}
+
 export const operationSchema = z.discriminatedUnion('operation', [
   articleSchema.extend({ operation: z.literal('draft') }),
   articleSchema.extend({ operation: z.literal('publish') }),
@@ -164,6 +182,9 @@ export const operationSchema = z.discriminatedUnion('operation', [
   sourceSchema.extend({ operation: z.literal('upsert-source') }),
   getPostSchema.extend({ operation: z.literal('get-post') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
+  schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
+  getPostSchema.extend({ operation: z.literal('cancel-schedule') }),
+  listSchedulesSchema.extend({ operation: z.literal('list-schedules') }),
   referenceSchema.extend({ operation: z.literal('list-categories') }),
   referenceSchema.extend({ operation: z.literal('list-authors') }),
 ])

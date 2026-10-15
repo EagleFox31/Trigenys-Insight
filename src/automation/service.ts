@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import sharp from 'sharp'
+import { changePublicationSchedule, listPublicationSchedules } from './scheduling'
 import type { PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
 import { createAutomationContent } from './content'
@@ -8,14 +9,8 @@ import {
   validateMarkers,
 } from '../../packages/insight-automation/src/schema'
 
-export class EditorialError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly code: string,
-  ) {
-    super(code)
-  }
-}
+import { EditorialError } from './errors'
+export { EditorialError } from './errors'
 export const editorialSlug = (key: string) =>
   `editorial-os-${createHash('sha256').update(key).digest('hex').slice(0, 20)}`
 
@@ -51,6 +46,7 @@ export async function executeEditorialOperation(
   input: EditorialOperation,
 ): Promise<Record<string, unknown>> {
   const payload = req.payload
+  if (input.operation === 'list-schedules') return listPublicationSchedules(req, input)
   if (input.operation === 'list-categories') {
     const result = await payload.find({
       collection: 'categories',
@@ -135,7 +131,7 @@ export async function executeEditorialOperation(
     })
     return { ok: true, id: media.id, url: media.url ?? null, reused: false }
   }
-  const byID = input.operation === 'get-post' || input.operation === 'update-post'
+  const byID = input.operation === 'get-post' || input.operation === 'update-post' || input.operation === 'schedule-post' || input.operation === 'cancel-schedule'
   if (byID && Boolean(input.idempotencyKey) === Boolean(input.postId))
     throw new EditorialError(400, 'provide_exactly_one_post_identifier')
   const slug = editorialSlug(input.idempotencyKey ?? '')
@@ -153,6 +149,10 @@ export async function executeEditorialOperation(
   if (input.operation === 'get-post') {
     if (!existing.docs[0]) throw new EditorialError(404, 'post_not_found')
     return { ok: true, post: existing.docs[0] }
+  }
+  if (input.operation === 'schedule-post' || input.operation === 'cancel-schedule') {
+    if (!existing.docs[0]) throw new EditorialError(404, 'post_not_found')
+    return changePublicationSchedule(req, existing.docs[0], input)
   }
   if (input.operation === 'update-post') {
     const previous = existing.docs[0]

@@ -7,10 +7,8 @@
 - Local MCP: `pnpm mcp`, or the `trigenys-insight-mcp` executable in the packaged SDK
 - TypeScript: `InsightClient` from `@trigenys/insight-automation`
 
-The remote endpoint supports MCP clients that can supply an Authorization header.
-It does not implement OAuth discovery or an OAuth login flow. A client that requires
-OAuth needs a separate authentication integration; do not assume the endpoint can
-be connected to ChatGPT simply by pasting its URL.
+The remote MCP supports OAuth with PKCE for ChatGPT, plus service Bearer credentials.
+See [OAuth configuration](mcp-oauth.md) for discovery, scopes and consent.
 
 ## Authentication
 
@@ -239,3 +237,63 @@ Exemple de modification ciblée :
 ```
 
 Cette modification utilise le droit OAuth `editorial:write` et conserve le contenu, l'image et le statut si ces champs sont omis. Les liens ne sont pas réciproques automatiquement : la sélection de A ne modifie pas celle de B. Le champ est partagé entre les versions linguistiques du même article.
+
+
+## Scheduled publication
+
+Payload's native post editor already exposes **Schedule publish**. Choose the date
+and time there, or use the MCP tools `insight_schedule_post`,
+`insight_cancel_schedule`, and `insight_list_schedules`.
+
+The SDK provides the same operations:
+
+```ts
+await insight.schedulePost({
+  postId: draft.id,
+  publishAt: '2027-01-15T09:00:00+01:00',
+  timeZone: 'Africa/Douala',
+  expectedUpdatedAt: latest.post.updatedAt as string,
+})
+await insight.listSchedules({ postId: draft.id })
+// Calling schedulePost again with another date replaces pending publication jobs.
+await insight.cancelSchedule({ postId: draft.id })
+```
+
+`publishAt` must be a future ISO 8601 timestamp with an explicit UTC offset; it
+identifies the instant. `timeZone` is a validated IANA zone used for the scheduling
+response (default Africa/Douala). Stored/listed dates are UTC and must be converted
+for display. List results support `page` and `limit` (max 100) and include failed
+jobs, but exclude completed and cancelled jobs. They include schedules made in the
+native CMS. Publish and cancel operations require both `editorial:write` and
+`editorial:publish`; listing requires `editorial:read`.
+
+Scheduling does not edit the article or publish immediately. It publishes the
+**latest saved draft**, not a frozen snapshot. Publication status is shared across
+FR/EN; prepare both translations first. Already public articles and empty content
+are rejected by the MCP. Cancel before execution to keep the draft; once a job is
+processing the MCP returns a conflict. Repeated identical scheduling calls reuse
+the existing job. Replacements use a database transaction and the same advisory
+lock as the worker. Native CMS changes use Payload's own queue controls.
+
+### Worker and operations
+
+`.github/workflows/publish-scheduled.yml` runs every five minutes, off the top of
+the hour, and can also be run manually in GitHub Actions. It calls
+`POST /api/editorial/scheduled-publish`. GitHub scheduling can be delayed or skipped
+under load: this is a best-effort publication time, not a minute-accurate SLA.
+Overdue jobs remain queued for the next run. GitHub may disable scheduled workflows
+after prolonged repository inactivity; monitor workflow runs and re-enable if needed.
+
+No long-lived publishing token is stored in the workflow. GitHub supplies a
+short-lived OIDC identity. The server verifies the RS256 signature against GitHub's
+fixed JWKS endpoint, expiry, audience, repository, main branch, exact workflow path
+and permitted event. Forks, pull requests and other workflows are rejected. It
+runs at most ten due `schedulePublish` jobs for **posts** per call, across queues;
+it does not execute pages, globals, unpublication jobs or arbitrary tasks. Payload
+handles due-date filtering, atomic job claiming, persistence and publication hooks
+(cache refresh and sitemap updates). The endpoint returns processed/failed counts.
+
+Inspect failed jobs via `listSchedules` or Payload Jobs. Fix the underlying article
+or validation issue, then reprogram the draft to replace its failed job. Do not
+reprogram an article that is already public. A busy queue returns HTTP 409 and the
+workflow retries. A job already processing cannot be cancelled through the MCP.

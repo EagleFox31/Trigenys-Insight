@@ -478,6 +478,6 @@ describe('MCP protocol', () => {
     expect(init.json.result.serverInfo.name).toBe('trigenys-insight')
     const tools = await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' })
     expect(tools.status).toBe(200)
-    expect(tools.json.result.tools).toHaveLength(8)
+    expect(tools.json.result.tools).toHaveLength(11)
   })
 })
