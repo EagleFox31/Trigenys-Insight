@@ -12,6 +12,7 @@ export const maxDuration = 60
 const headers = { 'Cache-Control': 'no-store' }
 
 export async function POST(request: Request) {
+  const startedAt = Date.now()
   const authorization = request.headers.get('authorization')
   if (
     !authorizedPublicationCron(authorization) &&
@@ -41,7 +42,17 @@ export async function POST(request: Request) {
     // deliver explicit social requests; creating a draft never schedules it.
     let buffer
     try {
-      buffer = await processBufferOutbox(req)
+      const results = []
+      for (let i = 0; i < 3 && Date.now() - startedAt < 25000; i++) {
+        const result = await processBufferOutbox(req)
+        results.push(result)
+        if (!result.processed && !result.failed) break
+      }
+      buffer = {
+        processed: results.reduce((sum, item) => sum + item.processed, 0),
+        failed: results.reduce((sum, item) => sum + item.failed, 0),
+        results,
+      }
     } catch {
       buffer = { processed: 0, failed: 1, error: 'buffer_worker_unavailable' }
     }

@@ -53,6 +53,7 @@ function fixture(state = 'pending-draft', remoteId: string | null = null) {
     findMatching: vi.fn(async () => null),
     createDraft: vi.fn(async () => remote),
     post: vi.fn(async () => remote),
+    editDraft: vi.fn(),
     schedule: vi.fn(),
     cancel: vi.fn(),
   } as unknown as BufferClient
@@ -246,6 +247,39 @@ describe('durable social delivery', () => {
     })
     expect(f.find).not.toHaveBeenCalled()
     expect(f.client.cancel).toHaveBeenCalledWith('buffer-1')
+  })
+  it('revises the same remote draft and verifies the resulting text', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = fixture('pending-revision', 'buffer-1')
+    Object.assign(f.row.request, { previousText: text, text: 'Reviewed longer text' })
+    vi.mocked(f.client.editDraft).mockResolvedValue({ ...remote, text: 'Reviewed longer text' })
+    expect(await processBufferOutbox(f.req, f.client)).toMatchObject({
+      processed: 1,
+      state: 'draft',
+    })
+    expect(f.client.editDraft).toHaveBeenCalledWith('buffer-1', 'Reviewed longer text', undefined)
+    expect(f.client.createDraft).not.toHaveBeenCalled()
+    expect(f.client.schedule).not.toHaveBeenCalled()
+  })
+  it('refuses to revise a remotely scheduled post', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = fixture('pending-revision', 'buffer-1')
+    Object.assign(f.row.request, { previousText: text, text: 'Reviewed longer text' })
+    vi.mocked(f.client.post).mockResolvedValue({ ...remote, status: 'scheduled' })
+    expect(await processBufferOutbox(f.req, f.client)).toMatchObject({
+      error: 'buffer_post_not_a_draft',
+    })
+    expect(f.client.editDraft).not.toHaveBeenCalled()
+  })
+  it('refuses to overwrite an unreviewed external draft edit', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = fixture('pending-revision', 'buffer-1')
+    Object.assign(f.row.request, { previousText: text, text: 'Reviewed longer text' })
+    vi.mocked(f.client.post).mockResolvedValue({ ...remote, text: 'Someone edited Buffer' })
+    expect(await processBufferOutbox(f.req, f.client)).toMatchObject({
+      error: 'buffer_post_changed_review_required',
+    })
+    expect(f.client.editDraft).not.toHaveBeenCalled()
   })
   it('rejects stale approval and releases the shared worker lock', async () => {
     const f = fixture('draft', 'buffer-1')

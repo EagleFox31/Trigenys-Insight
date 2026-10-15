@@ -110,6 +110,7 @@ async function executeBufferOperationUnlocked(
     EditorialOperation,
     {
       operation:
+        | 'buffer-update-draft'
         | 'buffer-status'
         | 'buffer-create-draft'
         | 'buffer-list-posts'
@@ -162,6 +163,31 @@ async function executeBufferOperationUnlocked(
     // Delivery happens on the next scheduled worker tick. No publication here.
     return { ok: true, export: summarizeExport(rows[0]) }
   }
+  if (input.operation === 'buffer-update-draft') {
+    const rows = await socialQuery<SocialExport>(
+      req,
+      'SELECT * FROM insight_social_exports WHERE id=$1',
+      [input.exportId],
+    )
+    const row = rows[0]
+    if (!row) throw new EditorialError(404, 'social_export_not_found')
+    if (new Date(row.updated_at).getTime() !== Date.parse(input.expectedUpdatedAt))
+      throw new EditorialError(409, 'stale_social_export')
+    if (row.state !== 'draft' || !row.remote_post_id || !row.request.channel || !row.request.text)
+      throw new EditorialError(409, 'social_export_not_a_draft')
+    const post = await publicPost(req, input.postId, input.locale)
+    const request = {
+      ...(await socialRequest(req, post, input.locale, row.request.channel, input.text)),
+      previousText: row.request.text,
+    }
+    const updated = await socialQuery<SocialExport>(
+      req,
+      `UPDATE insight_social_exports SET post_id=$2,state='pending-revision',request=$3::jsonb,body_hash=$4,last_error=NULL,updated_at=GREATEST(date_trunc('milliseconds', now()), updated_at + interval '1 millisecond') WHERE id=$1 AND updated_at=$5::timestamptz AND state='draft' RETURNING *`,
+      [row.id, post.id, JSON.stringify(request), hash(request), row.updated_at],
+    )
+    if (!updated.length) throw new EditorialError(409, 'stale_social_export')
+    return { ok: true, export: summarizeExport(updated[0]) }
+  }
   const cancellation = input.operation === 'buffer-cancel-schedule'
   if (!cancellation && Date.parse(input.publishAt) < Date.now() + 120000)
     throw new EditorialError(422, 'social_schedule_requires_two_minutes_notice')
@@ -199,7 +225,11 @@ export async function executeBufferOperation(
   req: PayloadRequest,
   input: Parameters<typeof executeBufferOperationUnlocked>[1],
 ) {
-  if (!['buffer-schedule-post', 'buffer-cancel-schedule'].includes(input.operation))
+  if (
+    !['buffer-schedule-post', 'buffer-cancel-schedule', 'buffer-update-draft'].includes(
+      input.operation,
+    )
+  )
     return executeBufferOperationUnlocked(req, input)
   const lock = await req.payload.db.pool.connect()
   try {
@@ -247,7 +277,7 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
     const pending = await socialQuery<SocialExport>(
       req,
       `SELECT * FROM insight_social_exports
-      WHERE state IN ('pending-bootstrap','pending-draft','pending-schedule','pending-cancel','uncertain')
+      WHERE state IN ('pending-bootstrap','pending-preparation','pending-revision','pending-draft','pending-schedule','pending-cancel','uncertain')
       ORDER BY CASE WHEN state='uncertain' THEN 1 ELSE 0 END, created_at ASC LIMIT 1`,
     )
     if (!pending.length) return { processed: 0, failed: 0 }
@@ -276,11 +306,32 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           [row.id, JSON.stringify(request), hash(request)],
         )
       }
+      if (['pending-preparation', 'pending-revision'].includes(row.state)) {
+        if (!request.channel || !request.text)
+          throw new EditorialError(422, 'buffer_export_incomplete')
+        request = {
+          ...(await socialRequest(
+            req,
+            await publicPost(req, row.post_id, request.locale),
+            request.locale,
+            request.channel,
+            request.text,
+          )),
+          ...(request.previousText ? { previousText: request.previousText } : {}),
+        }
+        await socialQuery(
+          req,
+          'UPDATE insight_social_exports SET request=$2::jsonb,body_hash=$3 WHERE id=$1',
+          [row.id, JSON.stringify(request), hash(request)],
+        )
+      }
       if (!request.channel || !request.text)
         throw new EditorialError(422, 'buffer_export_incomplete')
       let remote
       if (
-        ['pending-draft', 'pending-bootstrap', 'uncertain'].includes(row.state) &&
+        ['pending-draft', 'pending-bootstrap', 'pending-preparation', 'uncertain'].includes(
+          row.state,
+        ) &&
         !row.remote_post_id
       ) {
         remote = await client.findMatching(request.channel, request.text)
@@ -304,9 +355,26 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
       } else {
         if (!row.remote_post_id) throw new EditorialError(422, 'buffer_post_id_missing')
         remote = await client.post(row.remote_post_id)
-        if (remote.text !== request.text || remote.channelId !== request.channel.id)
+        if (
+          remote.channelId !== request.channel.id ||
+          (remote.text !== request.text &&
+            !(row.state === 'pending-revision' && remote.text === request.previousText))
+        )
           throw new EditorialError(409, 'buffer_post_changed_review_required')
-        if (row.state === 'pending-schedule') {
+        if (row.state === 'pending-revision') {
+          if (remote.status !== 'draft') throw new EditorialError(409, 'buffer_post_not_a_draft')
+          if (remote.text !== request.text) {
+            mutationAttempted = true
+            remote = await client.editDraft(remote.id, request.text, request.imageURL)
+          }
+          if (
+            remote.id !== row.remote_post_id ||
+            remote.status !== 'draft' ||
+            remote.channelId !== request.channel.id ||
+            remote.text !== request.text
+          )
+            throw new BufferAPIError('buffer_revision_state_unexpected', true)
+        } else if (row.state === 'pending-schedule') {
           if (Date.parse(request.publishAt ?? '') <= Date.now() + 15000)
             throw new EditorialError(422, 'social_schedule_is_no_longer_future')
           if (
@@ -334,7 +402,10 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           }
           if (remote.status !== 'draft')
             throw new BufferAPIError('buffer_cancel_state_unexpected', true)
-        } else if (row.state === 'uncertain')
+        } else if (
+          row.state === 'uncertain' &&
+          !(request.previousText && remote.status === 'draft' && remote.text === request.text)
+        )
           throw new EditorialError(409, 'buffer_outcome_unknown_review_required')
       }
       receiptPending = true
@@ -348,9 +419,11 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           state,
           remote.id,
           remote.status,
-          JSON.stringify(
-            row.state === 'pending-cancel' ? { ...request, publishAt: undefined } : request,
-          ),
+          JSON.stringify({
+            ...request,
+            previousText: undefined,
+            ...(row.state === 'pending-cancel' ? { publishAt: undefined } : {}),
+          }),
         ],
       )
       return { processed: 1, failed: 0, exportId: row.id, state }

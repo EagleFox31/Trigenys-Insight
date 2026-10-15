@@ -12,7 +12,7 @@ client. Le PNG 512 × 512 initial était tronqué ; l’icône du package a ét�
 depuis le favicon SVG existant, sans changer son dessin. Ses données PNG, son
 format, ses dimensions et sa lisibilité ont été vérifiés.
 
-Les schémas des 19 outils sont exportés depuis le vrai serveur MCP du SDK, sans
+Les schémas des 20 outils sont exportés depuis le vrai serveur MCP du SDK, sans
 connexion à la base et sans exécution d’opérations éditoriales. Le contrôle CI
 compare leur contrat au fichier versionné et reconstruit l’archive. Cela ne
 rafraîchit pas le catalogue ChatGPT et ne soumet pas automatiquement le plugin.

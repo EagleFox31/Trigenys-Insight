@@ -17,4 +17,6 @@ Le worker ne lit jamais une révision privée comme source sociale. Les demandes
 
 La migration initiale enregistre un seul test autorisé pour l'article public 1, en français, clairement marqué « Test d'intégration — brouillon à relire ». Il vise un canal Trigenys LinkedIn/Facebook non ambigu, avec priorité LinkedIn. Aucun calendrier social n'est créé par la migration. Si aucun canal unique ne correspond, le test s'arrête avec `buffer_test_needs_channel_selection`.
 
-Après déploiement, un client ChatGPT qui a gardé l'ancien inventaire d'outils peut devoir actualiser sa connexion pour voir les cinq outils Buffer. Le serveur expose alors 19 outils au total.
+Après déploiement, un client ChatGPT qui a gardé l'ancien inventaire d'outils peut devoir actualiser sa connexion pour voir les six outils Buffer. Le serveur expose alors 20 outils au total.
+
+`insight_buffer_update_draft` / `bufferUpdateDraft` modifie le texte, le lien et la couverture du même brouillon Buffer, avec contrôle de version et vérification des changements externes. Le worker traite au plus trois demandes par passage, dans son budget de temps. La migration du 16 octobre remplace le test du pipeline par Driivio et prépare les onze autres articles publics du 15 octobre, sur LinkedIn seulement. Aucun de ces brouillons n’est programmé.

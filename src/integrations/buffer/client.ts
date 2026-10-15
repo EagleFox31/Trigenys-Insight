@@ -139,6 +139,15 @@ export class BufferClient {
       aiAssisted: true,
     })
   }
+  editDraft(id: string, text: string, imageURL?: string): Promise<BufferPost> {
+    return this.mutation('editPost', {
+      id,
+      text,
+      saveToDraft: true,
+      aiAssisted: true,
+      assets: imageURL ? [{ image: { url: imageURL } }] : [],
+    })
+  }
   schedule(id: string, dueAt: string): Promise<BufferPost> {
     return this.mutation('editPost', {
       id,

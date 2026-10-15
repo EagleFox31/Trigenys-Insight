@@ -25,6 +25,7 @@ export async function executeEditorialOperation(
   input: EditorialOperation,
 ): Promise<Record<string, unknown>> {
   if (
+    input.operation === 'buffer-update-draft' ||
     input.operation === 'buffer-status' ||
     input.operation === 'buffer-create-draft' ||
     input.operation === 'buffer-list-posts' ||

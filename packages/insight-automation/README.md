@@ -65,3 +65,7 @@ after the next minute tick. Scheduling requires explicit approval and
 `bufferSchedulePost({ exportId, expectedUpdatedAt, publishAt })`; cancellation uses
 `bufferCancelSchedule({ exportId, expectedUpdatedAt })`. Buffer credentials stay
 on the server. See [the distribution guide](../../docs/buffer-distribution.md).
+
+`bufferUpdateDraft({ exportId, expectedUpdatedAt, postId, locale, text })` edits
+the same confirmed remote draft, including its article link and cover. It never
+schedules the post and refuses external text changes or scheduled/sent posts.

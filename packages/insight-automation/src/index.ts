@@ -21,6 +21,7 @@ import {
   type AuditPostsInput,
   type AuditPostsResult,
   type BufferDraftInput,
+  type BufferUpdateDraftInput,
   type BufferListInput,
   type BufferScheduleInput,
   type BufferCancelInput,
@@ -130,6 +131,9 @@ export class InsightClient {
   }
   getPostById(postId: number, locale: 'fr' | 'en' = 'fr') {
     return this.request<PostResult>({ operation: 'get-post', postId, locale })
+  }
+  bufferUpdateDraft(input: BufferUpdateDraftInput) {
+    return this.request({ ...input, operation: 'buffer-update-draft' })
   }
   bufferStatus() {
     return this.request({ operation: 'buffer-status' })

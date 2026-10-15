@@ -342,6 +342,16 @@ export const bufferScheduleSchema = z
     publishAt: z.string().datetime({ offset: true }),
   })
   .strict()
+export const bufferUpdateDraftSchema = z
+  .object({
+    exportId: z.string().uuid(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    postId: id,
+    locale: locale.default('fr'),
+    text: text.max(3000),
+  })
+  .strict()
+export type BufferUpdateDraftInput = z.input<typeof bufferUpdateDraftSchema>
 export const bufferCancelSchema = bufferScheduleSchema.omit({ publishAt: true })
 export type BufferDraftInput = z.input<typeof bufferDraftSchema>
 export type BufferListInput = z.input<typeof bufferListSchema>
@@ -349,6 +359,7 @@ export type BufferScheduleInput = z.input<typeof bufferScheduleSchema>
 export type BufferCancelInput = z.input<typeof bufferCancelSchema>
 
 export const operationSchema = z.discriminatedUnion('operation', [
+  bufferUpdateDraftSchema.extend({ operation: z.literal('buffer-update-draft') }),
   bufferStatusSchema.extend({ operation: z.literal('buffer-status') }),
   bufferDraftSchema.extend({ operation: z.literal('buffer-create-draft') }),
   bufferListSchema.extend({ operation: z.literal('buffer-list-posts') }),

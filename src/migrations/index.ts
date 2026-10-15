@@ -1,3 +1,4 @@
+import * as migration_20261016_000500_refresh_linkedin_drafts from './20261016_000500_refresh_linkedin_drafts'
 import * as migration_20261015_224500_add_buffer_outbox from './20261015_224500_add_buffer_outbox'
 import * as migration_20261015_162000_archive_ecommerce_duplicate from './20261015_162000_archive_ecommerce_duplicate'
 import * as migration_20261015_161000_repair_article_translations from './20261015_161000_repair_article_translations'
@@ -45,4 +46,5 @@ export const migrations = [
   { up: migration_20261015_161000_repair_article_translations.up, down: migration_20261015_161000_repair_article_translations.down, name: '20261015_161000_repair_article_translations' },
   { up: migration_20261015_162000_archive_ecommerce_duplicate.up, down: migration_20261015_162000_archive_ecommerce_duplicate.down, name: '20261015_162000_archive_ecommerce_duplicate' },
   { up: migration_20261015_224500_add_buffer_outbox.up, down: migration_20261015_224500_add_buffer_outbox.down, name: '20261015_224500_add_buffer_outbox' },
+  { up: migration_20261016_000500_refresh_linkedin_drafts.up, down: migration_20261016_000500_refresh_linkedin_drafts.down, name: '20261016_000500_refresh_linkedin_drafts' },
 ]

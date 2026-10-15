@@ -2,6 +2,8 @@ import type { PayloadRequest } from 'payload'
 import type { BufferChannel } from './client'
 export type SocialState =
   | 'pending-bootstrap'
+  | 'pending-preparation'
+  | 'pending-revision'
   | 'pending-draft'
   | 'sending'
   | 'draft'
@@ -21,6 +23,7 @@ export type SocialRequest = {
   sourceURL?: string
   channel?: BufferChannel
   bootstrap?: boolean
+  previousText?: string
   publishAt?: string
 }
 export type SocialExport = {

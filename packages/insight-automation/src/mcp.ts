@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {
   bufferStatusSchema,
+  bufferUpdateDraftSchema,
   bufferDraftSchema,
   bufferListSchema,
   bufferScheduleSchema,
@@ -69,6 +70,17 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
   }
   const oauth = (scopes: string[]) => ({ securitySchemes: [{ type: 'oauth2', scopes }] })
 
+  server.registerTool(
+    'insight_buffer_update_draft',
+    {
+      description:
+        'Revise the text, article link and cover of an existing Buffer draft, reusing its remote ID. Requires a fresh exportId/expectedUpdatedAt, public postId, locale and the complete reviewed social text. Never publishes or schedules. The worker refuses scheduled/sent posts or external text changes. Read list_posts after delivery to verify the final draft.',
+      inputSchema: bufferUpdateDraftSchema.shape,
+      annotations: { ...write, destructiveHint: true, openWorldHint: true },
+      _meta: oauth(['editorial:write']),
+    },
+    (input) => execute({ ...input, operation: 'buffer-update-draft' }),
+  )
   server.registerTool(
     'insight_buffer_status',
     {

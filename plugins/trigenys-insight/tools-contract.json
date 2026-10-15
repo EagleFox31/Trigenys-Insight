@@ -359,6 +359,67 @@
         "securitySchemes": [
           {
             "scopes": [
+              "editorial:write"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Revise the text, article link and cover of an existing Buffer draft, reusing its remote ID. Requires a fresh exportId/expectedUpdatedAt, public postId, locale and the complete reviewed social text. Never publishes or schedules. The worker refuses scheduled/sent posts or external text changes. Read list_posts after delivery to verify the final draft.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "expectedUpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "exportId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "text": {
+            "maxLength": 3000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "exportId",
+          "expectedUpdatedAt",
+          "postId",
+          "text"
+        ],
+        "type": "object"
+      },
+      "name": "insight_buffer_update_draft"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
               "editorial:write",
               "editorial:publish"
             ],
