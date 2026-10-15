@@ -41,8 +41,25 @@ export function publicationJobsWhere(postId?: number): Where {
       // Native CMS jobs created before type was added default to publication too.
       { or: [{ 'input.type': { equals: 'publish' } }, { 'input.type': { exists: false } }] },
       { completedAt: { exists: false } },
-      { 'error.cancelled': { not_equals: true } },
-      ...(postId ? [{ 'input.doc.value': { equals: postId } }] : []),
+      // PostgreSQL JSON-path comparisons do not match missing keys or a NULL
+      // JSON column. Include both explicitly, otherwise fresh jobs disappear.
+      {
+        or: [
+          { error: { exists: false } },
+          { 'error.cancelled': { exists: false } },
+          { 'error.cancelled': { not_equals: true } },
+        ],
+      },
+      ...(postId
+        ? [
+            {
+              or: [
+                { 'input.doc.value': { equals: postId } },
+                { 'input.doc.value': { equals: String(postId) } },
+              ],
+            },
+          ]
+        : []),
     ],
   }
 }

@@ -9,6 +9,7 @@ on:
       - '.github/workflows/publish-scheduled.yml'
       - 'src/app/api/editorial/scheduled-publish/**'
       - 'src/automation/workerAuth.ts'
+      - 'src/automation/scheduling.ts'
 permissions:
   id-token: write
 concurrency:

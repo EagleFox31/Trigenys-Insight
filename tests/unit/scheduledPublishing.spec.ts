@@ -38,7 +38,8 @@ function setup() {
         )
       if (Array.isArray(condition)) return false
       if ('equals' in condition) return value === condition.equals
-      if ('not_equals' in condition) return value !== condition.not_equals
+      if ('not_equals' in condition)
+        return value !== undefined && value !== null && value !== condition.not_equals
       if ('exists' in condition) return (value !== undefined && value !== null) === condition.exists
       return false
     })
@@ -175,6 +176,39 @@ describe('publication scheduling', () => {
     expect(payload.db.rollbackTransaction).toHaveBeenCalledWith('tx')
     expect(connection.query).toHaveBeenCalledWith('ROLLBACK')
     expect(connection.release).toHaveBeenCalledOnce()
+  })
+  it('finds fresh jobs with NULL errors and native CMS string IDs, while excluding cancellations', async () => {
+    const { req, jobs } = setup()
+    await changePublicationSchedule(req, post, input())
+    jobs[0].error = null
+    jobs[0].input = { type: 'publish', doc: { relationTo: 'posts', value: '42' } }
+    expect(
+      (
+        await listPublicationSchedules(req, {
+          operation: 'list-schedules',
+          postId: 42,
+          limit: 50,
+          page: 1,
+        })
+      ).docs,
+    ).toHaveLength(1)
+    jobs.push({ ...jobs[0], id: 200, error: { cancelled: true }, hasError: true })
+    expect(
+      (
+        await listPublicationSchedules(req, {
+          operation: 'list-schedules',
+          postId: 42,
+          limit: 50,
+          page: 1,
+        })
+      ).docs.map((job) => job.jobId),
+    ).toEqual([1])
+    await changePublicationSchedule(req, post, {
+      operation: 'cancel-schedule',
+      postId: 42,
+      locale: 'fr',
+    })
+    expect(jobs.map((job) => job.id)).toEqual([200])
   })
   it('requires publication scope and rejects invalid zones or date strings without offsets', () => {
     expect(operationScopes({ operation: 'schedule-post' })).toContain('editorial:publish')
