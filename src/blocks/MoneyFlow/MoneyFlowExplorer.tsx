@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -65,6 +66,45 @@ const nodeIcons = {
   shopping: ShoppingBasket,
   international: Send,
   crypto: Bitcoin,
+}
+
+/**
+ * Images bundled with the site, rather than remote image hotlinks.
+ * Orange/MoMo are editorial identifiers, not official trademark logo reproductions.
+ */
+export const nodeImages: Record<Origin | Wallet | Goal, string> = {
+  france: '/money-flow/france.svg',
+  cameroon: '/money-flow/cameroon.svg',
+  orange: '/money-flow/orange.svg',
+  mtn: '/money-flow/mtn.svg',
+  bank: '/money-flow/bank.svg',
+  cash: '/money-flow/cash.svg',
+  school: '/money-flow/school.svg',
+  shopping: '/money-flow/shopping.svg',
+  international: '/money-flow/international.svg',
+  crypto: '/money-flow/crypto.svg',
+}
+
+function NodeImage({ name }: { name: Origin | Wallet | Goal }) {
+  const [failed, setFailed] = useState(false)
+  const Icon = nodeIcons[name]
+  return (
+    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-black/5 bg-white text-slate-800" aria-hidden="true">
+      {failed ? (
+        <Icon size={22} aria-hidden="true" />
+      ) : (
+        <Image
+          src={nodeImages[name]}
+          alt=""
+          width={44}
+          height={44}
+          unoptimized
+          className="h-full w-full object-contain"
+          onError={() => setFailed(true)}
+        />
+      )}
+    </span>
+  )
 }
 
 const subtitles: Record<Language, Record<Origin | Wallet | Goal, string>> = {
@@ -192,7 +232,6 @@ function NetworkCanvas({
           : node.column === 'wallet'
             ? selectedJourney.incoming.status
             : selectedJourney.outgoing.status
-        const Icon = nodeIcons[node.key]
         const label = nodeLabel(node, locale)
         const category = cols[node.column === 'origin' ? 0 : node.column === 'wallet' ? 1 : 2]
 
@@ -221,9 +260,7 @@ function NetworkCanvas({
                 : 'border-slate-200 bg-white/95 text-slate-900 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50'
             )}
           >
-            <span className={'grid h-9 w-9 shrink-0 place-items-center rounded-xl ' + (active ? 'bg-white/15 text-white' : 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300')}>
-              <Icon size={18} aria-hidden="true" />
-            </span>
+            <NodeImage name={node.key} />
             <span className="min-w-0 flex-1">
               <span className="block text-[13px] font-bold leading-5">{label}</span>
               <span className={'mt-0.5 block text-[10px] leading-3.5 ' + (active ? 'text-emerald-50/80' : 'text-slate-500 dark:text-zinc-400')}>
