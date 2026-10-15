@@ -234,6 +234,19 @@ describe('durable social delivery', () => {
     })
     expect(f.client.schedule).not.toHaveBeenCalled()
   })
+  it('can cancel a schedule even after the source article is withdrawn', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = fixture('pending-cancel', 'buffer-1')
+    f.find.mockResolvedValue({ docs: [] })
+    vi.mocked(f.client.post).mockResolvedValue({ ...remote, status: 'scheduled' })
+    vi.mocked(f.client.cancel).mockResolvedValue(remote)
+    expect(await processBufferOutbox(f.req, f.client)).toMatchObject({
+      processed: 1,
+      state: 'draft',
+    })
+    expect(f.find).not.toHaveBeenCalled()
+    expect(f.client.cancel).toHaveBeenCalledWith('buffer-1')
+  })
   it('rejects stale approval and releases the shared worker lock', async () => {
     const f = fixture('draft', 'buffer-1')
     await expect(

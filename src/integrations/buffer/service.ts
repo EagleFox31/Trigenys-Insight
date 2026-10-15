@@ -255,7 +255,8 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
     let mutationAttempted = false
     let receiptPending = false
     try {
-      await publicPost(req, row.post_id, row.request.locale)
+      // Withdrawal of the article must never prevent cancelling its social schedule.
+      if (row.state !== 'pending-cancel') await publicPost(req, row.post_id, row.request.locale)
       let request = row.request
       if (row.state === 'pending-bootstrap') {
         const connection = await syncBufferConnection(req, client)
