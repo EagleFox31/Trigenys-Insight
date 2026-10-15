@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import struct
 import zipfile
+import zlib
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--require-ready', action='store_true')
@@ -44,6 +45,24 @@ for key in ['logo', 'composerIcon']:
     assert icon.is_relative_to(source.resolve())
     data = icon.read_bytes()
     assert data[:8] == b'\x89PNG\r\n\x1a\n' and len(data) <= 5 * 1024 * 1024
+    offset = 8
+    chunks = []
+    compressed = b''
+    while offset < len(data):
+        assert offset + 12 <= len(data), 'Truncated PNG chunk'
+        length = struct.unpack('>I', data[offset:offset+4])[0]
+        kind = data[offset+4:offset+8]
+        end = offset + 12 + length
+        assert end <= len(data), 'Truncated PNG data'
+        payload = data[offset+8:offset+8+length]
+        crc = struct.unpack('>I', data[end-4:end])[0]
+        assert zlib.crc32(kind + payload) & 0xffffffff == crc, 'Invalid PNG checksum'
+        chunks.append(kind)
+        if kind == b'IDAT':
+            compressed += payload
+        offset = end
+    assert chunks[0] == b'IHDR' and chunks[-1] == b'IEND' and compressed
+    assert zlib.decompress(compressed), 'PNG pixels could not be decoded'
     width, height = struct.unpack('>II', data[16:24])
     assert width == height and width >= (256 if key == 'logo' else 48)
 cases = openai['review']['test_cases']

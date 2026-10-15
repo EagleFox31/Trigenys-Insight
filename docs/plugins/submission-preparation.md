@@ -8,8 +8,9 @@ pays autorisés par OpenAI et le plugin ne propose aucun paiement. L’identité
 n’a pas encore été vérifiée dans le portail développeur.
 
 Le package expose le serveur existant, avec OAuth et enregistrement dynamique de
-client. Il reprend le logo PNG 512 × 512 existant. La taille et le format ont été
-contrôlés ; la vérification visuelle finale de l’icône reste à effectuer.
+client. Le PNG 512 × 512 initial était tronqué ; l’icône du package a été réexportée
+depuis le favicon SVG existant, sans changer son dessin. Ses données PNG, son
+format, ses dimensions et sa lisibilité ont été vérifiés.
 
 Les schémas des 11 outils sont exportés depuis le vrai serveur MCP du SDK, sans
 connexion à la base et sans exécution d’opérations éditoriales. Le contrôle CI
@@ -29,7 +30,8 @@ paiements. La programmation publie la dernière version du brouillon ; statut
 commun FR/EN et vérification environ toutes les cinq minutes, sans garantie de
 publication à la minute exacte.
 
-Présentation publique préparée : `/en/integrations/chatgpt` et version française.
+Présentation publique déployée et vérifiée (HTTP 200 et contenu) :
+https://insight.trigenys.com/en/integrations/chatgpt ; version française également déployée.
 Assistance vérifiée : `https://insight.trigenys.com/fr/contact` (formulaire public).
 Les pages de confidentialité et de conditions du plugin ne sont pas publiées ;
 leurs URL sont volontairement absentes du manifeste.
@@ -94,6 +96,10 @@ effectif de cet environnement restent à déterminer ; aucun service payant ni
 nouveau compte d’administration n’a été créé par cette préparation.
 
 ## Confidentialité et conditions : faits à reprendre, décisions à confirmer
+
+Le projet concret des deux textes est dans `docs/plugins/privacy-and-terms-draft.md`.
+L’éditrice a confirmé la conservation des articles et médias jusqu’à suppression
+par une personne habilitée. Les autres durées restent à confirmer.
 
 Les éléments techniques observés permettent de décrire :
 
