@@ -280,21 +280,40 @@ lock as the worker. Native CMS changes use Payload's own queue controls.
 
 ### Worker and operations
 
-`.github/workflows/publish-scheduled.yml` runs every five minutes, off the top of
-the hour, and can also be run manually in GitHub Actions. It calls
-`POST /api/editorial/scheduled-publish`. GitHub scheduling can be delayed or skipped
-under load: this is a best-effort publication time, not a minute-accurate SLA.
-Overdue jobs remain queued for the next run. GitHub may disable scheduled workflows
-after prolonged repository inactivity; monitor workflow runs and re-enable if needed.
+The Cloudflare Worker `trigenys-insight-publisher` runs every minute and calls
+`POST /api/editorial/scheduled-publish`. Its source and configuration are in
+`workers/publication-cron/`. The Worker's HTTP endpoint and preview URLs are
+disabled: only the scheduled handler can request a publication tick. Cron timing
+is best effort; new Cloudflare triggers can take up to 15 minutes to propagate.
 
-No long-lived publishing token is stored in the workflow. GitHub supplies a
-short-lived OIDC identity. The server verifies the RS256 signature against GitHub's
-fixed JWKS endpoint, expiry, audience, repository, main branch, exact workflow path
-and permitted event. Forks, pull requests and other workflows are rejected. It
-runs at most ten due `schedulePublish` jobs for **posts** per call, across queues;
-it does not execute pages, globals, unpublication jobs or arbitrary tasks. Payload
-handles due-date filtering, atomic job claiming, persistence and publication hooks
+Each tick uses an Ed25519-signed JWT valid for 60 seconds, with a fixed issuer,
+subject, audience and key ID. The server pins its public verification key in
+`src/automation/publicationCronAuth.ts`. The private PKCS8 base64 key is stored
+only as the encrypted `PUBLICATION_SIGNING_KEY` Worker secret. Never place it in
+source, logs, commands, the package or browser code. Key rotation requires first
+coordinating the pinned public key and Worker secret; retain the secret on code
+updates. The Cloudflare deployment does not need a CMS publishing token.
+
+`.github/workflows/publish-scheduled.yml` remains available for **manual recovery**
+via GitHub Actions. GitHub's scheduled trigger was not firing, so it is no longer
+the automatic scheduler. The manual workflow uses GitHub's short-lived OIDC
+identity restricted to this exact workflow on main, with signature, repository,
+audience and expiry checks. No long-lived GitHub or publishing token is stored.
+
+Both paths share the database publication lock and Payload's native atomic job
+claiming. The server runs at most ten due `schedulePublish` jobs for **posts** per
+call, across queues; never pages, globals, unpublication jobs or arbitrary tasks.
+Payload handles due-date filtering, persistence, validation and publication hooks
 (cache refresh and sitemap updates). The endpoint returns processed/failed counts.
+HTTP 409 means another worker owns the lock; the next minute retries. Other HTTP
+errors or failed jobs cause an errored Cloudflare invocation, not a success log.
+
+Monitor Cloudflare Workers Logs for `publication_tick`, its scheduled/start time
+and processed/failed counts. For a release check, schedule an authorized existing
+draft three minutes ahead, confirm it stays a draft before the deadline, then
+observe a real cron invocation, the public CMS status and public article URL after
+the deadline. A successful deployment or a manual call alone is insufficient.
+No exact-time delivery guarantee is implied.
 
 Inspect failed jobs via `listSchedules` or Payload Jobs. Fix the underlying article
 or validation issue, then reprogram the draft to replace its failed job. Do not

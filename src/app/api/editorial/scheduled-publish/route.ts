@@ -1,6 +1,7 @@
 import config from '@payload-config'
 import { createLocalReq, getPayload } from 'payload'
 import { authorizedPublicationWorker } from '@/automation/workerAuth'
+import { authorizedPublicationCron } from '@/automation/publicationCronAuth'
 import { publicationJobsWhere, withPublicationLock } from '@/automation/scheduling'
 import { EditorialError } from '@/automation/service'
 
@@ -10,7 +11,11 @@ export const maxDuration = 60
 const headers = { 'Cache-Control': 'no-store' }
 
 export async function POST(request: Request) {
-  if (!(await authorizedPublicationWorker(request.headers.get('authorization'))))
+  const authorization = request.headers.get('authorization')
+  if (
+    !authorizedPublicationCron(authorization) &&
+    !(await authorizedPublicationWorker(authorization))
+  )
     return Response.json({ error: 'unauthorized' }, { status: 401, headers })
   const payload = await getPayload({ config })
   const req = await createLocalReq({}, payload)

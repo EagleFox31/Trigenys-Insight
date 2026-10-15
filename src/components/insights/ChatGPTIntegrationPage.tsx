@@ -14,7 +14,7 @@ export function ChatGPTIntegrationPage({ locale }: { locale: 'fr' | 'en' }) {
         ],
         [
           'Choisir un horaire',
-          'Programmez un brouillon avec une date, une heure et un fuseau horaire. Modifiez ou annulez sa programmation avant son exécution. Le déclencheur vérifie les tâches environ toutes les cinq minutes ; un retard reste possible. La dernière version enregistrée du brouillon sera publiée.',
+          'Programmez un brouillon avec une date, une heure et un fuseau horaire. Modifiez ou annulez sa programmation avant son exécution. Le déclencheur vérifie les tâches environ toutes les minutes ; un retard reste possible. La dernière version enregistrée du brouillon sera publiée.',
         ],
         [
           'Un accès éditorial autorisé',
@@ -36,7 +36,7 @@ export function ChatGPTIntegrationPage({ locale }: { locale: 'fr' | 'en' }) {
         ],
         [
           'Choose a publication time',
-          'Schedule a draft with a date, time and time zone. Reschedule or cancel before execution starts. The worker checks approximately every five minutes; delays are possible. The latest saved draft will be published.',
+          'Schedule a draft with a date, time and time zone. Reschedule or cancel before execution starts. The worker checks approximately every minute; delays are possible. The latest saved draft will be published.',
         ],
         [
           'Authorized editorial access',

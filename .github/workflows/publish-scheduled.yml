@@ -1,15 +1,7 @@
 name: Publish scheduled articles
 on:
-  schedule:
-    - cron: '3-58/5 * * * *'
+  # Automatic minute ticks run in Cloudflare; this is manual recovery only.
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/publish-scheduled.yml'
-      - 'src/app/api/editorial/scheduled-publish/**'
-      - 'src/automation/workerAuth.ts'
-      - 'src/automation/scheduling.ts'
 permissions:
   id-token: write
 concurrency:

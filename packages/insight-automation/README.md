@@ -41,7 +41,7 @@ await insight.cancelSchedule({ postId: 42 })
 The matching MCP tools are `insight_schedule_post`, `insight_list_schedules` and
 `insight_cancel_schedule`. Repeating the same instant is idempotent; a new date
 replaces pending publication jobs. The latest saved draft is published. The worker
-checks every five minutes, with possible GitHub scheduling delays. See the full
+is triggered by Cloudflare every minute, with possible infrastructure delays. See the full
 guide for permissions, native CMS scheduling and worker monitoring.
 
 Editorial management: `listPosts({ status: 'DRAFT', heroImage: 'missing' })` returns
