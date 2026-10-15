@@ -1,3 +1,4 @@
+import * as migration_20261015_161000_repair_article_translations from './20261015_161000_repair_article_translations'
 import * as migration_20260909_073929 from './20260909_073929'
 import * as migration_20260909_075327 from './20260909_075327'
 import * as migration_20260909_075411 from './20260909_075411'
@@ -39,4 +40,5 @@ export const migrations = [
     name: '20261011_232733_add_author_public_profile',
   },
   { up: migration_20261014_121500_add_mcp_oauth.up, down: migration_20261014_121500_add_mcp_oauth.down, name: '20261014_121500_add_mcp_oauth' },
+  { up: migration_20261015_161000_repair_article_translations.up, down: migration_20261015_161000_repair_article_translations.down, name: '20261015_161000_repair_article_translations' },
 ]

@@ -53,5 +53,24 @@ export const redirects: NextConfig['redirects'] = async () => {
     }),
   )
 
-  return [legacyVercelHostRedirect, homepageRedirect, ...editorialRedirects, internetExplorerRedirect]
+  // The English e-commerce article used to live in its own CMS document.
+  // Keep existing links working after moving it onto the bilingual article.
+  const ecommerceTranslationRedirects = (['fr', 'en'] as const).map((locale) => ({
+    source: `/${locale}/posts/editorial-os-cfa2fe5303146b7eb16f`,
+    destination: `/${locale}/posts/editorial-os-75ebb8c36d8c1925637d`,
+    permanent: true,
+  }))
+
+  return [
+    legacyVercelHostRedirect,
+    homepageRedirect,
+    ...editorialRedirects,
+    ...ecommerceTranslationRedirects,
+    {
+      source: '/posts/editorial-os-cfa2fe5303146b7eb16f',
+      destination: '/fr/posts/editorial-os-75ebb8c36d8c1925637d',
+      permanent: true,
+    },
+    internetExplorerRedirect,
+  ]
 }
