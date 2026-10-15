@@ -155,7 +155,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:write', 'editorial:publish']),
       description:
-        'Schedule an existing draft for future publication, or replace its pending publication date. Provide exactly one postId or idempotencyKey, publishAt as ISO 8601 with an explicit UTC offset, and the IANA timeZone (default Africa/Douala). Ask for a date if none was specified. Does not publish immediately or change content. Publishes the latest saved draft and the shared FR/EN publication status. The worker checks about every 5 minutes; execution may be delayed. An already published article is rejected. Use expectedUpdatedAt to reject stale edits.',
+        'Schedule an existing draft for future publication, or replace its pending publication date. Provide exactly one postId or idempotencyKey, publishAt as ISO 8601 with an explicit UTC offset, and the IANA timeZone (default Africa/Douala). Ask for a date if none was specified. Does not publish immediately or change content. Publishes the latest saved draft and the shared FR/EN publication status. Cloudflare triggers the worker about every minute; execution may be delayed. An already published article is rejected. Use expectedUpdatedAt to reject stale edits.',
       inputSchema: schedulePostSchema.shape,
       annotations: write,
     },

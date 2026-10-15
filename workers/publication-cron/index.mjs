@@ -28,7 +28,7 @@ const worker = {
     const signature = await crypto.subtle.sign('Ed25519', key, new TextEncoder().encode(message))
     const response = await fetch(endpoint, {
       method: 'POST',
-      redirect: 'error',
+      redirect: 'manual',
       headers: { Authorization: `Bearer ${message}.${base64url(new Uint8Array(signature))}` },
       signal: AbortSignal.timeout(55000),
     })

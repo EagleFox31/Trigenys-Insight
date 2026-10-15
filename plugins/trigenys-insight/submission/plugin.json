@@ -13,7 +13,7 @@
       "interface": {
         "displayName": "Trigenys Insight",
         "shortDescription": "Manage editorial publishing",
-        "longDescription": "Trigenys Insight helps authorized editors manage the existing Trigenys Insight publication from ChatGPT. Read drafts, list authors and categories, create or revise articles, upload images, manage research sources and related articles, publish explicitly requested content, and schedule, reschedule or cancel future publication. Content supports French and English. An existing authorized Trigenys Insight editorial account is required. The plugin does not create accounts or manage unrelated websites, social networks, payments or purchases. Scheduling publishes the latest saved draft and checks due jobs approximately every five minutes, with possible delays.",
+        "longDescription": "Trigenys Insight helps authorized editors manage the existing Trigenys Insight publication from ChatGPT. Read drafts, list authors and categories, create or revise articles, upload images, manage research sources and related articles, publish explicitly requested content, and schedule, reschedule or cancel future publication. Content supports French and English. An existing authorized Trigenys Insight editorial account is required. The plugin does not create accounts or manage unrelated websites, social networks, payments or purchases. Scheduling publishes the latest saved draft and checks due jobs approximately every minute, with possible delays.",
         "developerName": "Jennifer Aka’a",
         "category": "Productivity",
         "defaultPrompt": [
@@ -51,7 +51,7 @@
               "description": "Use the same sample draft; choose tomorrow at 09:00 Africa/Douala from the live test date, using an explicit UTC offset. Test account has publication permission.",
               "prompt": "Programme ce brouillon pour demain à 9 h, heure du Cameroun, puis montre-moi sa programmation.",
               "tools_triggered": "insight_schedule_post, insight_list_schedules",
-              "expected_behavior": "Queue the existing post at the requested future instant, return the real job ID/date, preserve content and draft status; list the same job and explain best-effort five-minute checks."
+              "expected_behavior": "Queue the existing post at the requested future instant, return the real job ID/date, preserve content and draft status; list the same job and explain best-effort minute checks."
             },
             {
               "description": "Continue from the pending sample publication. Only the sample job is cancelled; no article is deleted or unpublished.",

@@ -69,7 +69,7 @@ describe('automatic scheduled handler', () => {
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
       expect(url).toBe(WORKER_AUDIENCE)
       expect(init.method).toBe('POST')
-      expect(init.redirect).toBe('error')
+      expect(init.redirect).toBe('manual')
       expect(
         authorizedPublicationCron(
           (init.headers as Record<string, string>).Authorization,

@@ -365,3 +365,22 @@ issue counts cover only the returned page, so follow `hasNextPage` for a complet
 audit. A technical pass is **not editorial approval**: there is no fact-checking,
 translation-quality judgment or external URL/image availability check, and audit
 never modifies or publishes anything. SEO lengths are indicative warnings.
+
+### Live verification — 15 October 2026
+
+The Cloudflare cron was enabled at 14:18 UTC. Its first real invocation exposed
+an unsupported `fetch` redirect option; Cloudflare requires `manual`, not `error`.
+The fixed handler rejects 3xx without forwarding authorization. Real scheduled
+invocations then processed post 5 at 14:24 (one job, zero failures) and post 3 at
+14:26 (one job, zero failures); neither was manually invoked.
+
+At 14:22:26 UTC, post 3 was rescheduled for three minutes ahead,
+14:25:26.891 UTC (15:25:26.891 Africa/Douala), job 14. It was still DRAFT at
+14:25:15 UTC and became PUBLISHED with `updatedAt: 14:26:27.469 UTC`; the
+14:26:24 cron invocation reported `processed: 1, failed: 0`. The public article
+URL was checked separately. The completed job disappeared from the pending
+list and the other 11 schedules remained intact, next at 14:45 UTC.
+
+An existing editorial `publishedAt` may be retained (post 3 kept its historic
+date). Do not mistake that field for a worker execution timestamp. Use the job
+result, the latest publication status, `updatedAt` and the public page as evidence.
