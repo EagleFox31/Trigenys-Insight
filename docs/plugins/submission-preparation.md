@@ -89,6 +89,12 @@ Ne pas fournir un compte de production aux évaluateurs pour contourner cette
 limite. Préparer un environnement de démonstration avec une base et un stockage
 indépendants, des articles fictifs et un utilisateur dédié.
 
+Cet accès de test doit fonctionner via le serveur MCP effectivement soumis.
+Le routage vers les seules données de démonstration reste à mettre en place et
+à tester ; un simple compte supplémentaire dans la production actuelle ne
+garantit pas cet isolement. Ne pas soumettre un serveur de staging en supposant
+que son origine pourra être remplacée par celle de production après approbation.
+
 Les identifiants doivent être renseignés dans les champs sécurisés du portail,
 jamais dans le ZIP, Git, la vidéo ou une conversation. Vérifier la connexion et
 les scénarios avec cet accès avant de le déclarer prêt. La création et le coût
