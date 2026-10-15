@@ -43,3 +43,14 @@ The matching MCP tools are `insight_schedule_post`, `insight_list_schedules` and
 replaces pending publication jobs. The latest saved draft is published. The worker
 checks every five minutes, with possible GitHub scheduling delays. See the full
 guide for permissions, native CMS scheduling and worker monitoring.
+
+Editorial management: `listPosts({ status: 'DRAFT', heroImage: 'missing' })` returns
+paginated summaries and exact filtered counts; `auditPosts()` checks both languages
+and technical issues without changing content. Follow pagination to cover all
+articles. An automated pass is not editorial approval or fact verification.
+`updateContent({ postId, expectedUpdatedAt, body })` replaces a language's full body
+while keeping status and schedules. Preserve existing embedded blocks with
+`retainedBlocks`, or explicitly allow their removal with `allowBlockRemoval: true`.
+Published edits take effect immediately. See the full guide for filters, scopes
+and preservation details. The matching MCP tools are `insight_list_posts`,
+`insight_update_content` and `insight_audit_posts`.

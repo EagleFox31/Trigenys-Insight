@@ -300,3 +300,49 @@ Inspect failed jobs via `listSchedules` or Payload Jobs. Fix the underlying arti
 or validation issue, then reprogram the draft to replace its failed job. Do not
 reprogram an article that is already public. A busy queue returns HTTP 409 and the
 workflow retries. A job already processing cannot be cancelled through the MCP.
+
+## Inventory, full content edits and technical audits
+
+The MCP exposes `insight_list_posts`, `insight_update_content` and
+`insight_audit_posts`; the SDK provides `listPosts`, `updateContent` and `auditPosts`.
+
+```ts
+const drafts = await insight.listPosts({ status: 'DRAFT', heroImage: 'missing', locale: 'fr', page: 1, limit: 25 })
+const latest = await insight.getPost({ postId: 42, locale: 'fr' })
+await insight.updateContent({
+  postId: 42, locale: 'fr', expectedUpdatedAt: latest.post.updatedAt as string,
+  body: '## Un contenu corrigé\n\nLe nouveau corps complet de l’article.',
+})
+const audit = await insight.auditPosts({ status: 'DRAFT', page: 1, limit: 20 })
+```
+
+Inventory returns exact filtered `totalDocs`, summaries and pagination (maximum
+100 per page). Filters include latest saved status, category, title search, cover
+presence and publication date range. `status: DRAFT` can include a draft revision
+of an already public article: `isPublic` separately reports its live status.
+Localized fields never silently fall back to the other language.
+
+Full content editing requires a fresh `expectedUpdatedAt` from `getPost` or
+`listPosts`. It replaces the supplied language's body, preserves omitted metadata,
+the slug, publication status, other-language body and pending schedules. Shared
+fields such as categories and cover still apply across languages. Editing a
+published version changes its public content immediately and requires both
+`editorial:write` and `editorial:publish`; a latest draft revision stays a draft.
+The scheduled worker publishes the latest saved version at execution time.
+
+Existing embedded blocks must be retained explicitly using a standalone marker:
+`body: 'Texte corrigé.\n\n[[BLOCK:diagram]]'` and
+`retainedBlocks: [{ marker: '[[BLOCK:diagram]]', blockId: '<existing fields.id>' }]`.
+This copies the existing CMS block, including interactive diagrams. To deliberately
+remove or rebuild blocks, pass `allowBlockRemoval: true`; new charts and images
+use the usual `charts` and `images` definitions and standalone markers. Arbitrary
+Lexical JSON and status changes are rejected by this operation.
+
+Inventory and audit require `editorial:read`. Audit checks both FR/EN without
+fallback, explicit SEO fields, structured sources, cover and embedded media,
+internal article links and basic structure. Select `checks` to restrict the checks
+or `postIds` for particular articles. Maximum 50 articles per page; summaries and
+issue counts cover only the returned page, so follow `hasNextPage` for a complete
+audit. A technical pass is **not editorial approval**: there is no fact-checking,
+translation-quality judgment or external URL/image availability check, and audit
+never modifies or publishes anything. SEO lengths are indicative warnings.

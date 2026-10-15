@@ -15,6 +15,11 @@ import {
   type PostSelector,
   type ScheduleResult,
   type SchedulesResult,
+  type ListPostsInput,
+  type ListPostsResult,
+  type UpdateContentInput,
+  type AuditPostsInput,
+  type AuditPostsResult,
 } from './schema.ts'
 export * from './schema.ts'
 
@@ -132,9 +137,21 @@ export class InsightClient {
     return this.request<ScheduleResult>({ ...input, operation: 'schedule-post' })
   }
   cancelSchedule(input: PostSelector) {
-    return this.request<{ ok: true; postId: number; cancelled: number }>({ ...input, operation: 'cancel-schedule' })
+    return this.request<{ ok: true; postId: number; cancelled: number }>({
+      ...input,
+      operation: 'cancel-schedule',
+    })
   }
   listSchedules(input: { postId?: number; limit?: number; page?: number } = {}) {
     return this.request<SchedulesResult>({ ...input, operation: 'list-schedules' })
+  }
+  listPosts(input: ListPostsInput = {}) {
+    return this.request<ListPostsResult>({ ...input, operation: 'list-posts' })
+  }
+  updateContent(input: UpdateContentInput) {
+    return this.request<UpdatePostResult>({ ...input, operation: 'update-content' })
+  }
+  auditPosts(input: AuditPostsInput = {}) {
+    return this.request<AuditPostsResult>({ ...input, operation: 'audit-posts' })
   }
 }

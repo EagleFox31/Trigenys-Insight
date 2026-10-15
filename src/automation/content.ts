@@ -2,7 +2,10 @@ import type { Post } from '@/payload-types'
 import { createSourcedEditorialDocument } from '@/editorial/sourced-markdown-lexical'
 import { validateMarkers, type ArticleInput } from '../../packages/insight-automation/src/schema'
 
-export function createAutomationContent(input: ArticleInput): Post['content'] {
+export function createAutomationContent(
+  input: Pick<ArticleInput, 'body' | 'charts' | 'images'>,
+  retainedBlocks: Map<string, Post['content']['root']['children'][number]> = new Map(),
+): Post['content'] {
   const errors = validateMarkers(input)
   if (errors.length) throw new Error(errors.join('; '))
   const definitions = new Map<string, Record<string, unknown>>()
@@ -19,6 +22,8 @@ export function createAutomationContent(input: ArticleInput): Post['content'] {
     .map((block) => block.trim())
     .filter(Boolean)
     .flatMap((block) => {
+      const retained = retainedBlocks.get(block)
+      if (retained) return [structuredClone(retained)]
       const fields = definitions.get(block)
       if (fields) return [{ type: 'block', version: 2, format: '', fields }]
       return createSourcedEditorialDocument(block).root.children

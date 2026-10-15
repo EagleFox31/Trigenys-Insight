@@ -83,7 +83,7 @@ export const articleSchema = z
   })
   .strict()
 
-export function validateMarkers(input: ArticleInput): string[] {
+export function validateMarkers(input: Pick<ArticleInput, 'body' | 'charts' | 'images'>): string[] {
   const definitions = [...(input.charts ?? []), ...(input.images ?? [])]
   const markers = definitions.map((item) => item.marker)
   const blocks = input.body
@@ -157,20 +157,167 @@ export type UpdatePostResult = {
 
 export const referenceSchema = z.object({ locale: locale.default('fr') }).strict()
 
-export const schedulePostSchema = getPostSchema.extend({
-  publishAt: z.string().datetime({ offset: true }),
-  timeZone: text.max(100).default('Africa/Douala').refine((value) => {
-    try { new Intl.DateTimeFormat('fr', { timeZone: value }); return true } catch { return false }
-  }, 'Use an IANA time zone, e.g. Africa/Douala'),
-  expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
-}).strict()
-export const listSchedulesSchema = z.object({ postId: id.optional(), limit: id.max(100).default(50), page: id.default(1) }).strict()
+export const listPostsSchema = z
+  .object({
+    locale: locale.default('fr'),
+    status: z.enum(['ANY', 'DRAFT', 'PUBLISHED']).default('ANY'),
+    categoryId: id.optional(),
+    heroImage: z.enum(['any', 'missing', 'present']).default('any'),
+    search: text.max(200).optional(),
+    publishedAfter: z.string().datetime({ offset: true }).optional(),
+    publishedBefore: z.string().datetime({ offset: true }).optional(),
+    sort: z
+      .enum([
+        'id',
+        '-id',
+        'updatedAt',
+        '-updatedAt',
+        'createdAt',
+        '-createdAt',
+        'publishedAt',
+        '-publishedAt',
+      ])
+      .default('-updatedAt'),
+    page: id.default(1),
+    limit: id.max(100).default(25),
+  })
+  .strict()
+export const updateContentSchema = articleSchema
+  .omit({ idempotencyKey: true, ownerKey: true, target: true })
+  .partial()
+  .extend({
+    postId: id,
+    locale: locale.default('fr'),
+    body: text.max(200000),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    heroImage: id.nullable().optional(),
+    retainedBlocks: z
+      .array(
+        z
+          .object({ marker: text.regex(/^\[\[BLOCK:[a-zA-Z0-9_-]+\]\]$/), blockId: text.max(100) })
+          .strict(),
+      )
+      .max(100)
+      .optional(),
+    allowBlockRemoval: z.boolean().default(false),
+  })
+  .strict()
+export const auditPostsSchema = listPostsSchema
+  .extend({
+    limit: id.max(50).default(20),
+    postIds: z.array(id).min(1).max(100).optional(),
+    checks: z
+      .array(z.enum(['translations', 'seo', 'sources', 'images', 'links', 'structure']))
+      .min(1)
+      .max(6)
+      .default(['translations', 'seo', 'sources', 'images', 'links', 'structure']),
+  })
+  .strict()
+export type ListPostsInput = z.input<typeof listPostsSchema>
+export type UpdateContentInput = z.input<typeof updateContentSchema>
+export type AuditPostsInput = z.input<typeof auditPostsSchema>
+export type PostSummary = {
+  id: number
+  slug: string
+  title: string | null
+  excerpt: string | null
+  status: 'DRAFT' | 'PUBLISHED'
+  isPublic: boolean
+  heroImage: number | null
+  categories: number[]
+  authors: number[]
+  updatedAt: string
+  publishedAt: string | null
+  hasContent: boolean
+  translationPresent: boolean
+  wordCount: number
+}
+export type ListPostsResult = {
+  ok: true
+  locale: 'fr' | 'en'
+  view: 'latest'
+  docs: PostSummary[]
+  totalDocs: number
+  page: number
+  limit: number
+  totalPages: number
+  hasNextPage: boolean
+}
+export type AuditIssue = {
+  code: string
+  severity: 'error' | 'warning'
+  field: string
+  locale?: 'fr' | 'en'
+  message: string
+}
+export type AuditPostsResult = {
+  ok: true
+  checkedAt: string
+  scope: 'current_page'
+  editorialApprovalRequired: true
+  externalAvailabilityChecked: false
+  factsVerified: false
+  totalDocs: number
+  page: number
+  limit: number
+  totalPages: number
+  hasNextPage: boolean
+  summary: {
+    scanned: number
+    articlesWithErrors: number
+    articlesWithWarnings: number
+    issuesByCode: Record<string, number>
+  }
+  docs: Array<{
+    id: number
+    slug: string
+    title: string | null
+    status: 'DRAFT' | 'PUBLISHED'
+    isPublic: boolean
+    passesAutomatedChecks: boolean
+    issues: AuditIssue[]
+    locales: Record<'fr' | 'en', { hasTitle: boolean; hasContent: boolean; wordCount: number }>
+  }>
+}
+
+export const schedulePostSchema = getPostSchema
+  .extend({
+    publishAt: z.string().datetime({ offset: true }),
+    timeZone: text
+      .max(100)
+      .default('Africa/Douala')
+      .refine((value) => {
+        try {
+          new Intl.DateTimeFormat('fr', { timeZone: value })
+          return true
+        } catch {
+          return false
+        }
+      }, 'Use an IANA time zone, e.g. Africa/Douala'),
+    expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .strict()
+export const listSchedulesSchema = z
+  .object({ postId: id.optional(), limit: id.max(100).default(50), page: id.default(1) })
+  .strict()
 export type SchedulePostInput = z.input<typeof schedulePostSchema>
 export type PostSelector = z.input<typeof getPostSchema>
-export type ScheduleResult = { ok: true; postId: number; jobId: number; publishAt: string; timeZone: string; status: 'SCHEDULED' }
+export type ScheduleResult = {
+  ok: true
+  postId: number
+  jobId: number
+  publishAt: string
+  timeZone: string
+  status: 'SCHEDULED'
+}
 export type SchedulesResult = {
   ok: true
-  docs: Array<{ jobId: number; postId: number; publishAt: string | null; status: 'SCHEDULED' | 'PROCESSING' | 'FAILED' }>
+  docs: Array<{
+    jobId: number
+    postId: number
+    publishAt: string | null
+    status: 'SCHEDULED' | 'PROCESSING' | 'FAILED'
+  }>
   totalDocs: number
   hasNextPage: boolean
 }
@@ -185,6 +332,9 @@ export const operationSchema = z.discriminatedUnion('operation', [
   schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
   getPostSchema.extend({ operation: z.literal('cancel-schedule') }),
   listSchedulesSchema.extend({ operation: z.literal('list-schedules') }),
+  listPostsSchema.extend({ operation: z.literal('list-posts') }),
+  updateContentSchema.extend({ operation: z.literal('update-content') }),
+  auditPostsSchema.extend({ operation: z.literal('audit-posts') }),
   referenceSchema.extend({ operation: z.literal('list-categories') }),
   referenceSchema.extend({ operation: z.literal('list-authors') }),
 ])

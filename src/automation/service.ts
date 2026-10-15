@@ -4,6 +4,10 @@ import { changePublicationSchedule, listPublicationSchedules } from './schedulin
 import type { PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
 import { createAutomationContent } from './content'
+import { requireReferences, validateRelatedPosts } from './references'
+import { listEditorialPosts } from './postInventory'
+import { auditEditorialPosts } from './postAudit'
+import { updateEditorialContent } from './updateContent'
 import {
   type EditorialOperation,
   validateMarkers,
@@ -14,38 +18,14 @@ export { EditorialError } from './errors'
 export const editorialSlug = (key: string) =>
   `editorial-os-${createHash('sha256').update(key).digest('hex').slice(0, 20)}`
 
-async function requireReferences(
-  req: PayloadRequest,
-  collection: 'users' | 'categories' | 'media' | 'research-sources' | 'posts',
-  ids: number[],
-) {
-  if (!ids.length) return
-  const result = await req.payload.find({
-    collection,
-    where: { id: { in: [...new Set(ids)] } },
-    limit: ids.length,
-    depth: 0,
-    overrideAccess: true,
-    req,
-  })
-  const found = new Set(result.docs.map((doc) => doc.id))
-  if (ids.some((id) => !found.has(id)))
-    throw new EditorialError(422, `invalid_${collection}_reference`)
-}
-async function validateRelatedPosts(req: PayloadRequest, ids: number[] | undefined, ownId?: number) {
-  if (ids === undefined) return undefined
-  const unique = [...new Set(ids)]
-  if (ownId !== undefined && unique.includes(ownId))
-    throw new EditorialError(422, 'self_related_post')
-  await requireReferences(req, 'posts', unique)
-  return unique
-}
-
 export async function executeEditorialOperation(
   req: PayloadRequest,
   input: EditorialOperation,
 ): Promise<Record<string, unknown>> {
   const payload = req.payload
+  if (input.operation === 'list-posts') return listEditorialPosts(req, input)
+  if (input.operation === 'audit-posts') return auditEditorialPosts(req, input)
+  if (input.operation === 'update-content') return updateEditorialContent(req, input)
   if (input.operation === 'list-schedules') return listPublicationSchedules(req, input)
   if (input.operation === 'list-categories') {
     const result = await payload.find({
@@ -131,7 +111,11 @@ export async function executeEditorialOperation(
     })
     return { ok: true, id: media.id, url: media.url ?? null, reused: false }
   }
-  const byID = input.operation === 'get-post' || input.operation === 'update-post' || input.operation === 'schedule-post' || input.operation === 'cancel-schedule'
+  const byID =
+    input.operation === 'get-post' ||
+    input.operation === 'update-post' ||
+    input.operation === 'schedule-post' ||
+    input.operation === 'cancel-schedule'
   if (byID && Boolean(input.idempotencyKey) === Boolean(input.postId))
     throw new EditorialError(400, 'provide_exactly_one_post_identifier')
   const slug = editorialSlug(input.idempotencyKey ?? '')
@@ -191,7 +175,7 @@ export async function executeEditorialOperation(
       data,
       locale: input.locale,
       fallbackLocale: false,
-      draft: (input.status ? input.status !== 'PUBLISHED' : previous._status !== 'published'),
+      draft: input.status ? input.status !== 'PUBLISHED' : previous._status !== 'published',
       depth: 0,
       overrideAccess: true,
       req,
@@ -203,7 +187,9 @@ export async function executeEditorialOperation(
       status: stored._status === 'published' ? 'PUBLISHED' : 'DRAFT',
       updatedAt: stored.updatedAt,
       url: stored._status === 'published' ? `/${input.locale}/posts/${stored.slug}` : null,
-      relatedPosts: (stored.relatedPosts ?? []).map((post) => typeof post === 'number' ? post : post.id),
+      relatedPosts: (stored.relatedPosts ?? []).map((post) =>
+        typeof post === 'number' ? post : post.id,
+      ),
     }
   }
   if (validateMarkers(input).length) throw new EditorialError(422, 'invalid_content_markers')

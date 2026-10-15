@@ -12,7 +12,7 @@ client. Le PNG 512 × 512 initial était tronqué ; l’icône du package a ét�
 depuis le favicon SVG existant, sans changer son dessin. Ses données PNG, son
 format, ses dimensions et sa lisibilité ont été vérifiés.
 
-Les schémas des 11 outils sont exportés depuis le vrai serveur MCP du SDK, sans
+Les schémas des 14 outils sont exportés depuis le vrai serveur MCP du SDK, sans
 connexion à la base et sans exécution d’opérations éditoriales. Le contrôle CI
 compare leur contrat au fichier versionné et reconstruit l’archive. Cela ne
 rafraîchit pas le catalogue ChatGPT et ne soumet pas automatiquement le plugin.
@@ -24,7 +24,8 @@ Sous-titre français : Gérez articles et brouillons.
 Sous-titre anglais : Manage editorial publishing.
 Public : membres de la rédaction disposant déjà d’un compte habilité.
 Fonctions : brouillons, édition ciblée, auteurs/catégories, sources, médias,
-articles liés, publication explicite et programmation.
+articles liés, publication explicite et programmation. Liste filtrée des articles,
+modification complète par ID et audit technique FR/EN sont également disponibles.
 Limites : pas de gestion de comptes, d’autres sites, de réseaux sociaux ou de
 paiements. La programmation publie la dernière version du brouillon ; statut
 commun FR/EN et vérification environ toutes les cinq minutes, sans garantie de
