@@ -1,3 +1,5 @@
+import { executeBufferOperation } from '@/integrations/buffer/service'
+import { socialArticleStatus } from '@/integrations/buffer/store'
 import { createHash } from 'node:crypto'
 import sharp from 'sharp'
 import { changePublicationSchedule, listPublicationSchedules } from './scheduling'
@@ -22,6 +24,14 @@ export async function executeEditorialOperation(
   req: PayloadRequest,
   input: EditorialOperation,
 ): Promise<Record<string, unknown>> {
+  if (
+    input.operation === 'buffer-status' ||
+    input.operation === 'buffer-create-draft' ||
+    input.operation === 'buffer-list-posts' ||
+    input.operation === 'buffer-schedule-post' ||
+    input.operation === 'buffer-cancel-schedule'
+  )
+    return executeBufferOperation(req, input)
   const payload = req.payload
   if (input.operation === 'list-posts') return listEditorialPosts(req, input)
   if (input.operation === 'audit-posts') return auditEditorialPosts(req, input)
@@ -132,7 +142,12 @@ export async function executeEditorialOperation(
   })
   if (input.operation === 'get-post') {
     if (!existing.docs[0]) throw new EditorialError(404, 'post_not_found')
-    return { ok: true, post: existing.docs[0] }
+    const socialDistribution = await socialArticleStatus(req, existing.docs[0].id)
+    return {
+      ok: true,
+      post: existing.docs[0],
+      ...(socialDistribution ? { socialDistribution } : {}),
+    }
   }
   if (input.operation === 'schedule-post' || input.operation === 'cancel-schedule') {
     if (!existing.docs[0]) throw new EditorialError(404, 'post_not_found')

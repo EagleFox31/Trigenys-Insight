@@ -20,6 +20,10 @@ import {
   type UpdateContentInput,
   type AuditPostsInput,
   type AuditPostsResult,
+  type BufferDraftInput,
+  type BufferListInput,
+  type BufferScheduleInput,
+  type BufferCancelInput,
 } from './schema.ts'
 export * from './schema.ts'
 
@@ -126,6 +130,21 @@ export class InsightClient {
   }
   getPostById(postId: number, locale: 'fr' | 'en' = 'fr') {
     return this.request<PostResult>({ operation: 'get-post', postId, locale })
+  }
+  bufferStatus() {
+    return this.request({ operation: 'buffer-status' })
+  }
+  bufferCreateDraft(input: BufferDraftInput) {
+    return this.request({ ...input, operation: 'buffer-create-draft' })
+  }
+  bufferListPosts(input: BufferListInput = {}) {
+    return this.request({ ...input, operation: 'buffer-list-posts' })
+  }
+  bufferSchedulePost(input: BufferScheduleInput) {
+    return this.request({ ...input, operation: 'buffer-schedule-post' })
+  }
+  bufferCancelSchedule(input: BufferCancelInput) {
+    return this.request({ ...input, operation: 'buffer-cancel-schedule' })
   }
   listCategories(locale: 'fr' | 'en' = 'fr') {
     return this.request<ReferenceResult>({ operation: 'list-categories', locale })

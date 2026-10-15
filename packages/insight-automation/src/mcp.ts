@@ -1,5 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import {
+  bufferStatusSchema,
+  bufferDraftSchema,
+  bufferListSchema,
+  bufferScheduleSchema,
+  bufferCancelSchema,
   articleSchema,
   getPostSchema,
   referenceSchema,
@@ -63,6 +68,63 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     openWorldHint: false,
   }
   const oauth = (scopes: string[]) => ({ securitySchemes: [{ type: 'oauth2', scopes }] })
+
+  server.registerTool(
+    'insight_buffer_status',
+    {
+      description:
+        'Check the server-side Buffer connection and list actual organizations/channels. Never returns the API key. First step before choosing a target social channel.',
+      inputSchema: bufferStatusSchema.shape,
+      annotations: { ...read, openWorldHint: true },
+      _meta: oauth(['editorial:read']),
+    },
+    () => execute({ operation: 'buffer-status' }),
+  )
+  server.registerTool(
+    'insight_buffer_create_draft',
+    {
+      description:
+        'Prepare a Buffer social draft linked to an already public, translated CMS article. Choose an actual connected LinkedIn/Facebook channelId and supply platform-adapted text, plus a stable idempotencyKey. Omitting text uses a simple title/excerpt/link template, not AI generation. Uses the public version, never a pending CMS revision. Copies the public cover image and includes a tracked source link in the default template. Delivery runs on the next minute tick. Creates only a Buffer draft; never publishes or schedules. Read insight_buffer_list_posts to confirm remote status before claiming success.',
+      inputSchema: bufferDraftSchema.shape,
+      annotations: { ...write, destructiveHint: false, openWorldHint: true },
+      _meta: oauth(['editorial:write']),
+    },
+    (input) => execute({ ...input, operation: 'buffer-create-draft' }),
+  )
+  server.registerTool(
+    'insight_buffer_list_posts',
+    {
+      description:
+        'List persisted social export requests and confirmed Buffer draft/schedule IDs, target channel, text, errors and timestamps. Status is the last observed Buffer response, not a live social-network delivery guarantee. Supports postId and pagination; get_post also includes recent social distribution records for that article.',
+      inputSchema: bufferListSchema.shape,
+      annotations: read,
+      _meta: oauth(['editorial:read']),
+    },
+    (input) => execute({ ...input, operation: 'buffer-list-posts' }),
+  )
+  server.registerTool(
+    'insight_buffer_schedule_post',
+    {
+      description:
+        'Schedule an existing confirmed Buffer draft for a user-approved explicit date/time. This authorizes future public social publication: call only when requested. Requires the export UUID and fresh expectedUpdatedAt from list_posts. publishAt must have an explicit UTC offset and be at least two minutes ahead. Reuses the remote draft ID, never creates another post. The minute worker checks remote text for unreviewed edits and confirms the Buffer schedule; read list_posts to verify.',
+      inputSchema: bufferScheduleSchema.shape,
+      annotations: { ...write, openWorldHint: true },
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+    },
+    (input) => execute({ ...input, operation: 'buffer-schedule-post' }),
+  )
+  server.registerTool(
+    'insight_buffer_cancel_schedule',
+    {
+      description:
+        'Request cancellation of a Buffer social schedule by returning the existing remote post to draft. Requires exportId and fresh expectedUpdatedAt. Cannot undo an already sent social post. Confirm the draft state through list_posts after the next worker tick.',
+      inputSchema: bufferCancelSchema.shape,
+      annotations: { ...write, openWorldHint: true },
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+    },
+    (input) => execute({ ...input, operation: 'buffer-cancel-schedule' }),
+  )
+
   server.registerTool(
     'insight_list_categories',
     {

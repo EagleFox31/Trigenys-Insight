@@ -322,7 +322,38 @@ export type SchedulesResult = {
   hasNextPage: boolean
 }
 
+export const bufferStatusSchema = z.object({}).strict()
+export const bufferDraftSchema = z
+  .object({
+    postId: id,
+    locale: locale.default('fr'),
+    channelId: text.max(200),
+    idempotencyKey: text.max(200),
+    text: text.max(3000).optional(),
+  })
+  .strict()
+export const bufferListSchema = z
+  .object({ postId: id.optional(), page: id.default(1), limit: id.max(100).default(25) })
+  .strict()
+export const bufferScheduleSchema = z
+  .object({
+    exportId: z.string().uuid(),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    publishAt: z.string().datetime({ offset: true }),
+  })
+  .strict()
+export const bufferCancelSchema = bufferScheduleSchema.omit({ publishAt: true })
+export type BufferDraftInput = z.input<typeof bufferDraftSchema>
+export type BufferListInput = z.input<typeof bufferListSchema>
+export type BufferScheduleInput = z.input<typeof bufferScheduleSchema>
+export type BufferCancelInput = z.input<typeof bufferCancelSchema>
+
 export const operationSchema = z.discriminatedUnion('operation', [
+  bufferStatusSchema.extend({ operation: z.literal('buffer-status') }),
+  bufferDraftSchema.extend({ operation: z.literal('buffer-create-draft') }),
+  bufferListSchema.extend({ operation: z.literal('buffer-list-posts') }),
+  bufferScheduleSchema.extend({ operation: z.literal('buffer-schedule-post') }),
+  bufferCancelSchema.extend({ operation: z.literal('buffer-cancel-schedule') }),
   articleSchema.extend({ operation: z.literal('draft') }),
   articleSchema.extend({ operation: z.literal('publish') }),
   uploadSchema.extend({ operation: z.literal('upload-media') }),

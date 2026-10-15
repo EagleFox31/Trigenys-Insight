@@ -54,3 +54,14 @@ while keeping status and schedules. Preserve existing embedded blocks with
 Published edits take effect immediately. See the full guide for filters, scopes
 and preservation details. The matching MCP tools are `insight_list_posts`,
 `insight_update_content` and `insight_audit_posts`.
+
+### Buffer social distribution
+
+The server can use `BUFFER_API_KEY` to prepare public articles as LinkedIn/Facebook
+Buffer drafts. `bufferStatus()` lists actual connected channels;
+`bufferCreateDraft({ postId, locale, channelId, idempotencyKey, text? })` enqueues a
+safe draft request. Verify the remote receipt with `bufferListPosts({ postId })`
+after the next minute tick. Scheduling requires explicit approval and
+`bufferSchedulePost({ exportId, expectedUpdatedAt, publishAt })`; cancellation uses
+`bufferCancelSchedule({ exportId, expectedUpdatedAt })`. Buffer credentials stay
+on the server. See [the distribution guide](../../docs/buffer-distribution.md).

@@ -1,3 +1,4 @@
+import { processBufferOutbox } from '@/integrations/buffer/service'
 import config from '@payload-config'
 import { createLocalReq, getPayload } from 'payload'
 import { authorizedPublicationWorker } from '@/automation/workerAuth'
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
   const payload = await getPayload({ config })
   const req = await createLocalReq({}, payload)
   try {
-    return await withPublicationLock(req, async () => {
+    const publication = await withPublicationLock(req, async () => {
       const result = await payload.jobs.run({
         allQueues: true,
         where: publicationJobsWhere(),
@@ -28,17 +29,23 @@ export async function POST(request: Request) {
         req,
       })
       const statuses = Object.values(result.jobStatus ?? {})
-      return Response.json(
-        {
-          ok: true,
-          processed: statuses.length,
-          failed: statuses.filter((job) => job.status !== 'success').length,
-          remaining: result.remainingJobsFromQueried,
-          noJobsRemaining: result.noJobsRemaining ?? false,
-        },
-        { headers },
-      )
+      return {
+        ok: true,
+        processed: statuses.length,
+        failed: statuses.filter((job) => job.status !== 'success').length,
+        remaining: result.remainingJobsFromQueried,
+        noJobsRemaining: result.noJobsRemaining ?? false,
+      }
     })
+    // Buffer failures never prevent article publication. This queue can only
+    // deliver explicit social requests; creating a draft never schedules it.
+    let buffer
+    try {
+      buffer = await processBufferOutbox(req)
+    } catch {
+      buffer = { processed: 0, failed: 1, error: 'buffer_worker_unavailable' }
+    }
+    return Response.json({ ...publication, buffer }, { headers })
   } catch (error) {
     if (error instanceof EditorialError)
       return Response.json({ error: error.code }, { status: error.status, headers })
