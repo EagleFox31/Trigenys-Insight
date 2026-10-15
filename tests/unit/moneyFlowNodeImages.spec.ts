@@ -20,6 +20,6 @@ describe('money flow node visuals', () => {
   it('uses distinct source files and does not need third-party hotlinks', () => {
     const assets = nodeNames.map((name) => readFileSync(join(process.cwd(), 'public', 'money-flow', name + '.svg'), 'utf8'))
     expect(new Set(assets).size).toBe(nodeNames.length)
-    expect(assets.join('')).not.toContain('http://')
+    expect(assets.join('')).not.toMatch(/(?:href|src)="https?:\/\//i)
   })
 })
