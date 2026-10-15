@@ -196,6 +196,9 @@ MCP host. Available tools:
 - `insight_upload_media`
 - `insight_create_draft`
 - `insight_publish`
+- `insight_schedule_post`
+- `insight_cancel_schedule`
+- `insight_list_schedules`
 
 Draft and publish are separate tools, with mutation annotations. The publish tool
 explicitly describes its public effect. Host approval policies still apply.
