@@ -106,6 +106,9 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
   const [search,setSearch]=useState('')
   const [category,setCategory]=useState<'all'|ProviderCategory>('all')
   const [onlyWithFees,setOnlyWithFees]=useState(false)
+  const [railFilter,setRailFilter]=useState<'all'|PaymentRail>('all')
+  const [stackFilter,setStackFilter]=useState<'all'|TechStack>('all')
+  const [documentedOnly,setDocumentedOnly]=useState(false)
 
   const finished=step===steps.length
   const profile = finished ? answers as FinderProfile : null
@@ -114,8 +117,10 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
   const matching=useMemo(()=>providers.filter(p=>
     (category==='all'||p.category===category) &&
     (!onlyWithFees||!!p.fee) &&
+    (railFilter==='all'|| !documentedOnly || (railFilter==='mobileCards'?(p.rails?.includes('mobile') && p.rails?.includes('cards')):p.rails?.includes(railFilter))) &&
+    (stackFilter==='all'|| !documentedOnly || p.stacks?.includes(stackFilter)) &&
     p.name.toLocaleLowerCase('fr').includes(search.trim().toLocaleLowerCase('fr'))
-  ),[search,category,onlyWithFees])
+  ),[search,category,onlyWithFees,railFilter,stackFilter,documentedOnly])
 
   function select(key:StepKey,value:string) {
     setAnswers(a=>({...a,[key]:value}))
@@ -127,6 +132,8 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
     setCount(100)
     setAmount(10000)
   }
+  const railChoices:PaymentRail[]=answers.useCase==='freelance'?['international','cards','mobile','mobileCards']:choices.rail
+  const prompt=steps[step]?.key==='rail' && answers.useCase==='freelance' ? 'Comment tes clients te paient-ils ?' : steps[step]?.key==='rail' && answers.useCase==='marketplace' ? 'Comment tes acheteurs doivent-ils payer ?' : steps[step]?.title
   const wrapper = embedded
     ? 'not-prose relative left-1/2 my-12 w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2'
     : 'mx-auto w-full max-w-6xl'
@@ -164,10 +171,10 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                 <div className="mb-7 grid grid-cols-5 gap-1.5" aria-hidden="true">
                   {steps.map((s,i)=><span key={s.key} className={'h-1.5 rounded-full '+(i<=step?'bg-emerald-600':'bg-muted')}/>)}
                 </div>
-                <h3 className="text-xl font-semibold sm:text-2xl">{steps[step].title}</h3>
+                <h3 className="text-xl font-semibold sm:text-2xl">{prompt}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{steps[step].hint}</p>
-                <div className="mt-6 grid gap-2 sm:grid-cols-2" aria-label={steps[step].title}>
-                  {choices[steps[step].key].map(value=>(
+                <div className="mt-6 grid gap-2 sm:grid-cols-2" aria-label={prompt}>
+                  {(steps[step].key==='rail'?railChoices:choices[steps[step].key]).map(value=>(
                     <button type="button" key={value} onClick={()=>select(steps[step].key,value)}
                       className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-border bg-background p-4 text-left text-sm font-medium transition hover:border-emerald-600 hover:bg-emerald-500/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
                       {labels[steps[step].key][value as never]} <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-muted-foreground"/>
@@ -233,7 +240,25 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                   </select>
                 </label>
               </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="text-xs text-muted-foreground">Moyen recherché
+                  <select value={railFilter} onChange={e=>setRailFilter(e.target.value as 'all'|PaymentRail)} className="mt-1 block w-full rounded-lg border border-border bg-background p-3 text-sm text-foreground">
+                    <option value="all">Tous les moyens</option>
+                    {Object.entries(railLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs text-muted-foreground">Stack technique
+                  <select value={stackFilter} onChange={e=>setStackFilter(e.target.value as 'all'|TechStack)} className="mt-1 block w-full rounded-lg border border-border bg-background p-3 text-sm text-foreground">
+                    <option value="all">Toutes les stacks</option>
+                    {Object.entries(stackLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}
+                  </select>
+                </label>
+              </div>
               <label className="mt-4 flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={documentedOnly} onChange={e=>setDocumentedOnly(e.target.checked)} className="accent-emerald-700"/>
+                Restreindre aux compatibilités documentées (les inconnues ne sont pas incompatibles)
+              </label>
+              <label className="mt-3 flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={onlyWithFees} onChange={e=>setOnlyWithFees(e.target.checked)} className="accent-emerald-700"/>
                 Tarifs publics renseignés uniquement
               </label>
