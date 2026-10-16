@@ -870,6 +870,17 @@ a {
   object-fit: cover;
   border-radius: 4px;
 }
+
+/* Artwork with labels and provider logos must display in full, not use
+   the photographic cover crop. The 16:9 image scales proportionally on
+   desktop and mobile instead of being constrained to a 560px crop. */
+.post-hero__image--uncropped img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+}
 .post-hero:has(.post-hero__image) {
   margin-bottom: 20px;
 }
