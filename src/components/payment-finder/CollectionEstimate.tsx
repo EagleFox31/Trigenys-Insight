@@ -10,7 +10,7 @@ export function CollectionEstimate({provider, simulation}: {provider: Provider; 
     <dl className="mt-2 space-y-2">{result.lines.map(line => <div key={line.rail}>
       <div className="flex flex-wrap justify-between gap-x-2 gap-y-1">
         <dt className="text-xs text-muted-foreground">{railLabels[line.rail]}</dt>
-        <dd className="text-xs font-semibold">{line.estimate === null ? 'Tarif à confirmer' : XAF.format(line.estimate)+' FCFA'}</dd>
+        <dd className="text-xs font-semibold">{line.estimate === null ? 'Tarif non renseigné' : XAF.format(line.estimate)+' FCFA'}</dd>
       </div>
       {line.fee && <a href={line.fee.source} target="_blank" rel="noopener noreferrer" className="mt-0.5 block text-xs text-muted-foreground underline underline-offset-2">
         {line.fee.percent.toLocaleString('fr-FR')} %{line.fee.perTransactionXaf ? ' + '+XAF.format(line.fee.perTransactionXaf)+' FCFA/paiement' : ''} · source du tarif

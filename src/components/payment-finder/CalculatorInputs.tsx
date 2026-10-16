@@ -58,7 +58,7 @@ export function CalculatorInputs({rails, simulation, onSimulate}: {
     <div className="mt-3 text-xs leading-5 text-muted-foreground" role="status">
       {simulation && <p>Volume simulé : {XAF.format(simulation.channels.reduce((sum, channel) => sum + channel.count * channel.amountXaf, 0))} FCFA.</p>}
       {simulation && dirty && <p className="font-medium text-amber-800 dark:text-amber-300">Valeurs modifiées : clique sur « Recalculer les commissions » pour actualiser les résultats.</p>}
-      {!simulation && <p>Renseigne tes volumes puis lance la simulation. Les frais non publiés restent inconnus, jamais zéro.</p>}
+      {!simulation && <p>Renseigne tes volumes puis lance la simulation. Les frais absents de notre relevé restent inconnus, jamais zéro.</p>}
       {rails.includes('international') && <p>Pour l’international, les montants représentent un équivalent FCFA. Change, devise de règlement et frais transfrontaliers restent à confirmer.</p>}
     </div>
   </form>

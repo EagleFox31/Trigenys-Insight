@@ -11,6 +11,8 @@ import {
 import { CalculatorInputs } from './CalculatorInputs'
 import { CollectionEstimate } from './CollectionEstimate'
 import { ProviderLogo } from './ProviderLogo'
+import { CoverageNotice } from './CoverageNotice'
+import { catalogCoverage, deferInternational, previewCoverage } from './coverage'
 import { assessProviders, selectDiverseShortlist, type AssessedCandidate } from './decisionEngine'
 
 type StepKey = 'useCase' | 'rail' | 'stack' | 'stage' | 'need' | 'priority'
@@ -120,7 +122,7 @@ function DirectoryRow({provider,simulation,selected,onToggle,selectionFull}:{
             {provider.rails?.length ? provider.rails.map(rail=>railLabels[rail]).join(' · ') : 'Moyens à confirmer'}
           </span>
           <span className="min-w-20 text-right text-xs font-semibold sm:min-w-32">
-            {provider.fee?provider.fee.percent.toLocaleString('fr-FR')+' % annoncé':'Tarif à confirmer'}
+            {provider.fee?provider.fee.percent.toLocaleString('fr-FR')+' % annoncé':'Tarif non renseigné'}
           </span>
           <ChevronDown aria-hidden="true" size={18} className={'shrink-0 text-muted-foreground transition-transform '+(expanded?'rotate-180':'')} />
         </button>
@@ -228,6 +230,10 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
   const activeSimulation=simulation?.channels.map(c=>c.rail).sort().join('-')===simulationKey?simulation:null
   const ranked=useMemo(()=>profile?assessProviders(profile,activeSimulation):[],[profile,activeSimulation])
   const shortlist=selectDiverseShortlist(ranked)
+  const unranked=shortlist.length===0?ranked.filter(candidate=>candidate.tier==='documented').slice(0,3):[]
+  const displayed=shortlist.length?shortlist:unranked
+  const coverageAnswers=useMemo(()=>({...answers,...(step<3?{stage:undefined}:{}),...(step<4?{need:undefined}:{})}),[answers,step])
+  const coverage=useMemo(()=>previewCoverage(coverageAnswers),[coverageAnswers])
   const exploratory=ranked.filter(result=>result.tier==='investigate' && (currentPaymentMethods(profile??{rail:'mobile'}).some(rail=>result.provider.rails?.includes(rail)) || result.provider.useCases?.includes(profile?.useCase??'saas'))).slice(0,3)
   const matching=useMemo(()=>providers.filter(p=>
     (category==='all'||p.category===category) &&
@@ -246,7 +252,9 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
 
 
   function select(key:StepKey,value:string) {
-    setAnswers(a=>key==='useCase'?({...a,useCase:value as UseCase,need:a.useCase===value?a.need:undefined}):({...a,[key]:value}))
+    const next=key==='useCase'?({...answers,useCase:value as UseCase,need:answers.useCase===value?answers.need:undefined}):key==='stage'?({...answers,stage:value as BusinessStage,need:undefined}):({...answers,[key]:value})
+    setAnswers(next)
+    if ((key==='stage'||key==='need') && previewCoverage(next)?.count===0) return
     setStep(s=>Math.min(steps.length,s+1))
   }
   function reset() {
@@ -258,6 +266,20 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
   function toggleRail(period:'currentRails'|'futureRails',rail:PaymentMethod) {
     setAnswers(a=>({...a,...togglePlannedMethod(a,period,rail)}))
     setSimulation(null)
+  }
+  function deferInternationalChoice() {
+    setAnswers(deferInternational)
+    setSimulation(null)
+  }
+  function exploreUnverified() {
+    setMode('expert')
+    setCategory('all')
+    setRailFilter('all')
+    setStackFilter('all')
+    setDocumentedOnly(false)
+    setOnlyWithFees(false)
+    setSearch('')
+    setVisibleCount(15)
   }
   const needChoices: PaymentNeed[] = needsByCase[answers.useCase??'saas']
   const prompt=steps[step]?.key==='rail' && answers.useCase==='freelance' ? 'Comment tes clients te paient-ils ?' : steps[step]?.key==='rail' && answers.useCase==='marketplace' ? 'Comment tes acheteurs doivent-ils payer ?' : steps[step]?.key==='need' && answers.useCase==='agency' ? 'Que dois-tu gérer pour tes clients ?' : steps[step]?.title
@@ -289,6 +311,10 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
         </div>
 
         <div className="p-4 sm:p-7">
+          <details className="mb-5 rounded-xl border border-border bg-muted/25 p-3 text-xs text-muted-foreground">
+            <summary className="cursor-pointer font-medium text-foreground">Données du comparateur : {catalogCoverage.methods}/{catalogCoverage.total} fiches avec moyens renseignés</summary>
+            <p className="mt-2 leading-5">{catalogCoverage.mobileFees}/{catalogCoverage.total} fiches avec un tarif Mobile Money et {catalogCoverage.cardFees}/{catalogCoverage.total} avec un tarif carte. Les autres fiches restent des pistes à documenter. Un tarif absent de notre relevé peut être publié ailleurs ou disponible sur devis.</p>
+          </details>
           {mode==='wizard' ? (
             !finished ? (
               <div>
@@ -301,21 +327,33 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                 <h3 className="text-xl font-semibold sm:text-2xl">{prompt}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{steps[step].hint}</p>
                 {steps[step].key==='stack' && <p className="mt-2 text-xs text-muted-foreground">Pour une application mobile, garde les clés secrètes et la validation des paiements côté serveur.</p>}
+                {steps[step].key!=='rail' && step>1 && <div className="mt-4"><CoverageNotice coverage={coverage} onDeferInternational={deferInternationalChoice} onExplore={exploreUnverified} onChangeMethods={()=>setStep(1)}/></div>}
                 {steps[step].key==='rail' ? <div className="mt-6 space-y-5">
-                  {(['currentRails','futureRails'] as const).map(period=><fieldset key={period}>
-                    <legend className="mb-2 text-sm font-semibold">{period==='currentRails'?'À gérer maintenant':'Prévu plus tard (facultatif)'}</legend>
-                    <div className="grid gap-2 sm:grid-cols-3">{railChoices.map(rail=><label key={rail} className={'flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border p-4 text-sm font-medium '+(answers[period]?.includes(rail)?'border-[#102e48] bg-[#102e48]/5':'border-border bg-background')}>
-                      <input type="checkbox" checked={answers[period]?.includes(rail)??false} onChange={()=>toggleRail(period,rail)} className="size-5 shrink-0 accent-[#102e48]"/>
-                      {railLabels[rail]}
-                    </label>)}</div>
-                  </fieldset>)}
+                  {(['currentRails','futureRails'] as const).map(period=><div key={period}>
+                    <fieldset>
+                      <legend className="mb-2 text-sm font-semibold">{period==='currentRails'?'À gérer maintenant':'Prévu plus tard (facultatif)'}</legend>
+                      <div className="grid gap-2 sm:grid-cols-3">{railChoices.map(rail=>{
+                        const selected=answers[period]?.includes(rail)??false
+                        const candidateRails=selected?answers.currentRails??[]:[...(answers.currentRails??[]),rail]
+                        const optionCoverage=period==='currentRails'?previewCoverage({...coverageAnswers,currentRails:candidateRails}):null
+                        return <label key={rail} className={'flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border p-4 text-sm font-medium '+(selected?'border-[#102e48] bg-[#102e48]/5':'border-border bg-background')}>
+                          <input type="checkbox" aria-label={railLabels[rail]} checked={selected} onChange={()=>toggleRail(period,rail)} className="mt-0.5 size-5 shrink-0 accent-[#102e48]"/>
+                          <span>{railLabels[rail]}<span className={'mt-1 block text-xs font-normal '+(optionCoverage?.count===0?'text-amber-800 dark:text-amber-300':'text-muted-foreground')}>
+                            {period==='futureRails'?'Objectif d’évolution, non bloquant':optionCoverage?.count===0?'Aucune combinaison documentée':optionCoverage?.count+' piste(s) à ce stade'}
+                          </span></span>
+                        </label>
+                      })}</div>
+                    </fieldset>
+                    {period==='currentRails' && <div className="mt-3"><CoverageNotice coverage={coverage} onDeferInternational={deferInternationalChoice} onExplore={exploreUnverified}/></div>}
+                  </div>)}
+                  <p className="text-xs leading-5 text-muted-foreground">À l’international, pays acceptés, devises et conditions d’encaissement restent à vérifier. Accepter les cartes ne garantit pas tous les paiements depuis l’étranger.</p>
                   <p className="text-xs text-muted-foreground">Les résultats doivent couvrir tous tes besoins actuels. Les besoins futurs servent à préparer l’évolution sans écarter les solutions adaptées au démarrage.</p>
-                  <button type="button" disabled={!answers.currentRails?.length} onClick={()=>{setAnswers(a=>({...a,rail:a.currentRails![0]}));setStep(s=>s+1)}} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#102e48] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto">Continuer <ArrowRight size={16} aria-hidden="true"/></button>
+                  <button type="button" disabled={!answers.currentRails?.length||coverage?.count===0} onClick={()=>{setAnswers(a=>({...a,rail:a.currentRails![0]}));setStep(s=>s+1)}} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#102e48] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto">Continuer <ArrowRight size={16} aria-hidden="true"/></button>
                 </div> : <div className="mt-6 grid gap-2 sm:grid-cols-2" aria-label={prompt}>
                   {(steps[step].key==='need'?needChoices:choices[steps[step].key]).map(value=>(
-                    <button type="button" key={value} onClick={()=>select(steps[step].key,value)} aria-pressed={answers[steps[step].key]===value}
+                    <button type="button" key={value} onClick={()=>select(steps[step].key,value)} aria-pressed={answers[steps[step].key]===value} aria-label={labels[steps[step].key][value as never]} aria-describedby={(steps[step].key==='stage'||steps[step].key==='need')?id+'-'+steps[step].key+'-'+value+'-coverage':undefined}
                       className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-border bg-background p-4 text-left text-sm font-medium transition hover:border-[#102e48] hover:bg-[#102e48]/5 focus-visible:outline-2 focus-visible:outline-offset-2">
-                      {labels[steps[step].key][value as never]} <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-muted-foreground"/>
+                      <span>{labels[steps[step].key][value as never]}{(steps[step].key==='stage'||steps[step].key==='need') && <span id={id+'-'+steps[step].key+'-'+value+'-coverage'} className="mt-1 block text-xs font-normal text-muted-foreground">{previewCoverage({...coverageAnswers,[steps[step].key]:value})?.count??0} piste(s) documentée(s) à ce stade</span>}</span> <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-muted-foreground"/>
                     </button>
                   ))}
                 </div>}
@@ -334,7 +372,7 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                 <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Ton profil</p>
-                    <h3 className="mt-1 text-xl font-semibold">{shortlist.length ? shortlist.length+' piste'+(shortlist.length>1?'s':'')+' documentée'+(shortlist.length>1?'s':'')+' à examiner' : 'Aucune piste suffisamment documentée'}</h3>
+                    <h3 className="mt-1 text-xl font-semibold">{displayed.length ? displayed.length+' piste'+(displayed.length>1?'s':'')+' documentée'+(displayed.length>1?'s':'')+' à examiner' : 'Sélection à documenter davantage'}</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {useCaseLabels[profile!.useCase]} · Maintenant : {currentPaymentMethods(profile!).map(rail=>railLabels[rail]).join(' + ')} · {stackLabels[profile!.stack]} · {stageLabels[profile!.stage]} · {needLabels[profile!.need??'collect']}.
                     </p>
@@ -351,16 +389,17 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                   {profile!.priority==='cost' && activeSimulation && profile!.need==='collect' && <p className="mt-2">Le coût dépend du volume saisi, uniquement pour les commissions publiées et comparables, hors frais annuels, retraits et taxes.</p>}
                 </div>
                 <CalculatorInputs key={simulationKey} rails={activeRails} simulation={activeSimulation} onSimulate={setSimulation}/>
-                {shortlist.length>0 ? (
+                {unranked.length>0 && <p className="mt-4 rounded-xl border border-amber-400/60 p-3 text-sm">Ces fiches réunissent les critères essentiels, mais les données manquent pour établir un classement multicritère. Consulte les justificatifs et les points à confirmer.</p>}
+                {displayed.length>0 ? (
                   <div className="mt-6 grid gap-3 lg:grid-cols-3">
-                    {shortlist.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} evidence={c.evidence} assessment={c} simulation={activeSimulation} futureRails={profile!.futureRails??[]} stack={profile!.stack}/>)}
+                    {displayed.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} evidence={c.evidence} assessment={c} simulation={activeSimulation} futureRails={profile!.futureRails??[]} stack={profile!.stack}/>)}
                   </div>
                 ) : (
-                  <p className="mt-5 rounded-xl border border-amber-500/40 p-4 text-sm">Aucune solution ne dispose, dans notre relevé, de preuves suffisantes pour réunir ce moyen de paiement, cette opération et ce statut. Ce n’est pas une preuve d’incompatibilité : les fournisseurs doivent être interrogés. Nous ne remplaçons pas les réponses manquantes par les mêmes trois noms.</p>
+                  <div className="mt-5"><CoverageNotice coverage={coverage} onDeferInternational={()=>{deferInternationalChoice();setStep(1)}} onExplore={exploreUnverified} onChangeMethods={()=>setStep(1)}/></div>
                 )}
-                <p className="mt-4 text-sm text-muted-foreground">
+                {displayed.length>0 && <p className="mt-4 text-sm text-muted-foreground">
                   Les pistes ci-dessus remplissent les critères essentiels d’après les documents consultés, mais leur ouverture en production, leur KYC et leur fiabilité restent à confirmer. Une donnée absente n’est jamais une preuve d’incompatibilité.
-                </p>
+                </p>}
                 {exploratory.length>0 && <details className="mt-4 rounded-xl border border-border p-4 text-sm">
                   <summary className="cursor-pointer font-semibold">Autres fournisseurs à interroger (données incomplètes)</summary>
                   <div className="mt-3 space-y-3">{exploratory.map(c=><div key={c.provider.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0"><span><strong>{c.provider.name}</strong><span className="ml-2 text-xs text-muted-foreground">{c.unknown.slice(0,2).join(' · ')}</span></span>{c.provider.source&&<a href={c.provider.source} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline dark:text-emerald-300">Source</a>}</div>)}</div>
