@@ -14,6 +14,7 @@ import { ArticleHighlights } from '@/components/insights/ArticleHighlights'
 import { ArticleFaq } from '@/components/insights/ArticleFaq'
 import { ArticleBodyEnhancer } from '@/components/insights/ArticleBodyEnhancer'
 import { PaymentFinder } from '@/components/payment-finder/PaymentFinder'
+import { PaymentFinderEnglish } from '@/components/payment-finder/PaymentFinderEnglish'
 import { ArticleTableOfContents } from '@/components/insights/ArticleTableOfContents'
 import { extractArticleHighlights } from '@/components/insights/articleEditorial'
 import { TrackedOutboundLink } from '@/components/analytics/TrackedOutboundLink'
@@ -130,8 +131,8 @@ export async function LocalizedPostPage({
             <RichText className="article-content" data={post.content} enableGutter={false} />
             <ArticleBodyEnhancer locale={locale} slug={decodedSlug} />
 
-            {/* Existing French research draft #36: make the finder available without rewriting editorial copy. */}
-            {post.id === 36 && locale === 'fr' && <PaymentFinder embedded />}
+            {/* Shared recommendation engine: match the article's locale for post #36. */}
+            {post.id === 36 && (locale === 'fr' ? <PaymentFinder embedded /> : <PaymentFinderEnglish embedded />)}
 
             <ArticleFaq items={faqItems} locale={locale} />
 
