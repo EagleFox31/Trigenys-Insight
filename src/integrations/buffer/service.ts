@@ -1,3 +1,4 @@
+import { selectNamedSocialChannel, adaptTrackedSource } from './channelSelection'
 import { createHash, randomUUID } from 'node:crypto'
 import type { PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
@@ -32,7 +33,9 @@ export async function syncBufferConnection(req: PayloadRequest, client = new Buf
 async function publicPost(req: PayloadRequest, postId: number, locale: 'fr' | 'en'): Promise<Post> {
   const result = await req.payload.find({
     collection: 'posts',
-    where: { and: [{ id: { equals: postId } }, { _status: { equals: 'published' } }] },
+    where: {
+      and: [{ id: { equals: postId } }, { _status: { equals: 'published' } }],
+    },
     locale,
     fallbackLocale: false,
     draft: false,
@@ -208,7 +211,10 @@ async function executeBufferOperationUnlocked(
     !row.remote_post_id
   )
     throw new EditorialError(409, 'social_export_not_ready')
-  const request = { ...row.request, ...(cancellation ? {} : { publishAt: input.publishAt }) }
+  const request = {
+    ...row.request,
+    ...(cancellation ? {} : { publishAt: input.publishAt }),
+  }
   const updated = await socialQuery<SocialExport>(
     req,
     `UPDATE insight_social_exports SET state=$2,request=$3::jsonb,last_error=NULL,updated_at=GREATEST(date_trunc('milliseconds', now()), updated_at + interval '1 millisecond')
@@ -277,7 +283,7 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
     const pending = await socialQuery<SocialExport>(
       req,
       `SELECT * FROM insight_social_exports
-      WHERE state IN ('pending-bootstrap','pending-preparation','pending-revision','pending-draft','pending-schedule','pending-cancel','uncertain')
+      WHERE state IN ('pending-channel-draft','pending-bootstrap','pending-preparation','pending-revision','pending-draft','pending-schedule','pending-cancel','uncertain')
       ORDER BY CASE WHEN state='uncertain' THEN 1 ELSE 0 END, created_at ASC LIMIT 1`,
     )
     if (!pending.length) return { processed: 0, failed: 0 }
@@ -288,17 +294,28 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
       // Withdrawal of the article must never prevent cancelling its social schedule.
       if (row.state !== 'pending-cancel') await publicPost(req, row.post_id, row.request.locale)
       let request = row.request
-      if (row.state === 'pending-bootstrap') {
+      if (['pending-bootstrap', 'pending-channel-draft'].includes(row.state)) {
+        const named = row.state === 'pending-channel-draft'
+        if (named && (!request.targetChannelName || !request.text))
+          throw new EditorialError(422, 'buffer_named_draft_incomplete')
         const connection = await syncBufferConnection(req, client)
-        const channel = bootstrapChannel(connection.channels)
-        if (!channel) throw new EditorialError(409, 'buffer_test_needs_channel_selection')
+        const channel = named
+          ? selectNamedSocialChannel(connection.channels, request.targetChannelName!)
+          : bootstrapChannel(connection.channels)
+        if (!channel)
+          throw new EditorialError(
+            409,
+            named
+              ? 'buffer_named_channel_not_found_or_ambiguous'
+              : 'buffer_test_needs_channel_selection',
+          )
         request = await socialRequest(
           req,
           await publicPost(req, row.post_id, request.locale),
           request.locale,
           channel,
-          undefined,
-          true,
+          named ? adaptTrackedSource(request.text!, channel.service) : undefined,
+          !named,
         )
         await socialQuery(
           req,
@@ -329,9 +346,13 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
         throw new EditorialError(422, 'buffer_export_incomplete')
       let remote
       if (
-        ['pending-draft', 'pending-bootstrap', 'pending-preparation', 'uncertain'].includes(
-          row.state,
-        ) &&
+        [
+          'pending-draft',
+          'pending-bootstrap',
+          'pending-channel-draft',
+          'pending-preparation',
+          'uncertain',
+        ].includes(row.state) &&
         !row.remote_post_id
       ) {
         remote = await client.findMatching(request.channel, request.text)

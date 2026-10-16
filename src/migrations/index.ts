@@ -1,3 +1,4 @@
+import * as migration_20261016_185500_recreate_agenstudio_drafts from './20261016_185500_recreate_agenstudio_drafts'
 import * as migration_20261016_062000_add_linkedin_hashtags from './20261016_062000_add_linkedin_hashtags'
 import * as migration_20261016_000500_refresh_linkedin_drafts from './20261016_000500_refresh_linkedin_drafts'
 import * as migration_20261015_224500_add_buffer_outbox from './20261015_224500_add_buffer_outbox'
@@ -49,4 +50,5 @@ export const migrations = [
   { up: migration_20261015_224500_add_buffer_outbox.up, down: migration_20261015_224500_add_buffer_outbox.down, name: '20261015_224500_add_buffer_outbox' },
   { up: migration_20261016_000500_refresh_linkedin_drafts.up, down: migration_20261016_000500_refresh_linkedin_drafts.down, name: '20261016_000500_refresh_linkedin_drafts' },
   { up: migration_20261016_062000_add_linkedin_hashtags.up, down: migration_20261016_062000_add_linkedin_hashtags.down, name: '20261016_062000_add_linkedin_hashtags' },
+  { up: migration_20261016_185500_recreate_agenstudio_drafts.up, down: migration_20261016_185500_recreate_agenstudio_drafts.down, name: '20261016_185500_recreate_agenstudio_drafts' },
 ]

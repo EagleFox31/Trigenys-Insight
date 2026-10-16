@@ -2,6 +2,7 @@ import type { PayloadRequest } from 'payload'
 import type { BufferChannel } from './client'
 export type SocialState =
   | 'pending-bootstrap'
+  | 'pending-channel-draft'
   | 'pending-preparation'
   | 'pending-revision'
   | 'pending-draft'
@@ -23,6 +24,7 @@ export type SocialRequest = {
   sourceURL?: string
   channel?: BufferChannel
   bootstrap?: boolean
+  targetChannelName?: string
   previousText?: string
   publishAt?: string
 }
@@ -51,7 +53,11 @@ export async function socialQuery<T>(
 export async function socialArticleStatus(req: PayloadRequest, postId: number) {
   if (!process.env.BUFFER_API_KEY?.trim()) return undefined
   const [connection, exports] = await Promise.all([
-    socialQuery<{ checked_at: Date; channels: BufferChannel[]; last_error: string | null }>(
+    socialQuery<{
+      checked_at: Date
+      channels: BufferChannel[]
+      last_error: string | null
+    }>(
       req,
       'SELECT checked_at, channels, last_error FROM insight_buffer_connection WHERE id = true',
     ),
