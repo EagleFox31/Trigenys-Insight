@@ -33,15 +33,15 @@ describe('Cameroon Payment Finder editorial catalog',()=>{
   it('uses only published characteristics in explanatory matching',()=>{
     const candidates=rankProviders(base)
     const fapshi=candidates.find(c=>c.provider.id==='fapshi')!
-    expect(fapshi.known).toContain('Moyen de paiement documenté')
-    expect(fapshi.known).toContain('Sandbox documentée')
+    expect(fapshi.known).toContain('Moyen de paiement annoncé dans la documentation')
+    expect(fapshi.known).toContain('Sandbox annoncée')
     const unknown=candidates.find(c=>c.provider.id==='softeller')!
     expect(unknown.known).toHaveLength(0)
-    expect(unknown.unknown).toContain('Couverture du moyen de paiement')
+    expect(unknown.unknown).toContain('Moyen de paiement recherché non vérifié')
   })
   it('never gives an unsupported provider a claim of tested SAV',()=>{
     const c=rankProviders({...base,priority:'support'})
-    expect(c.every(x=>x.unknown.includes('Performance SAV non mesurée'))).toBe(true)
+    expect(c.every(x=>x.unknown.includes('Qualité du SAV non mesurée'))).toBe(true)
   })
   it('reserves individual recommendations for documented individual KYC pathways',()=>{
     const solo=rankProviders({...base,stage:'individual',need:'collect',stack:'python'})
