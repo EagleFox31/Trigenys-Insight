@@ -118,10 +118,12 @@ export const PostHero: React.FC<{
         )}
       </div>
       {heroImage && typeof heroImage !== 'string' ? (
-        <div className="insights-shell post-hero__image">
+        <div className={post.id === 36
+          ? 'insights-shell post-hero__image post-hero__image--uncropped'
+          : 'insights-shell post-hero__image'}>
           <Media
             priority
-            imgClassName="object-cover"
+            imgClassName={post.id === 36 ? 'h-auto w-full object-contain' : 'object-cover'}
             resource={heroImage}
             alt={post.id === 36
               ? locale === 'fr'
