@@ -4,13 +4,14 @@ import { useId, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Filter, RotateCcw, Search, ShieldAlert } from 'lucide-react'
 import {
   categoryLabels, currentPaymentMethods, needLabels, priorityLabels, providers, railLabels,
-  rankProviders, simulateCollection, stackIntegration, stackLabels, stageLabels, togglePlannedMethod, useCaseLabels,
+  simulateCollection, stackIntegration, stackLabels, stageLabels, togglePlannedMethod, useCaseLabels,
   type BusinessStage, type FinderProfile, type PaymentMethod, type PaymentRail, type PaymentSimulation, type Priority,
   type PaymentNeed, type Provider, type ProviderCategory, type TechStack, type UseCase,
 } from './catalog'
 import { CalculatorInputs } from './CalculatorInputs'
 import { CollectionEstimate } from './CollectionEstimate'
 import { ProviderLogo } from './ProviderLogo'
+import { assessProviders, selectDiverseShortlist, type AssessedCandidate } from './decisionEngine'
 
 type StepKey = 'useCase' | 'rail' | 'stack' | 'stage' | 'need' | 'priority'
 const steps: {key: StepKey; title: string; hint: string}[] = [
@@ -48,8 +49,8 @@ const categoryOptions: {value:'all'|ProviderCategory;label:string}[] = [
   ...Object.entries(categoryLabels).map(([value,label])=>({value:value as ProviderCategory,label})),
 ]
 
-function ProviderCard({provider,why,unknown,simulation,futureRails,stack,evidence}: {
-  provider:Provider;why:string[];unknown:string[];simulation:PaymentSimulation|null;futureRails:PaymentMethod[];stack:TechStack;evidence?:{label:string;url:string}[]
+function ProviderCard({provider,why,unknown,simulation,futureRails,stack,evidence,assessment}: {
+  provider:Provider;why:string[];unknown:string[];simulation:PaymentSimulation|null;futureRails:PaymentMethod[];stack:TechStack;evidence?:{label:string;url:string}[];assessment:AssessedCandidate
 }) {
   const integration = stackIntegration(provider,stack)
   return (
@@ -61,6 +62,25 @@ function ProviderCard({provider,why,unknown,simulation,futureRails,stack,evidenc
           <p className="mt-0.5 text-xs text-muted-foreground">{categoryLabels[provider.category]}</p>
         </div>
       </div>
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted/60 p-3 text-xs">
+        <div>
+          <p className="text-muted-foreground">Adéquation indicative</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums">{assessment.suitability===null?'—':assessment.suitability+'/100'}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Couverture documentaire</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums">{assessment.evidenceCoverage}%</p>
+        </div>
+      </div>
+      <details className="text-xs">
+        <summary className="cursor-pointer font-medium">Détail du calcul multicritère</summary>
+        <div className="mt-2 space-y-2">
+          {assessment.criteria.map(c=><div key={c.key} className="flex items-start justify-between gap-3">
+            <span><strong>{c.label}</strong> · poids {c.weight}<span className="block text-muted-foreground">{c.explanation}</span></span>
+            <span className="shrink-0 font-semibold tabular-nums">{c.rating===null?'Inconnu':c.rating+'/100'}</span>
+          </div>)}
+        </div>
+      </details>
       {why.length > 0 ? <div className="space-y-1.5">{why.slice(0,2).map(item=>(
         <p className="flex items-start gap-2 text-sm" key={item}><Check size={15} aria-hidden="true" className="mt-0.5 shrink-0 text-emerald-600"/>{item}</p>
       ))}</div> : <p className="text-sm text-muted-foreground">Compatibilité avec ce parcours à vérifier.</p>}
@@ -206,8 +226,8 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
   const activeRails:PaymentMethod[]=mode==='wizard'&&profile?currentPaymentMethods(profile):railFilter==='mobileCards'?['mobile','cards']:[railFilter==='all'?'mobile':railFilter]
   const simulationKey=activeRails.slice().sort().join('-')
   const activeSimulation=simulation?.channels.map(c=>c.rail).sort().join('-')===simulationKey?simulation:null
-  const ranked=useMemo(()=>profile?rankProviders(profile,activeSimulation):[],[profile,activeSimulation])
-  const shortlist=ranked.filter(result=>result.tier==='documented').slice(0,3)
+  const ranked=useMemo(()=>profile?assessProviders(profile,activeSimulation):[],[profile,activeSimulation])
+  const shortlist=selectDiverseShortlist(ranked)
   const exploratory=ranked.filter(result=>result.tier==='investigate' && (currentPaymentMethods(profile??{rail:'mobile'}).some(rail=>result.provider.rails?.includes(rail)) || result.provider.useCases?.includes(profile?.useCase??'saas'))).slice(0,3)
   const matching=useMemo(()=>providers.filter(p=>
     (category==='all'||p.category===category) &&
@@ -324,11 +344,16 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                     <RotateCcw size={16} aria-hidden="true"/> Modifier mes réponses
                   </button>
                 </div>
-                {profile!.priority==='cost' && activeSimulation && <p className="text-xs text-muted-foreground">Les pistes documentées sont triées par commissions de collecte calculables, hors frais annuels et de sortie.</p>}
+                <div className="rounded-xl border border-border bg-muted/25 p-3 text-xs leading-relaxed text-muted-foreground">
+                  <strong className="text-foreground">Méthode V2 :</strong> adéquation normalisée sur les critères disposant de données, avec réduction si la documentation manque. L’indicateur de couverture mesure seulement la quantité d’informations disponibles, pas la fiabilité ni l’agrément du prestataire. La diversification départage des solutions proches sans forcer l’entrée de fournisseurs non qualifiés.
+                  {profile!.priority==='support' && <p className="mt-2 font-medium text-amber-800 dark:text-amber-200">Aucun benchmark SAV indépendant : les critères techniques et opérationnels servent uniquement à préparer la présélection, sans noter la qualité du support.</p>}
+                  {profile!.priority==='cost' && (!activeSimulation || profile!.need!=='collect') && <p className="mt-2">Les frais de collecte ne peuvent pas être classés pour ce parcours tant qu’un volume comparable et une opération d’encaissement ne sont pas renseignés.</p>}
+                  {profile!.priority==='cost' && activeSimulation && profile!.need==='collect' && <p className="mt-2">Le coût dépend du volume saisi, uniquement pour les commissions publiées et comparables, hors frais annuels, retraits et taxes.</p>}
+                </div>
                 <CalculatorInputs key={simulationKey} rails={activeRails} simulation={activeSimulation} onSimulate={setSimulation}/>
                 {shortlist.length>0 ? (
                   <div className="mt-6 grid gap-3 lg:grid-cols-3">
-                    {shortlist.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} evidence={c.evidence} simulation={activeSimulation} futureRails={profile!.futureRails??[]} stack={profile!.stack}/>)}
+                    {shortlist.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} evidence={c.evidence} assessment={c} simulation={activeSimulation} futureRails={profile!.futureRails??[]} stack={profile!.stack}/>)}
                   </div>
                 ) : (
                   <p className="mt-5 rounded-xl border border-amber-500/40 p-4 text-sm">Aucune solution ne dispose, dans notre relevé, de preuves suffisantes pour réunir ce moyen de paiement, cette opération et ce statut. Ce n’est pas une preuve d’incompatibilité : les fournisseurs doivent être interrogés. Nous ne remplaçons pas les réponses manquantes par les mêmes trois noms.</p>
