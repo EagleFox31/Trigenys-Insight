@@ -3,7 +3,7 @@ import { PaymentFinder } from '@/components/payment-finder/PaymentFinder'
 
 export const metadata:Metadata = {
   title:'Comparateur des solutions de paiement au Cameroun | Trigenys Insight',
-  description:'5 questions, un calculateur et 63 pistes pour trouver les solutions de paiement à examiner selon votre stack, votre budget et votre activité.',
+  description:'6 questions, un calculateur et 63 pistes pour trouver les solutions de paiement à examiner selon votre stack, votre budget et votre activité.',
   robots:{index:false,follow:false},
 }
 export default function Page(){

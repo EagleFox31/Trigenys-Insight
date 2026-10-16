@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {categoryLabels,collectionFeeEstimate,providers,rankProviders,type FinderProfile} from '@/components/payment-finder/catalog'
+import {categoryLabels,collectionFeeEstimate,currentPaymentMethods,providers,rankProviders,simulateCollection,stackIntegration,togglePlannedMethod,type FinderProfile} from '@/components/payment-finder/catalog'
 
 const base:FinderProfile={useCase:'saas',rail:'mobile',stack:'python',stage:'mvp',priority:'integration'}
 const byName=(name:string)=>providers.find(p=>p.name===name)!
@@ -78,6 +78,49 @@ describe('Cameroon Payment Finder editorial catalog',()=>{
     expect(solo).not.toEqual(business)
     expect(business).toContain('tranzak')
     expect(business).toContain('bui')
+  })
+
+  it('requires every current method while keeping future methods out of eligibility',()=>{
+    const profile:FinderProfile={...base,stage:'company',currentRails:['mobile','cards'],futureRails:['international']}
+    const results=rankProviders(profile)
+    expect(results.find(c=>c.provider.id==='zitopay')?.tier).toBe('documented')
+    expect(results.find(c=>c.provider.id==='fapshi')?.tier).toBe('investigate')
+    expect(rankProviders({...profile,currentRails:['mobile','cards','international']}).filter(c=>c.tier==='documented')).toHaveLength(0)
+    expect(currentPaymentMethods({...base,rail:'mobileCards'})).toEqual(['mobile','cards'])
+  })
+
+  it('keeps a payment method in only one planning period',()=>{
+    const plan=togglePlannedMethod({currentRails:['mobile','cards'],futureRails:['international']},'currentRails','international')
+    expect(plan).toEqual({currentRails:['mobile','cards','international'],futureRails:[]})
+    expect(togglePlannedMethod(plan,'futureRails','cards')).toEqual({currentRails:['mobile','international'],futureRails:['cards']})
+  })
+
+  it('distinguishes an official Kotlin SDK from a REST integration for Go and from unknown no-code support',()=>{
+    expect(stackIntegration(byName('MeSomb'),'kotlin').kind).toBe('native')
+    expect(stackIntegration(byName('MeSomb'),'go').kind).toBe('rest')
+    expect(stackIntegration(byName('Fapshi'),'kotlin').kind).toBe('rest')
+    expect(stackIntegration(byName('Fapshi'),'noCode').kind).toBe('unknown')
+    expect(stackIntegration(byName('Kratos Pay'),'go').kind).toBe('unknown')
+  })
+
+  it('calculates each channel on its own volume and never substitutes a Mobile Money tariff for cards',()=>{
+    const simulation={channels:[{rail:'mobile' as const,count:100,amountXaf:10000},{rail:'cards' as const,count:20,amountXaf:5000}]}
+    const result=simulateCollection(byName('ZITOPAY'),simulation)
+    expect(result.lines.map(line=>line.estimate)).toEqual([27000,4100])
+    expect(result.total).toBe(31100)
+    expect(collectionFeeEstimate(byName('My-CoolPay'),20,5000,'cards')).toBe(4000)
+    const partial=simulateCollection(byName('Fapshi'),simulation)
+    expect(partial.lines.map(line=>line.estimate)).toEqual([30000,null])
+    expect(partial.total).toBeNull()
+    expect(partial.complete).toBe(false)
+    expect(collectionFeeEstimate(byName('ZITOPAY'),1000,1000)).toBe(36000)
+    expect(collectionFeeEstimate(byName('SupraPay'),100,10000,'international')).toBeNull()
+  })
+
+  it('ranks known collection costs using the submitted volume, including fixed per-payment fees',()=>{
+    const profile:FinderProfile={...base,stage:'individual',priority:'cost'}
+    expect(rankProviders(profile,{channels:[{rail:'mobile',count:100,amountXaf:10000}]}).filter(c=>c.tier==='documented')[0].provider.id).toBe('zitopay')
+    expect(rankProviders(profile,{channels:[{rail:'mobile',count:1000,amountXaf:1000}]}).filter(c=>c.tier==='documented')[0].provider.id).toBe('fapshi')
   })
 
 })

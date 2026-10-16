@@ -7,7 +7,8 @@
  */
 export type UseCase = 'saas' | 'commerce' | 'marketplace' | 'freelance' | 'agency'
 export type PaymentRail = 'mobile' | 'mobileCards' | 'cards' | 'international'
-export type TechStack = 'python' | 'node' | 'php' | 'mobile' | 'other'
+export type PaymentMethod = Exclude<PaymentRail, 'mobileCards'>
+export type TechStack = 'python' | 'node' | 'php' | 'mobile' | 'kotlin' | 'go' | 'java' | 'dotnet' | 'other' | 'noCode'
 export type BusinessStage = 'mvp' | 'individual' | 'company'
 export type PaymentNeed = 'collect' | 'payout' | 'bulk' | 'multiService' | 'subscription' | 'split'
 export type Priority = 'cost' | 'integration' | 'support' | 'coverage'
@@ -28,6 +29,9 @@ export type Provider = {
   /** Proven features only; absence means NOT VERIFIED, not unsupported. */
   rails?: PaymentRail[]
   stacks?: TechStack[]
+  /** Language-independent HTTP integration, distinct from an official SDK. */
+  restSource?: string
+  stackSources?: Partial<Record<TechStack, string>>
   useCases?: UseCase[]
   sandbox?: boolean
   /** Explicit published individual/unregistered onboarding path, not approval. */
@@ -37,10 +41,13 @@ export type Provider = {
   /** Documented product capabilities; absence is unverified, never incompatible. */
   capabilities?: Partial<Record<Exclude<PaymentNeed,'collect'>, string>>
   fee?: Fee
+  fees?: Partial<Record<PaymentMethod, Fee>>
 }
 export type FinderProfile = {
   useCase: UseCase
   rail: PaymentRail
+  currentRails?: PaymentMethod[]
+  futureRails?: PaymentMethod[]
   stack: TechStack
   stage: BusinessStage
   need?: PaymentNeed
@@ -49,18 +56,18 @@ export type FinderProfile = {
 
 const list: Provider[] = [
   // A — Gateways and merchant collection products (48)
-  { id:'fapshi', name:'Fapshi', category:'gateway', source:'https://www.fapshi.com/en', rails:['mobile'], stacks:['other'], useCases:['saas','commerce'], sandbox:true, individualPath:true, individualPathSource:'https://www.fapshi.com/en/help-and-support/topics/account', businessKycSource:'https://www.fapshi.com/en/help-and-support/topics/account', fee:{ percent:3, source:'https://www.fapshi.com/fr/nos-tarifs'} },
-  { id:'mesomb', name:'MeSomb', category:'gateway', source:'https://docs.mesomb.com/', rails:['mobile'], stacks:['python','node','php','mobile'], useCases:['saas','commerce','agency'], sandbox:true, capabilities:{multiService:'https://docs.mesomb.com/fr/products/payments/register-service',payout:'https://docs.mesomb.com/development'}, },
-  { id:'notch-pay', name:'Notch Pay', category:'gateway', source:'https://www.notchpay.co/pricing', rails:['mobile','cards'], stacks:['php'], useCases:['commerce','saas'], fee:{percent:2,source:'https://www.notchpay.co/pricing'} },
+  { id:'fapshi', restSource:'https://docs.fapshi.com/en/api-reference/getting-started', name:'Fapshi', category:'gateway', source:'https://www.fapshi.com/en', rails:['mobile'], stacks:['other'], useCases:['saas','commerce'], sandbox:true, individualPath:true, individualPathSource:'https://www.fapshi.com/en/help-and-support/topics/account', businessKycSource:'https://www.fapshi.com/en/help-and-support/topics/account', fee:{ percent:3, source:'https://www.fapshi.com/fr/nos-tarifs'} },
+  { id:'mesomb', restSource:'https://docs.mesomb.com/development/authentication', name:'MeSomb', category:'gateway', source:'https://docs.mesomb.com/', rails:['mobile'], stacks:['python','node','php','mobile','kotlin','java'], stackSources:{kotlin:'https://github.com/hachther/mesomb-kotlin'}, useCases:['saas','commerce','agency'], sandbox:true, capabilities:{multiService:'https://docs.mesomb.com/fr/products/payments/register-service',payout:'https://docs.mesomb.com/development'}, },
+  { id:'notch-pay', restSource:'https://developer.notchpay.co', name:'Notch Pay', category:'gateway', source:'https://www.notchpay.co/pricing', rails:['mobile','cards'], stacks:['php'], useCases:['commerce','saas'], fee:{percent:2,source:'https://www.notchpay.co/pricing'} },
   { id:'monetbil', name:'Monetbil', category:'gateway', source:'https://www.monetbil.com', rails:['mobile'], useCases:['commerce'] },
-  { id:'payunit', name:'PayUnit', category:'gateway', source:'https://developer.payunit.net/', rails:['mobile','cards'], stacks:['python','node','php','mobile'], useCases:['commerce','saas'], sandbox:true, individualPath:true, individualPathSource:'https://developer.payunit.net/kyc', businessKycSource:'https://developer.payunit.net/kyc' },
+  { id:'payunit', restSource:'https://developer.payunit.net/', name:'PayUnit', category:'gateway', source:'https://developer.payunit.net/', rails:['mobile','cards'], stacks:['python','node','php','mobile'], useCases:['commerce','saas'], sandbox:true, individualPath:true, individualPathSource:'https://developer.payunit.net/kyc', businessKycSource:'https://developer.payunit.net/kyc' },
   { id:'flutterwave', name:'Flutterwave', category:'gateway', source:'https://www.flutterwave.com', useCases:['commerce'] },
-  { id:'campay', name:'CamPay', category:'gateway', source:'https://www.campay.net/fr/', rails:['mobile'], stacks:['other'], useCases:['commerce','saas'], fee:{percent:2,source:'https://www.campay.net/fr/'} },
+  { id:'campay', restSource:'https://documenter.getpostman.com/view/2391374/T1LV8PVA', name:'CamPay', category:'gateway', source:'https://www.campay.net/fr/', rails:['mobile'], stacks:['python','php','kotlin'], stackSources:{kotlin:'https://github.com/CamPay/android-sdk'}, useCases:['commerce','saas'], fee:{percent:2,source:'https://www.campay.net/fr/'} },
   { id:'cinetpay', name:'CinetPay', category:'gateway', source:'https://docs.cinetpay.com/', rails:['mobile','cards'], useCases:['commerce','saas'] },
   { id:'mmgate', name:'MMGate', category:'gateway', source:'https://www.mmgate.org' },
   { id:'dropme', name:'Dropme', category:'gateway', source:'https://dropme.cm/fr/developers', rails:['mobile'], stacks:['other'] },
   { id:'zopay', name:'ZoPay', category:'gateway', source:'https://zopay.co/docs/getting-started/introduction' },
-  { id:'my-coolpay', name:'My-CoolPay', category:'gateway', source:'https://my-coolpay.com/fr/api/tarifs', rails:['mobile','cards'], stacks:['php'], useCases:['commerce'], fee:{percent:1.8,annualXaf:10000,source:'https://my-coolpay.com/fr/api/tarifs'} },
+  { id:'my-coolpay', name:'My-CoolPay', category:'gateway', source:'https://my-coolpay.com/fr/api/tarifs', rails:['mobile','cards'], stacks:['php'], useCases:['commerce'], fee:{percent:1.8,annualXaf:10000,source:'https://my-coolpay.com/fr/api/tarifs'}, fees:{cards:{percent:4,source:'https://my-coolpay.com/fr/api/tarifs'}} },
   { id:'dohone', name:'Dohone', category:'gateway', source:'https://www.my-dohone.com' },
   { id:'elyonpay', name:'ElyonPay', category:'gateway', source:'https://docs.elyonpay.com/fr/', rails:['mobile','cards'], stacks:['python','node','mobile'], useCases:['saas','commerce'], sandbox:true },
   { id:'getmipay', name:'GetMiPay', category:'gateway', source:'https://getmipay.com/developers' },
@@ -70,7 +77,7 @@ const list: Provider[] = [
   { id:'ktcpay', name:'KTCPay', category:'gateway', source:'https://ktcpay.net' },
   { id:'paynote', name:'Paynote / Y-Note', category:'gateway', source:'https://www.paynote.africa/documentation-paynote.html', rails:['mobile'], useCases:['saas'] },
   { id:'tranzak', name:'Tranzak Cameroon', category:'gateway', source:'https://docs.developer.tranzak.me/', rails:['mobile'], useCases:['agency','saas'], capabilities:{payout:'https://docs.developer.tranzak.me/',bulk:'https://docs.developer.tranzak.me/'} },
-  { id:'bui', name:'BUI Corporation', category:'gateway', source:'https://docs.buicorporation.io/', rails:['mobile'], stacks:['python','node','other'], useCases:['saas'], capabilities:{payout:'https://docs.buicorporation.io/transaction/service.html'} },
+  { id:'bui', restSource:'https://docs.buicorporation.io/transaction/service.html', name:'BUI Corporation', category:'gateway', source:'https://docs.buicorporation.io/', rails:['mobile'], stacks:['python','node','other'], useCases:['saas'], capabilities:{payout:'https://docs.buicorporation.io/transaction/service.html'} },
   { id:'sp-heavy', name:'SP-Heavy', category:'gateway', source:'https://www.yukwaindustries.org/' },
   { id:'camerpay', name:'CamerPay', category:'gateway', source:'https://camerpay.biz', useCases:['commerce'] },
   { id:'nexpay', name:'Nexpay', category:'gateway', source:'https://pay.nexbyt.com' },
@@ -80,7 +87,7 @@ const list: Provider[] = [
   { id:'intasend', name:'IntaSend', category:'gateway', source:'https://developers.intasend.com/countries/cameroon/' },
   { id:'kkiapay', name:'KKiaPay', category:'gateway', source:'https://kkiapay.me' },
   { id:'digitalispay', name:'DigitalisPay', category:'gateway' },
-  { id:'zitopay', name:'ZITOPAY', category:'gateway', source:'https://zitopay.africa/docs', rails:['mobile','cards'], stacks:['php','other'], useCases:['commerce','saas'], individualPath:true, individualPathSource:'https://zitopay.africa/faqs', businessKycSource:'https://zitopay.africa/faqs', fee:{percent:2.6,perTransactionXaf:10,source:'https://zitopay.africa/pricing'} },
+  { id:'zitopay', restSource:'https://zitopay.africa/docs', name:'ZITOPAY', category:'gateway', source:'https://zitopay.africa/docs', rails:['mobile','cards'], stacks:['php','other'], useCases:['commerce','saas'], individualPath:true, individualPathSource:'https://zitopay.africa/faqs', businessKycSource:'https://zitopay.africa/faqs', fee:{percent:2.6,perTransactionXaf:10,source:'https://zitopay.africa/pricing'}, fees:{cards:{percent:3.7,perTransactionXaf:20,source:'https://zitopay.africa/pricing'}} },
   { id:'moala', name:'MOALA', category:'gateway', source:'https://docs.moala.africa/fr/docs/introduction/', stacks:['php','other'], useCases:['saas','agency'] },
   { id:'adwapay', name:'AdwaPay', category:'gateway', source:'https://www.adwapay.com/' },
   { id:'enkap', name:'e-nkap', category:'gateway', source:'https://www.enkap.cm' },
@@ -129,7 +136,7 @@ export const railLabels: Record<PaymentRail, string> = {
 }
 export const stackLabels: Record<TechStack, string> = {
   python:'Python / Django / FastAPI', node:'Node.js / TypeScript', php:'PHP / WordPress',
-  mobile:'Flutter / application mobile', other:'Autre / REST / no-code',
+  mobile:'Flutter / Dart', kotlin:'Kotlin / Android', go:'Go', java:'Java / Spring', dotnet:'C# / .NET', other:'Autre langage / API REST', noCode:'No-code',
 }
 export const useCaseLabels: Record<UseCase, string> = {
   saas:'Un SaaS', commerce:'Une boutique e-commerce', marketplace:'Une marketplace',
@@ -159,21 +166,66 @@ export type Candidate = {
   evidence: { label: string; url: string }[]
 }
 
+export function currentPaymentMethods(profile: Pick<FinderProfile, 'rail' | 'currentRails'>): PaymentMethod[] {
+  if (profile.currentRails?.length) return [...new Set(profile.currentRails)]
+  return profile.rail === 'mobileCards' ? ['mobile', 'cards'] : [profile.rail]
+}
+
+export function togglePlannedMethod(
+  plan: {currentRails?: PaymentMethod[]; futureRails?: PaymentMethod[]},
+  period: 'currentRails' | 'futureRails',
+  rail: PaymentMethod,
+): {currentRails: PaymentMethod[]; futureRails: PaymentMethod[]} {
+  const other = period === 'currentRails' ? 'futureRails' : 'currentRails'
+  const selected = plan[period] ?? []
+  return {
+    currentRails: plan.currentRails ?? [], futureRails: plan.futureRails ?? [],
+    [period]: selected.includes(rail) ? selected.filter(r => r !== rail) : [...selected, rail],
+    [other]: (plan[other] ?? []).filter(r => r !== rail),
+  }
+}
+
+export function stackIntegration(provider: Provider, stack: TechStack): {kind: 'native' | 'rest' | 'unknown'; label: string; source?: string} {
+  if (stack !== 'other' && provider.stacks?.includes(stack)) {
+    return {kind:'native', label: stack === 'kotlin' ? 'SDK Android / Kotlin officiel documenté' : 'Intégration publiée pour '+stackLabels[stack], source:provider.stackSources?.[stack]??provider.source}
+  }
+  if (stack !== 'noCode' && provider.restSource) {
+    return {kind:'rest', label:stack === 'kotlin' ? 'API REST via ton backend pour Android' : 'API REST utilisable depuis ton backend '+(stack === 'other' ? '' : stackLabels[stack]), source:provider.restSource}
+  }
+  return {kind:'unknown', label:'Intégration avec ta stack non vérifiée'}
+}
+
+export function collectionFeeForRail(provider: Provider, rail: PaymentMethod): Fee | undefined {
+  return rail === 'mobile' ? provider.fee : provider.fees?.[rail]
+}
+
 /** A recommendation only enters the documented shortlist if the selected rail,
  * operation and (when requested) sandbox/individual onboarding path are actually
  * evidenced. Missing metadata means investigation, NOT incompatibility.
  */
-export function rankProviders(profile: FinderProfile): Candidate[] {
+export function rankProviders(profile: FinderProfile, simulation?: PaymentSimulation | null): Candidate[] {
   const need = profile.need ?? 'collect'
+  const costOrder = (a:Provider,b:Provider) => {
+    if (profile.priority !== 'cost') return 0
+    if (simulation) {
+      const aTotal=simulateCollection(a,simulation).total
+      const bTotal=simulateCollection(b,simulation).total
+      if (aTotal === null && bTotal === null) return 0
+      if (aTotal === null) return 1
+      if (bTotal === null) return -1
+      return aTotal-bTotal
+    }
+    return Number(currentPaymentMethods(profile).every(r => !!collectionFeeForRail(b,r))) -
+      Number(currentPaymentMethods(profile).every(r => !!collectionFeeForRail(a,r)))
+  }
   return providers.map((provider): Candidate => {
     let score = 0
     const known: string[] = []
     const unknown: string[] = []
     const evidence: Candidate['evidence'] = []
 
-    const railMatch = profile.rail === 'mobileCards'
-      ? Boolean(provider.rails?.includes('mobile') && provider.rails.includes('cards'))
-      : Boolean(provider.rails?.includes(profile.rail))
+    const currentRails = currentPaymentMethods(profile)
+    const railMatch = currentRails.every(rail => provider.rails?.includes(rail))
     if (railMatch) {
       score += 10
       known.push('Moyen de paiement annoncé dans la documentation')
@@ -192,15 +244,12 @@ export function rankProviders(profile: FinderProfile): Candidate[] {
       evidence.push({label:needLabels[need],url:needSource!})
     } else unknown.push(needLabels[need]+' : capacité non vérifiée')
 
-    if (profile.stack === 'other') {
-      if (provider.stacks?.includes('other')) {
-        score += 4
-        known.push('API REST décrite')
-      } else unknown.push('API REST / no-code à vérifier')
-    } else if (provider.stacks?.includes(profile.stack)) {
-      score += 4
-      known.push('Intégration technique documentée')
-    } else unknown.push('Intégration avec ta stack non vérifiée')
+    const integration = stackIntegration(provider, profile.stack)
+    if (integration.kind !== 'unknown') {
+      score += integration.kind === 'native' ? 4 : 2
+      known.push(integration.label)
+      if (integration.source) evidence.push({label:'Intégration technique',url:integration.source})
+    } else unknown.push(integration.label)
 
     if (provider.useCases?.includes(profile.useCase)) {
       score += 2
@@ -230,9 +279,9 @@ export function rankProviders(profile: FinderProfile): Candidate[] {
     if (profile.priority === 'integration' && provider.sandbox) score += 2
     if (profile.priority === 'coverage' && (provider.rails?.length ?? 0) > 1) score += 2
     if (profile.priority === 'cost') {
-      if(provider.fee && profile.rail === 'mobile') {
+      if(currentRails.every(rail => collectionFeeForRail(provider,rail))) {
         // Cost is secondary to documented core capabilities and eligibility.
-        score+=Math.max(0,5-provider.fee.percent)
+        score+=2
       } else unknown.push('Coût de collecte comparable non documenté')
     }
     if(profile.priority==='support')unknown.push('Qualité du SAV non mesurée')
@@ -240,12 +289,27 @@ export function rankProviders(profile: FinderProfile): Candidate[] {
     return {provider,score,tier:railMatch && needMatch && stageMatch?'documented':'investigate',known,unknown,evidence}
   }).sort((a,b)=>
     Number(b.tier==='documented')-Number(a.tier==='documented') ||
+    costOrder(a.provider,b.provider) ||
     b.score-a.score || b.known.length-a.known.length ||
     a.provider.name.localeCompare(b.provider.name,'fr')
   )
 }
 
-export function collectionFeeEstimate(provider: Provider, count: number, amountXaf: number): number | null {
-  if (!provider.fee || !Number.isSafeInteger(count) || count < 0 || !Number.isFinite(amountXaf) || amountXaf < 0) return null
-  return Math.round(count * (amountXaf * provider.fee.percent / 100 + (provider.fee.perTransactionXaf ?? 0)))
+export function collectionFeeEstimate(provider: Provider, count: number, amountXaf: number, rail: PaymentMethod = 'mobile'): number | null {
+  const fee = collectionFeeForRail(provider,rail)
+  if (!fee || !Number.isSafeInteger(count) || count < 0 || !Number.isFinite(amountXaf) || amountXaf < 0) return null
+  const estimate = Math.round(count * (amountXaf * fee.percent / 100 + (fee.perTransactionXaf ?? 0)))
+  return Number.isSafeInteger(estimate) ? estimate : null
+}
+
+export type SimulationChannel = {rail: PaymentMethod; count: number; amountXaf: number}
+export type PaymentSimulation = {channels: SimulationChannel[]}
+
+export function simulateCollection(provider: Provider, simulation: PaymentSimulation) {
+  const lines = simulation.channels.map(channel => ({
+    ...channel, fee:collectionFeeForRail(provider,channel.rail),
+    estimate:collectionFeeEstimate(provider,channel.count,channel.amountXaf,channel.rail),
+  }))
+  const complete = lines.length > 0 && lines.every(line => line.estimate !== null)
+  return {lines, complete, total:complete ? lines.reduce((sum,line) => sum + line.estimate!,0) : null}
 }
