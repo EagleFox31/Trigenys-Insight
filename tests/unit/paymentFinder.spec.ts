@@ -33,14 +33,51 @@ describe('Cameroon Payment Finder editorial catalog',()=>{
   it('uses only published characteristics in explanatory matching',()=>{
     const candidates=rankProviders(base)
     const fapshi=candidates.find(c=>c.provider.id==='fapshi')!
-    expect(fapshi.known).toContain('Moyen de paiement documenté')
-    expect(fapshi.known).toContain('Sandbox documentée')
+    expect(fapshi.known).toContain('Moyen de paiement annoncé dans la documentation')
+    expect(fapshi.known).toContain('Sandbox annoncée')
     const unknown=candidates.find(c=>c.provider.id==='softeller')!
     expect(unknown.known).toHaveLength(0)
-    expect(unknown.unknown).toContain('Couverture du moyen de paiement')
+    expect(unknown.unknown).toContain('Moyen de paiement recherché non vérifié')
   })
   it('never gives an unsupported provider a claim of tested SAV',()=>{
     const c=rankProviders({...base,priority:'support'})
-    expect(c.every(x=>x.unknown.includes('Performance SAV non mesurée'))).toBe(true)
+    expect(c.every(x=>x.unknown.includes('Qualité du SAV non mesurée'))).toBe(true)
   })
+  it('reserves individual recommendations for documented individual KYC pathways',()=>{
+    const solo=rankProviders({...base,stage:'individual',need:'collect',stack:'python'})
+    const listed=solo.filter(c=>c.tier==='documented')
+    expect(listed.length).toBeGreaterThan(0)
+    expect(listed.every(c=>Boolean(c.provider.individualPathSource))).toBe(true)
+    expect(listed.map(c=>c.provider.id)).toContain('fapshi')
+    expect(listed.map(c=>c.provider.id)).toContain('payunit')
+    expect(listed.map(c=>c.provider.id)).toContain('zitopay')
+    expect(solo.find(c=>c.provider.id==='mesomb')?.tier).toBe('investigate')
+  })
+  it('matches a registered business bulk-payout scenario to documented mass payments rather than general gateways',()=>{
+    const results=rankProviders({...base,stage:'company',useCase:'agency',need:'bulk',rail:'mobile',priority:'integration'})
+    const documented=results.filter(c=>c.tier==='documented')
+    expect(documented.map(c=>c.provider.id)).toEqual(['tranzak'])
+    expect(documented[0].evidence.some(item=>item.label.includes('Verser'))).toBe(true)
+    expect(results.find(c=>c.provider.id==='fapshi')?.tier).toBe('investigate')
+  })
+  it('recognizes multiple applications only when the provider documents separation of services',()=>{
+    const results=rankProviders({...base,stage:'company',useCase:'agency',need:'multiService',rail:'mobile'})
+    expect(results.filter(c=>c.tier==='documented').map(c=>c.provider.id)).toEqual(['mesomb'])
+  })
+  it('does not fabricate subscription renewals or marketplace split support',()=>{
+    for (const need of ['subscription','split'] as const) {
+      const matches=rankProviders({...base,stage:'company',need,useCase:need==='split'?'marketplace':'saas'})
+      expect(matches.filter(c=>c.tier==='documented')).toHaveLength(0)
+    }
+  })
+  it('a business payout shortlist differs from an individual collection shortlist for the same payment rail',()=>{
+    const solo=rankProviders({...base,stage:'individual',need:'collect'})
+      .filter(c=>c.tier==='documented').slice(0,3).map(c=>c.provider.id)
+    const business=rankProviders({...base,stage:'company',need:'payout'})
+      .filter(c=>c.tier==='documented').slice(0,3).map(c=>c.provider.id)
+    expect(solo).not.toEqual(business)
+    expect(business).toContain('tranzak')
+    expect(business).toContain('bui')
+  })
+
 })

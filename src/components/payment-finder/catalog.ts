@@ -9,6 +9,7 @@ export type UseCase = 'saas' | 'commerce' | 'marketplace' | 'freelance' | 'agenc
 export type PaymentRail = 'mobile' | 'mobileCards' | 'cards' | 'international'
 export type TechStack = 'python' | 'node' | 'php' | 'mobile' | 'other'
 export type BusinessStage = 'mvp' | 'individual' | 'company'
+export type PaymentNeed = 'collect' | 'payout' | 'bulk' | 'multiService' | 'subscription' | 'split'
 export type Priority = 'cost' | 'integration' | 'support' | 'coverage'
 export type ProviderCategory = 'gateway' | 'infrastructure' | 'orchestrator' | 'adjacent'
 
@@ -31,6 +32,10 @@ export type Provider = {
   sandbox?: boolean
   /** Explicit published individual/unregistered onboarding path, not approval. */
   individualPath?: boolean
+  individualPathSource?: string
+  businessKycSource?: string
+  /** Documented product capabilities; absence is unverified, never incompatible. */
+  capabilities?: Partial<Record<Exclude<PaymentNeed,'collect'>, string>>
   fee?: Fee
 }
 export type FinderProfile = {
@@ -38,16 +43,17 @@ export type FinderProfile = {
   rail: PaymentRail
   stack: TechStack
   stage: BusinessStage
+  need?: PaymentNeed
   priority: Priority
 }
 
 const list: Provider[] = [
   // A — Gateways and merchant collection products (48)
-  { id:'fapshi', name:'Fapshi', category:'gateway', source:'https://www.fapshi.com/en', rails:['mobile'], stacks:['other'], useCases:['saas','commerce'], sandbox:true, individualPath:true, fee:{ percent:3, source:'https://www.fapshi.com/fr/nos-tarifs'} },
-  { id:'mesomb', name:'MeSomb', category:'gateway', source:'https://docs.mesomb.com/', rails:['mobile'], stacks:['python','node','php','mobile'], useCases:['saas','commerce','agency'], sandbox:true },
+  { id:'fapshi', name:'Fapshi', category:'gateway', source:'https://www.fapshi.com/en', rails:['mobile'], stacks:['other'], useCases:['saas','commerce'], sandbox:true, individualPath:true, individualPathSource:'https://www.fapshi.com/en/help-and-support/topics/account', businessKycSource:'https://www.fapshi.com/en/help-and-support/topics/account', fee:{ percent:3, source:'https://www.fapshi.com/fr/nos-tarifs'} },
+  { id:'mesomb', name:'MeSomb', category:'gateway', source:'https://docs.mesomb.com/', rails:['mobile'], stacks:['python','node','php','mobile'], useCases:['saas','commerce','agency'], sandbox:true, capabilities:{multiService:'https://docs.mesomb.com/fr/products/payments/register-service',payout:'https://docs.mesomb.com/development'}, },
   { id:'notch-pay', name:'Notch Pay', category:'gateway', source:'https://www.notchpay.co/pricing', rails:['mobile','cards'], stacks:['php'], useCases:['commerce','saas'], fee:{percent:2,source:'https://www.notchpay.co/pricing'} },
   { id:'monetbil', name:'Monetbil', category:'gateway', source:'https://www.monetbil.com', rails:['mobile'], useCases:['commerce'] },
-  { id:'payunit', name:'PayUnit', category:'gateway', source:'https://developer.payunit.net/', rails:['mobile','cards'], stacks:['python','node','php','mobile'], useCases:['commerce','saas'], sandbox:true },
+  { id:'payunit', name:'PayUnit', category:'gateway', source:'https://developer.payunit.net/', rails:['mobile','cards'], stacks:['python','node','php','mobile'], useCases:['commerce','saas'], sandbox:true, individualPath:true, individualPathSource:'https://developer.payunit.net/kyc', businessKycSource:'https://developer.payunit.net/kyc' },
   { id:'flutterwave', name:'Flutterwave', category:'gateway', source:'https://www.flutterwave.com', useCases:['commerce'] },
   { id:'campay', name:'CamPay', category:'gateway', source:'https://www.campay.net/fr/', rails:['mobile'], stacks:['other'], useCases:['commerce','saas'], fee:{percent:2,source:'https://www.campay.net/fr/'} },
   { id:'cinetpay', name:'CinetPay', category:'gateway', source:'https://docs.cinetpay.com/', rails:['mobile','cards'], useCases:['commerce','saas'] },
@@ -63,8 +69,8 @@ const list: Provider[] = [
   { id:'kola', name:'Kola', category:'gateway', source:'https://bikusgroup.com/realisations/kola' },
   { id:'ktcpay', name:'KTCPay', category:'gateway', source:'https://ktcpay.net' },
   { id:'paynote', name:'Paynote / Y-Note', category:'gateway', source:'https://www.paynote.africa/documentation-paynote.html', rails:['mobile'], useCases:['saas'] },
-  { id:'tranzak', name:'Tranzak Cameroon', category:'gateway', source:'https://docs.developer.tranzak.me/', rails:['mobile'], useCases:['agency','saas'] },
-  { id:'bui', name:'BUI Corporation', category:'gateway', source:'https://docs.buicorporation.io/', rails:['mobile'], stacks:['python','node','other'], useCases:['saas'] },
+  { id:'tranzak', name:'Tranzak Cameroon', category:'gateway', source:'https://docs.developer.tranzak.me/', rails:['mobile'], useCases:['agency','saas'], capabilities:{payout:'https://docs.developer.tranzak.me/',bulk:'https://docs.developer.tranzak.me/'} },
+  { id:'bui', name:'BUI Corporation', category:'gateway', source:'https://docs.buicorporation.io/', rails:['mobile'], stacks:['python','node','other'], useCases:['saas'], capabilities:{payout:'https://docs.buicorporation.io/transaction/service.html'} },
   { id:'sp-heavy', name:'SP-Heavy', category:'gateway', source:'https://www.yukwaindustries.org/' },
   { id:'camerpay', name:'CamerPay', category:'gateway', source:'https://camerpay.biz', useCases:['commerce'] },
   { id:'nexpay', name:'Nexpay', category:'gateway', source:'https://pay.nexbyt.com' },
@@ -74,7 +80,7 @@ const list: Provider[] = [
   { id:'intasend', name:'IntaSend', category:'gateway', source:'https://developers.intasend.com/countries/cameroon/' },
   { id:'kkiapay', name:'KKiaPay', category:'gateway', source:'https://kkiapay.me' },
   { id:'digitalispay', name:'DigitalisPay', category:'gateway' },
-  { id:'zitopay', name:'ZITOPAY', category:'gateway', source:'https://zitopay.africa/docs', rails:['mobile','cards'], stacks:['php','other'], useCases:['commerce','saas'], individualPath:true, fee:{percent:2.6,perTransactionXaf:10,source:'https://zitopay.africa/pricing'} },
+  { id:'zitopay', name:'ZITOPAY', category:'gateway', source:'https://zitopay.africa/docs', rails:['mobile','cards'], stacks:['php','other'], useCases:['commerce','saas'], individualPath:true, individualPathSource:'https://zitopay.africa/faqs', businessKycSource:'https://zitopay.africa/faqs', fee:{percent:2.6,perTransactionXaf:10,source:'https://zitopay.africa/pricing'} },
   { id:'moala', name:'MOALA', category:'gateway', source:'https://docs.moala.africa/fr/docs/introduction/', stacks:['php','other'], useCases:['saas','agency'] },
   { id:'adwapay', name:'AdwaPay', category:'gateway', source:'https://www.adwapay.com/' },
   { id:'enkap', name:'e-nkap', category:'gateway', source:'https://www.enkap.cm' },
@@ -133,6 +139,11 @@ export const stageLabels: Record<BusinessStage, string> = {
   mvp:'Un MVP en cours de test', individual:'Je vends sans société enregistrée',
   company:'Une entreprise enregistrée',
 }
+export const needLabels: Record<PaymentNeed, string> = {
+  collect:'Encaisser des clients', payout:'Décaisser vers des bénéficiaires',
+  bulk:'Verser à plusieurs bénéficiaires en une opération',multiService:'Gérer plusieurs applications / clients',
+  subscription:'Gérer les renouvellements récurrents',split:'Répartir automatiquement entre vendeurs',
+}
 export const priorityLabels: Record<Priority, string> = {
   cost:'Les frais', integration:'Intégrer rapidement', support:'Le support et la fiabilité',
   coverage:'La diversité des paiements',
@@ -141,50 +152,97 @@ export const priorityLabels: Record<Priority, string> = {
 export type Candidate = {
   provider: Provider
   score: number
+  /** Complete evidence for key criteria, not a regulatory or availability guarantee. */
+  tier: 'documented' | 'investigate'
   known: string[]
   unknown: string[]
+  evidence: { label: string; url: string }[]
 }
 
+/** A recommendation only enters the documented shortlist if the selected rail,
+ * operation and (when requested) sandbox/individual onboarding path are actually
+ * evidenced. Missing metadata means investigation, NOT incompatibility.
+ */
 export function rankProviders(profile: FinderProfile): Candidate[] {
-  return providers.map((provider) => {
+  const need = profile.need ?? 'collect'
+  return providers.map((provider): Candidate => {
     let score = 0
     const known: string[] = []
     const unknown: string[] = []
+    const evidence: Candidate['evidence'] = []
 
-    if (profile.rail === 'mobileCards' ? (provider.rails?.includes('mobile') && provider.rails?.includes('cards')) : provider.rails?.includes(profile.rail)) {
-      score += 5
-      known.push('Moyen de paiement documenté')
-    } else unknown.push('Couverture du moyen de paiement')
+    const railMatch = profile.rail === 'mobileCards'
+      ? Boolean(provider.rails?.includes('mobile') && provider.rails.includes('cards'))
+      : Boolean(provider.rails?.includes(profile.rail))
+    if (railMatch) {
+      score += 10
+      known.push('Moyen de paiement annoncé dans la documentation')
+      if(provider.source)evidence.push({label:'Moyen de paiement',url:provider.source})
+    } else unknown.push('Moyen de paiement recherché non vérifié')
+
+    // An advertised collection method is evidence of collection, never payout,
+    // automated subscriptions, splitting or bulk disbursement.
+    const needSource = need==='collect' && railMatch && provider.category!=='orchestrator'
+      ? provider.source
+      : need==='collect' ? undefined : provider.capabilities?.[need]
+    const needMatch = Boolean(needSource)
+    if(needMatch) {
+      score+=22
+      known.push(needLabels[need]+' : documentation disponible')
+      evidence.push({label:needLabels[need],url:needSource!})
+    } else unknown.push(needLabels[need]+' : capacité non vérifiée')
 
     if (profile.stack === 'other') {
-      if (provider.source && provider.stacks?.includes('other')) { score += 2; known.push('API REST documentée') }
-      else unknown.push('Compatibilité technique')
+      if (provider.stacks?.includes('other')) {
+        score += 4
+        known.push('API REST décrite')
+      } else unknown.push('API REST / no-code à vérifier')
     } else if (provider.stacks?.includes(profile.stack)) {
-      score += 3
+      score += 4
       known.push('Intégration technique documentée')
-    } else unknown.push('Intégration avec ta stack')
+    } else unknown.push('Intégration avec ta stack non vérifiée')
 
     if (provider.useCases?.includes(profile.useCase)) {
       score += 2
-      known.push("Cas d'usage pertinent d'après l'offre")
-    } else unknown.push("Conditions pour ce cas d'usage")
+      known.push('Cas d’usage cité dans le relevé')
+    } else unknown.push('Prise en charge du cas d’usage à vérifier')
 
+    let stageMatch = true
     if (profile.stage === 'mvp') {
-      if (provider.sandbox) { score += 2; known.push('Sandbox documentée') }
-      else unknown.push('Accès à une sandbox')
+      stageMatch=Boolean(provider.sandbox)
+      if(stageMatch){score+=12;known.push('Sandbox annoncée')}
+      else unknown.push('Sandbox accessible non vérifiée')
     } else if (profile.stage === 'individual') {
-      if (provider.individualPath) { score += 2; known.push('Parcours KYC individuel annoncé') }
-      else unknown.push('Éligibilité sans société')
+      stageMatch=Boolean(provider.individualPathSource)
+      if(stageMatch) {
+        score+=15
+        known.push('Parcours de vérification individuel décrit (approbation non garantie)')
+        evidence.push({label:'KYC individuel',url:provider.individualPathSource!})
+      } else unknown.push('Éligibilité sans société non vérifiée')
+    } else {
+      if(provider.businessKycSource) {
+        score+=5
+        known.push('Dossier KYC entreprise décrit')
+        evidence.push({label:'KYC entreprise',url:provider.businessKycSource})
+      } else unknown.push('Conditions KYC entreprise à confirmer')
     }
 
-    if (profile.priority === 'integration' && provider.sandbox) score += 1
-    if (profile.priority === 'coverage' && (provider.rails?.length ?? 0) > 1) score += 1
-    // A cheaper advertised rate earns only a small tie-breaker; missing fees never mean zero.
-    if (profile.priority === 'cost' && provider.fee) score += Math.max(0, 3 - provider.fee.percent)
-    if (profile.priority === 'support') unknown.push('Performance SAV non mesurée')
+    if (profile.priority === 'integration' && provider.sandbox) score += 2
+    if (profile.priority === 'coverage' && (provider.rails?.length ?? 0) > 1) score += 2
+    if (profile.priority === 'cost') {
+      if(provider.fee && profile.rail === 'mobile') {
+        // Cost is secondary to documented core capabilities and eligibility.
+        score+=Math.max(0,5-provider.fee.percent)
+      } else unknown.push('Coût de collecte comparable non documenté')
+    }
+    if(profile.priority==='support')unknown.push('Qualité du SAV non mesurée')
 
-    return {provider,score,known,unknown}
-  }).sort((a,b)=>b.score-a.score || b.known.length-a.known.length || a.provider.name.localeCompare(b.provider.name))
+    return {provider,score,tier:railMatch && needMatch && stageMatch?'documented':'investigate',known,unknown,evidence}
+  }).sort((a,b)=>
+    Number(b.tier==='documented')-Number(a.tier==='documented') ||
+    b.score-a.score || b.known.length-a.known.length ||
+    a.provider.name.localeCompare(b.provider.name,'fr')
+  )
 }
 
 export function collectionFeeEstimate(provider: Provider, count: number, amountXaf: number): number | null {
