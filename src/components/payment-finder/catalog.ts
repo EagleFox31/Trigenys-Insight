@@ -6,7 +6,7 @@
  * Keep this module side-effect-free so comparison rules can be unit-tested.
  */
 export type UseCase = 'saas' | 'commerce' | 'marketplace' | 'freelance' | 'agency'
-export type PaymentRail = 'mobile' | 'cards' | 'international'
+export type PaymentRail = 'mobile' | 'mobileCards' | 'cards' | 'international'
 export type TechStack = 'python' | 'node' | 'php' | 'mobile' | 'other'
 export type BusinessStage = 'mvp' | 'individual' | 'company'
 export type Priority = 'cost' | 'integration' | 'support' | 'coverage'
@@ -107,7 +107,7 @@ const list: Provider[] = [
   { id:'paycore', name:'PAYCORE', category:'orchestrator', source:'https://paycore.space/' },
   // D — related fintech products (3)
   { id:'diool', name:'Diool', category:'adjacent', source:'https://www.diool.com/' },
-  { id:'suprapay', name:'SupraPay', category:'adjacent', source:'https://www.suprapay.io/', useCases:['freelance'] },
+  { id:'suprapay', name:'SupraPay', category:'adjacent', source:'https://www.suprapay.io/', rails:['international'], useCases:['freelance'] },
   { id:'wakapay', name:'WakaPay', category:'adjacent', source:'https://wakapay.cash' },
 ]
 
@@ -119,7 +119,7 @@ export const categoryLabels: Record<ProviderCategory, string> = {
   adjacent:'Fintech spécialisée',
 }
 export const railLabels: Record<PaymentRail, string> = {
-  mobile:'MTN / Orange Money', cards:'Cartes bancaires', international:'Paiements internationaux',
+  mobile:'MTN / Orange Money', mobileCards:'Mobile Money + cartes', cards:'Cartes bancaires', international:'Paiements internationaux',
 }
 export const stackLabels: Record<TechStack, string> = {
   python:'Python / Django / FastAPI', node:'Node.js / TypeScript', php:'PHP / WordPress',
@@ -151,7 +151,7 @@ export function rankProviders(profile: FinderProfile): Candidate[] {
     const known: string[] = []
     const unknown: string[] = []
 
-    if (provider.rails?.includes(profile.rail)) {
+    if (profile.rail === 'mobileCards' ? (provider.rails?.includes('mobile') && provider.rails?.includes('cards')) : provider.rails?.includes(profile.rail)) {
       score += 5
       known.push('Moyen de paiement documenté')
     } else unknown.push('Couverture du moyen de paiement')
