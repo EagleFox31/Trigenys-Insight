@@ -3,10 +3,10 @@
 import { useId, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, Calculator, Check, ChevronDown, ChevronRight, ExternalLink, Filter, RotateCcw, Search, ShieldAlert } from 'lucide-react'
 import {
-  categoryLabels, collectionFeeEstimate, priorityLabels, providers, railLabels,
+  categoryLabels, collectionFeeEstimate, needLabels, priorityLabels, providers, railLabels,
   rankProviders, stackLabels, stageLabels, useCaseLabels,
   type BusinessStage, type FinderProfile, type PaymentRail, type Priority,
-  type Provider, type ProviderCategory, type TechStack, type UseCase,
+  type PaymentNeed, type Provider, type ProviderCategory, type TechStack, type UseCase,
 } from './catalog'
 
 type StepKey = keyof FinderProfile
@@ -14,30 +14,39 @@ const steps: {key: StepKey; title: string; hint: string}[] = [
   {key:'useCase',title:'Tu construis quoi ?',hint:'On adapte les critères à la réalité de ton produit.'},
   {key:'rail',title:'Quelles transactions dois-tu encaisser ?',hint:'Sélectionne ton besoin principal. Les autres seront affinés en mode expert.'},
   {key:'stack',title:'Tu développes avec quoi ?',hint:'Une bonne API REST peut aussi convenir sans SDK officiel.'},
-  {key:'stage',title:'Où en est ton activité ?',hint:'Avoir des clés sandbox ne garantit pas le droit d’encaisser en production.'},
+  {key:'stage',title:'Où en est ton activité ?',hint:'Le statut juridique détermine les documents à présenter, pas seulement les tarifs.'},
+  {key:'need',title:'Quelle opération est indispensable ?',hint:'Une API qui encaisse ne sait pas nécessairement faire des décaissements, du split ou des renouvellements.'},
   {key:'priority',title:'Qu’est-ce qui compte le plus ?',hint:'Le SAV et le KYC ne sont jamais notés sans mesures indépendantes.'},
 ]
 
 const choices: {
   useCase: UseCase[]; rail: PaymentRail[]; stack: TechStack[];
-  stage: BusinessStage[]; priority: Priority[]
+  stage: BusinessStage[]; need: PaymentNeed[]; priority: Priority[]
 } = {
   useCase:['saas','commerce','marketplace','freelance','agency'],
   rail:['mobile','mobileCards','cards','international'],
   stack:['python','node','php','mobile','other'],
   stage:['mvp','individual','company'],
+  need:['collect','payout','bulk','multiService','subscription','split'],
   priority:['cost','integration','support','coverage'],
 }
 
-const labels = {useCase:useCaseLabels,rail:railLabels,stack:stackLabels,stage:stageLabels,priority:priorityLabels}
+const labels = {useCase:useCaseLabels,rail:railLabels,stack:stackLabels,stage:stageLabels,need:needLabels,priority:priorityLabels}
+const needsByCase: Record<UseCase,PaymentNeed[]> = {
+  saas:['collect','subscription','payout'],
+  commerce:['collect','payout'],
+  marketplace:['collect','split','payout','bulk'],
+  freelance:['collect','payout'],
+  agency:['collect','multiService','bulk','payout'],
+}
 const XAF = new Intl.NumberFormat('fr-CM',{maximumFractionDigits:0})
 const categoryOptions: {value:'all'|ProviderCategory;label:string}[] = [
   {value:'all',label:'Toutes les catégories'},
   ...Object.entries(categoryLabels).map(([value,label])=>({value:value as ProviderCategory,label})),
 ]
 
-function ProviderCard({provider,why,unknown,count,amount,selectedRail}: {
-  provider:Provider;why:string[];unknown:string[];count:number;amount:number;selectedRail?:PaymentRail
+function ProviderCard({provider,why,unknown,count,amount,selectedRail,evidence}: {
+  provider:Provider;why:string[];unknown:string[];count:number;amount:number;selectedRail?:PaymentRail; evidence?:{label:string;url:string}[]
 }) {
   const isMobileEstimate = !selectedRail || selectedRail === 'mobile'
   const estimate = isMobileEstimate ? collectionFeeEstimate(provider,count,amount) : null
@@ -87,6 +96,7 @@ function ProviderCard({provider,why,unknown,count,amount,selectedRail}: {
           </ul>
         </details>
       )}
+      {evidence && evidence.length>0 && <details className="text-xs text-muted-foreground"><summary className="cursor-pointer font-medium">Pourquoi cette piste ? Voir les justificatifs</summary><div className="mt-2 flex flex-wrap gap-3">{evidence.map(e=><a key={e.label+e.url} href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline dark:text-emerald-300">{e.label}</a>)}</div></details>}
       {provider.fee && <a href={provider.fee.source} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-700 underline underline-offset-4 dark:text-emerald-300">Source du tarif Mobile Money</a>}
       {provider.source ? (
         <a href={provider.source} target="_blank" rel="noopener noreferrer"
@@ -226,7 +236,8 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
   const finished=step===steps.length
   const profile = finished ? answers as FinderProfile : null
   const ranked=useMemo(()=>profile?rankProviders(profile):[],[profile])
-  const shortlist=ranked.filter(result=>result.score>0).slice(0,3)
+  const shortlist=ranked.filter(result=>result.tier==='documented').slice(0,3)
+  const exploratory=ranked.filter(result=>result.tier==='investigate' && (result.provider.rails?.includes(profile?.rail==='mobileCards'?'mobile':profile?.rail??'mobile') || result.provider.useCases?.includes(profile?.useCase??'saas'))).slice(0,3)
   const matching=useMemo(()=>providers.filter(p=>
     (category==='all'||p.category===category) &&
     (!onlyWithFees||!!p.fee) &&
@@ -244,7 +255,7 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
 
 
   function select(key:StepKey,value:string) {
-    setAnswers(a=>({...a,[key]:value}))
+    setAnswers(a=>key==='useCase'?({...a,useCase:value as UseCase,need:undefined}):({...a,[key]:value}))
     setStep(s=>Math.min(steps.length,s+1))
   }
   function reset() {
@@ -254,7 +265,8 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
     setAmount(10000)
   }
   const railChoices:PaymentRail[]=answers.useCase==='freelance'?['international','cards','mobile','mobileCards']:choices.rail
-  const prompt=steps[step]?.key==='rail' && answers.useCase==='freelance' ? 'Comment tes clients te paient-ils ?' : steps[step]?.key==='rail' && answers.useCase==='marketplace' ? 'Comment tes acheteurs doivent-ils payer ?' : steps[step]?.title
+  const needChoices: PaymentNeed[] = needsByCase[answers.useCase??'saas']
+  const prompt=steps[step]?.key==='rail' && answers.useCase==='freelance' ? 'Comment tes clients te paient-ils ?' : steps[step]?.key==='rail' && answers.useCase==='marketplace' ? 'Comment tes acheteurs doivent-ils payer ?' : steps[step]?.key==='need' && answers.useCase==='agency' ? 'Que dois-tu gérer pour tes clients ?' : steps[step]?.title
   const wrapper = embedded
     ? 'not-prose relative left-1/2 my-12 w-[min(1120px,calc(100vw-2rem))] -translate-x-1/2'
     : 'mx-auto w-full max-w-6xl'
@@ -268,7 +280,7 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
             Choisis tes paiements selon ton projet, pas selon la publicité.
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-emerald-50/85">
-            63 pistes recensées. 5 questions pour orienter la recherche. Aucune disponibilité, conformité ou qualité de SAV n’est présumée.
+            63 pistes recensées. 6 questions pour orienter la recherche. Aucune disponibilité, conformité ou qualité de SAV n’est présumée.
           </p>
           <div className="mt-5 inline-flex flex-wrap gap-2" role="group" aria-label="Mode de comparaison">
             <button type="button" onClick={()=>setMode('wizard')} aria-pressed={mode==='wizard'}
@@ -295,7 +307,7 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                 <h3 className="text-xl font-semibold sm:text-2xl">{prompt}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{steps[step].hint}</p>
                 <div className="mt-6 grid gap-2 sm:grid-cols-2" aria-label={prompt}>
-                  {(steps[step].key==='rail'?railChoices:choices[steps[step].key]).map(value=>(
+                  {(steps[step].key==='rail'?railChoices:steps[step].key==='need'?needChoices:choices[steps[step].key]).map(value=>(
                     <button type="button" key={value} onClick={()=>select(steps[step].key,value)}
                       className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-border bg-background p-4 text-left text-sm font-medium transition hover:border-emerald-600 hover:bg-emerald-500/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
                       {labels[steps[step].key][value as never]} <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-muted-foreground"/>
@@ -317,9 +329,9 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                 <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Ton profil</p>
-                    <h3 className="mt-1 text-xl font-semibold">3 pistes à vérifier en priorité</h3>
+                    <h3 className="mt-1 text-xl font-semibold">{shortlist.length ? shortlist.length+' piste'+(shortlist.length>1?'s':'')+' documentée'+(shortlist.length>1?'s':'')+' à examiner' : 'Aucune piste suffisamment documentée'}</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {useCaseLabels[profile!.useCase]} · {railLabels[profile!.rail]} · {stackLabels[profile!.stack]} · {stageLabels[profile!.stage]}.
+                      {useCaseLabels[profile!.useCase]} · {railLabels[profile!.rail]} · {stackLabels[profile!.stack]} · {stageLabels[profile!.stage]} · {needLabels[profile!.need??'collect']}.
                     </p>
                   </div>
                   <button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
@@ -329,14 +341,19 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                 <CalculatorInputs count={count} amount={amount} setCount={setCount} setAmount={setAmount}/>
                 {shortlist.length>0 ? (
                   <div className="mt-6 grid gap-3 lg:grid-cols-3">
-                    {shortlist.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} count={count} amount={amount} selectedRail={profile!.rail}/>)}
+                    {shortlist.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} evidence={c.evidence} count={count} amount={amount} selectedRail={profile!.rail}/>)}
                   </div>
                 ) : (
-                  <p className="mt-5 rounded-xl border border-amber-500/40 p-4 text-sm">Nous n’avons pas assez de données pour faire une présélection honnête. Passe en mode expert et contacte les fournisseurs.</p>
+                  <p className="mt-5 rounded-xl border border-amber-500/40 p-4 text-sm">Aucune solution ne dispose, dans notre relevé, de preuves suffisantes pour réunir ce moyen de paiement, cette opération et ce statut. Ce n’est pas une preuve d’incompatibilité : les fournisseurs doivent être interrogés. Nous ne remplaçons pas les réponses manquantes par les mêmes trois noms.</p>
                 )}
                 <p className="mt-4 text-sm text-muted-foreground">
-                  La présélection reflète uniquement les caractéristiques documentées dans notre inventaire, pas un classement de fiabilité. Une caractéristique inconnue n’équivaut pas à une incompatibilité.
+                  Les pistes ci-dessus remplissent les critères essentiels d’après les documents consultés, mais leur ouverture en production, leur KYC et leur fiabilité restent à confirmer. Une donnée absente n’est jamais une preuve d’incompatibilité.
                 </p>
+                {exploratory.length>0 && <details className="mt-4 rounded-xl border border-border p-4 text-sm">
+                  <summary className="cursor-pointer font-semibold">Autres fournisseurs à interroger (données incomplètes)</summary>
+                  <div className="mt-3 space-y-3">{exploratory.map(c=><div key={c.provider.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 last:border-0"><span><strong>{c.provider.name}</strong><span className="ml-2 text-xs text-muted-foreground">{c.unknown.slice(0,2).join(' · ')}</span></span>{c.provider.source&&<a href={c.provider.source} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline dark:text-emerald-300">Source</a>}</div>)}</div>
+                  <p className="mt-3 text-xs text-muted-foreground">Ces acteurs ne sont pas des recommandations validées pour ton profil.</p>
+                </details>}
                 <button type="button" onClick={()=>setMode('expert')} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-800 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700">
                   Voir les 63 acteurs <ArrowRight size={16} aria-hidden="true"/>
                 </button>
