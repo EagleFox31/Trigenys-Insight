@@ -1,0 +1,178 @@
+{
+  "fapshi": {
+    "path": "/payment-brands/fapshi.svg",
+    "source": "https://www.fapshi.com/logo/logoBlack.svg?dpl=dpl_LfNThMQBYKJzYXWCv8KRpfdipiaN"
+  },
+  "mesomb": {
+    "path": "/payment-brands/mesomb.png",
+    "source": "https://mesomb.com/_next/static/media/logo.099ga-va.d7gh.png"
+  },
+  "notch-pay": {
+    "path": "/payment-brands/notch-pay.png",
+    "source": "https://www.notchpay.co/apple-touch-icon.png"
+  },
+  "monetbil": {
+    "path": "/payment-brands/monetbil.ico",
+    "source": "https://www.monetbil.com/assets/img/favicon.ico"
+  },
+  "flutterwave": {
+    "path": "/payment-brands/flutterwave.png",
+    "source": "https://www.flutterwave.com/apple-touch-icon.png"
+  },
+  "campay": {
+    "path": "/payment-brands/campay.svg",
+    "source": "https://www.campay.net/static/v2/custom_assets/images/icons/logo-min.svg"
+  },
+  "mmgate": {
+    "path": "/payment-brands/mmgate.png",
+    "source": "https://www.mmgate.org/apple-touch-icon.png"
+  },
+  "dropme": {
+    "path": "/payment-brands/dropme.png",
+    "source": "https://dropme.cm/_next/image?url=https%3A%2F%2Ffhraxozqbvhwipfwjdyn.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fplatform-customizations%2F15854a0a-f6f1-4bea-9808-376fcf8f526f%2Fbranding%2FlogoUrl%2F74027c96-3c4e-489f-ae7c-58c665525765.png&w=256&q=75"
+  },
+  "zopay": {
+    "path": "/payment-brands/zopay.ico",
+    "source": "https://zopay.co/favicon.ico"
+  },
+  "my-coolpay": {
+    "path": "/payment-brands/my-coolpay.ico",
+    "source": "https://my-coolpay.com/sources/images/logos/favicon.ico?v2.43.2"
+  },
+  "elyonpay": {
+    "path": "/payment-brands/elyonpay.png",
+    "source": "https://static.wixstatic.com/media/88d85f_d028cf0b5ab4432e865a7fbb3f5d970d%7Emv2.png/v1/fill/w_192%2Ch_192%2Clg_1%2Cusm_0.66_1.00_0.01/88d85f_d028cf0b5ab4432e865a7fbb3f5d970d%7Emv2.png"
+  },
+  "nokash": {
+    "path": "/payment-brands/nokash.png",
+    "source": "https://nokash.co/icon-512.png"
+  },
+  "ktcpay": {
+    "path": "/payment-brands/ktcpay.svg",
+    "source": "https://ktcpay.net/favicon.svg"
+  },
+  "paynote": {
+    "path": "/payment-brands/paynote.png",
+    "source": "https://www.paynote.africa/favicon.ico"
+  },
+  "bui": {
+    "path": "/payment-brands/bui.png",
+    "source": "https://assets.buicorporation.io/meta/apple-touch-icon.png"
+  },
+  "camerpay": {
+    "path": "/payment-brands/camerpay.png",
+    "source": "https://camerpay.biz/apple-touch-icon.png"
+  },
+  "nexpay": {
+    "path": "/payment-brands/nexpay.png",
+    "source": "https://pay.nexbyt.com/assets/images/logo/logo.png"
+  },
+  "paymooney": {
+    "path": "/payment-brands/paymooney.png",
+    "source": "https://api-doc.paymooney.com/img/logo_paymoone2.png"
+  },
+  "nelsiuspay": {
+    "path": "/payment-brands/nelsiuspay.png",
+    "source": "https://nelsiuspay.com/images/nelsius-logo-horizontal-transparent.png"
+  },
+  "afrigate": {
+    "path": "/payment-brands/afrigate.ico",
+    "source": "https://www.afrigate.co/favicon.ico"
+  },
+  "intasend": {
+    "path": "/payment-brands/intasend.svg",
+    "source": "https://developers.intasend.com/img/logo.svg"
+  },
+  "kkiapay": {
+    "path": "/payment-brands/kkiapay.svg",
+    "source": "https://kkiapay.me/wp-content/uploads/2024/04/base.svg"
+  },
+  "zitopay": {
+    "path": "/payment-brands/zitopay.ico",
+    "source": "https://zitopay.africa/favicon.ico"
+  },
+  "moala": {
+    "path": "/payment-brands/moala.ico",
+    "source": "https://docs.moala.africa/fr/img/favicon.ico"
+  },
+  "adwapay": {
+    "path": "/payment-brands/adwapay.png",
+    "source": "https://www.adwapay.com/icon/apple-touch-icon-48-precomposed.png"
+  },
+  "soleaspay": {
+    "path": "/payment-brands/soleaspay.png",
+    "source": "https://mysoleas.com/images/pack/apple-touch-icon.png"
+  },
+  "xfin": {
+    "path": "/payment-brands/xfin.png",
+    "source": "https://www.xfin.pro/assets/images/logo_ban.png"
+  },
+  "trustpayway": {
+    "path": "/payment-brands/trustpayway.png",
+    "source": "https://trustpayway.com/resources/images/tpw-favicon.png"
+  },
+  "codees": {
+    "path": "/payment-brands/codees.png",
+    "source": "https://pay.codees-cm.com/static/images/codees-logo.png"
+  },
+  "payonus": {
+    "path": "/payment-brands/payonus.svg",
+    "source": "https://payonus.com/logo-full.svg"
+  },
+  "porsa": {
+    "path": "/payment-brands/porsa.png",
+    "source": "https://porsa.io/assets/img/logo.png"
+  },
+  "pawapay": {
+    "path": "/payment-brands/pawapay.png",
+    "source": "https://cdn.prod.website-files.com/62824591015aa314fd308df1/698c499646882970b77dd102_favicon.png"
+  },
+  "maviance": {
+    "path": "/payment-brands/maviance.png",
+    "source": "https://maviance.com/wp-content/uploads/2023/11/mavinace_favicon.png"
+  },
+  "hub2": {
+    "path": "/payment-brands/hub2.png",
+    "source": "https://www.hub2.io/assets/images/favicon-192x192.png"
+  },
+  "kang": {
+    "path": "/payment-brands/kang.png",
+    "source": "https://kangopenbanking.com/favicon.png"
+  },
+  "digitwace": {
+    "path": "/payment-brands/digitwace.ico",
+    "source": "https://digitwace.com/favicon.ico"
+  },
+  "cartflox": {
+    "path": "/payment-brands/cartflox.png",
+    "source": "https://cartflox.com/cfa/apple-touch-icon.png"
+  },
+  "zayono": {
+    "path": "/payment-brands/zayono.png",
+    "source": "https://www.zayono.com/favicon.png"
+  },
+  "simiz": {
+    "path": "/payment-brands/simiz.ico",
+    "source": "https://simiz.io/favicon.ico"
+  },
+  "paycore": {
+    "path": "/payment-brands/paycore.svg",
+    "source": "https://paycore.space/favicon.svg"
+  },
+  "diool": {
+    "path": "/payment-brands/diool.png",
+    "source": "https://www.diool.com/icon-light-32x32.png"
+  },
+  "suprapay": {
+    "path": "/payment-brands/suprapay.png",
+    "source": "https://www.suprapay.io/apple-touch-icon.png"
+  },
+  "wakapay": {
+    "path": "/payment-brands/wakapay.png",
+    "source": "https://www.wakapay.cash/favicon.ico"
+  },
+  "payunit": {
+    "path": "/payment-brands/payunit.png",
+    "source": "https://web.payunit.net/images/logo-payunit.png"
+  }
+}

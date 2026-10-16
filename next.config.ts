@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
   images: {
     localPatterns: [
       {
+        pathname: '/payment-brands/**',
+      },
+      {
         pathname: '/api/media/file/**',
       },
     ],
