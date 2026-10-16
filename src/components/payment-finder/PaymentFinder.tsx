@@ -63,7 +63,7 @@ function ProviderCard({provider,why,unknown,count,amount,selectedRail}: {
       {estimate!==null ? (
         <div className="mt-auto rounded-xl bg-muted/70 p-3 text-sm">
           <div className="flex items-start justify-between gap-2">
-            <span className="text-muted-foreground">Commissions d'encaissement Mobile Money estimées</span>
+            <span className="text-muted-foreground">Commissions d’encaissement Mobile Money estimées</span>
             <strong className="shrink-0">{XAF.format(estimate)} FCFA</strong>
           </div>
           {provider.fee && <p className="mt-1 text-xs text-muted-foreground">
@@ -201,7 +201,7 @@ function ComparePanel({selected,count,amount,onRemove}:{
           </tr>)}</tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">L'absence d'information signifie « inconnu », jamais « incompatible ». Les commissions sont partielles et concernent uniquement le Mobile Money. Le support client n'a pas été évalué.</p>
+      <p className="mt-3 text-xs text-muted-foreground">L’absence d’information signifie « inconnu », jamais « incompatible ». Les commissions sont partielles et concernent uniquement le Mobile Money. Le support client n’a pas été évalué.</p>
     </section>
   )
 }
