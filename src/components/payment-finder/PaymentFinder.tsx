@@ -23,7 +23,7 @@ const choices: {
   stage: BusinessStage[]; priority: Priority[]
 } = {
   useCase:['saas','commerce','marketplace','freelance','agency'],
-  rail:['mobile','cards','international'],
+  rail:['mobile','mobileCards','cards','international'],
   stack:['python','node','php','mobile','other'],
   stage:['mvp','individual','company'],
   priority:['cost','integration','support','coverage'],
@@ -36,10 +36,11 @@ const categoryOptions: {value:'all'|ProviderCategory;label:string}[] = [
   ...Object.entries(categoryLabels).map(([value,label])=>({value:value as ProviderCategory,label})),
 ]
 
-function ProviderCard({provider,why,unknown,count,amount}: {
-  provider:Provider;why:string[];unknown:string[];count:number;amount:number
+function ProviderCard({provider,why,unknown,count,amount,selectedRail}: {
+  provider:Provider;why:string[];unknown:string[];count:number;amount:number;selectedRail?:PaymentRail
 }) {
-  const estimate = collectionFeeEstimate(provider,count,amount)
+  const isMobileEstimate = !selectedRail || selectedRail === 'mobile'
+  const estimate = isMobileEstimate ? collectionFeeEstimate(provider,count,amount) : null
   return (
     <article className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -63,10 +64,10 @@ function ProviderCard({provider,why,unknown,count,amount}: {
       ) : <p className="text-sm text-muted-foreground">Aucune compatibilité spécifique vérifiée pour ce profil.</p>}
       <div className="mt-auto rounded-xl bg-muted/70 p-3 text-sm">
         <div className="flex items-start justify-between gap-2">
-          <span className="text-muted-foreground">Commission d’encaissement estimée</span>
-          <strong>{estimate===null?'Non publiée / non vérifiée':XAF.format(estimate)+' FCFA'}</strong>
+          <span className="text-muted-foreground">Commission Mobile Money estimée</span>
+          <strong>{!isMobileEstimate?'Non comparable pour le moyen choisi':estimate===null?'Non publiée / non vérifiée':XAF.format(estimate)+' FCFA'}</strong>
         </div>
-        {provider.fee && (
+        {provider.fee && isMobileEstimate && (
           <p className="mt-1 text-xs text-muted-foreground">
             {provider.fee.percent}%{provider.fee.perTransactionXaf?(' + '+XAF.format(provider.fee.perTransactionXaf)+' FCFA/transaction'):''}
             {provider.fee.annualXaf?' · '+XAF.format(provider.fee.annualXaf)+' FCFA/an en sus':''}
@@ -84,6 +85,7 @@ function ProviderCard({provider,why,unknown,count,amount}: {
           </ul>
         </details>
       )}
+      {provider.fee && <a href={provider.fee.source} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-700 underline underline-offset-4 dark:text-emerald-300">Source du tarif Mobile Money</a>}
       {provider.source ? (
         <a href={provider.source} target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-emerald-700 underline underline-offset-4 dark:text-emerald-300">
@@ -199,7 +201,7 @@ export function PaymentFinder({embedded=false}:{embedded?:boolean}) {
                 <CalculatorInputs count={count} amount={amount} setCount={setCount} setAmount={setAmount}/>
                 {shortlist.length>0 ? (
                   <div className="mt-6 grid gap-3 lg:grid-cols-3">
-                    {shortlist.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} count={count} amount={amount}/>)}
+                    {shortlist.map(c=><ProviderCard key={c.provider.id} provider={c.provider} why={c.known} unknown={c.unknown} count={count} amount={amount} selectedRail={profile!.rail}/>)}
                   </div>
                 ) : (
                   <p className="mt-5 rounded-xl border border-amber-500/40 p-4 text-sm">Nous n’avons pas assez de données pour faire une présélection honnête. Passe en mode expert et contacte les fournisseurs.</p>
