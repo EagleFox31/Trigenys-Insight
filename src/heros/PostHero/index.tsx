@@ -119,7 +119,16 @@ export const PostHero: React.FC<{
       </div>
       {heroImage && typeof heroImage !== 'string' ? (
         <div className="insights-shell post-hero__image">
-          <Media priority imgClassName="object-cover" resource={heroImage} />
+          <Media
+            priority
+            imgClassName="object-cover"
+            resource={heroImage}
+            alt={post.id === 36
+              ? locale === 'fr'
+                ? 'Carte du Cameroun connectée aux solutions de paiement Fapshi, CamPay, MeSomb, PayUnit, ZITOPAY et autres agrégateurs.'
+                : 'Map of Cameroon linked to Fapshi, CamPay, MeSomb, PayUnit, ZITOPAY and other payment providers.'
+              : title}
+          />
         </div>
       ) : editorialVisuals?.hero ? (
         <div className="insights-shell post-hero__image">
