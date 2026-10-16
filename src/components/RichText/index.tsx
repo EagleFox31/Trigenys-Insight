@@ -1,6 +1,7 @@
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
 import { ChartBlock } from '@/blocks/Chart/Component'
 import { MoneyFlowBlock, type MoneyFlowBlockProps } from '@/blocks/MoneyFlow/Component'
+import { PaymentFinderBlock, type PaymentFinderBlockProps } from '@/blocks/PaymentFinder/Component'
 import {
   DefaultNodeTypes,
   SerializedBlockNode,
@@ -27,7 +28,7 @@ import { cn } from '@/utilities/ui'
 
 type NodeTypes =
   | DefaultNodeTypes
-  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps | ChartBlockProps | MoneyFlowBlockProps>
+  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps | ChartBlockProps | MoneyFlowBlockProps | PaymentFinderBlockProps>
 
 const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
   const { value, relationTo } = linkNode.fields.doc!
@@ -44,6 +45,7 @@ const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) 
   blocks: {
     chart: ({ node }) => <ChartBlock className="col-start-2 my-9" {...node.fields} />,
     moneyFlow: ({ node }) => <MoneyFlowBlock {...node.fields} />,
+    paymentFinder: ({ node }) => <PaymentFinderBlock {...node.fields} />,
     banner: ({ node }) => <BannerBlock className="col-start-2 mb-4" {...node.fields} />,
     mediaBlock: ({ node }) => (
       <MediaBlock
