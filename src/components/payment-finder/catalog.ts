@@ -119,7 +119,7 @@ export const categoryLabels: Record<ProviderCategory, string> = {
   adjacent:'Fintech spécialisée',
 }
 export const railLabels: Record<PaymentRail, string> = {
-  mobile:'MTN / Orange Money', mobileCards:'Mobile Money + cartes', cards:'Cartes bancaires', international:'Paiements internationaux',
+  mobile:'Mobile Money', mobileCards:'Mobile Money + cartes', cards:'Cartes bancaires', international:'Paiements internationaux',
 }
 export const stackLabels: Record<TechStack, string> = {
   python:'Python / Django / FastAPI', node:'Node.js / TypeScript', php:'PHP / WordPress',
