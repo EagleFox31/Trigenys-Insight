@@ -19,6 +19,9 @@ export type EditorialAnalyticsEvent =
 export type ArticlePlacement =
   | 'home_signal'
   | 'home_lead'
+  | 'home_hero_1'
+  | 'home_hero_2'
+  | 'home_hero_3'
   | 'home_trending'
   | 'home_latest'
   | 'home_analysis'
