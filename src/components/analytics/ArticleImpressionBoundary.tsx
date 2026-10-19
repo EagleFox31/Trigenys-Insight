@@ -16,12 +16,14 @@ export function ArticleImpressionBoundary({
   placement,
   category,
   children,
+  enabled = true,
 }: {
   slug: string
   locale: SiteLocale
   placement: ArticlePlacement
   category?: string | null
   children: ReactNode
+  enabled?: boolean
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
@@ -31,7 +33,7 @@ export function ArticleImpressionBoundary({
     const wrapper = wrapperRef.current
     const element = wrapper?.firstElementChild
 
-    if (!(element instanceof HTMLElement) || fired.current) return
+    if (!enabled || !(element instanceof HTMLElement) || fired.current) return
 
     const clearTimer = () => {
       if (timer.current) {
@@ -71,7 +73,7 @@ export function ArticleImpressionBoundary({
       clearTimer()
       observer.disconnect()
     }
-  }, [category, locale, placement, slug])
+  }, [category, enabled, locale, placement, slug])
 
   return (
     <div ref={wrapperRef} style={{ display: 'contents' }}>

@@ -9,7 +9,14 @@ import Link from 'next/link'
 import React from 'react'
 
 import { NewsletterForm } from './NewsletterForm'
-import { editorialRubrics, localizedRubricPath, postBelongsToRubric, type EditorialRubricId } from '@/editorial/rubrics'
+import { HeroCarousel } from './HeroCarousel'
+import { selectHeroPosts } from './heroSelection'
+import {
+  editorialRubrics,
+  localizedRubricPath,
+  postBelongsToRubric,
+  type EditorialRubricId,
+} from '@/editorial/rubrics'
 import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpressionBoundary'
 import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 import type { ArticlePlacement } from '@/lib/analytics/events'
@@ -100,17 +107,12 @@ function ArticleCardOverlay({
   )
 }
 
-export function InsightsHome({
-  locale,
-  posts,
-}: {
-  locale: SiteLocale
-  posts: Post[]
-}) {
+export function InsightsHome({ locale, posts }: { locale: SiteLocale; posts: Post[] }) {
   const t = getMessages(locale)
-  const featured = posts.find((post) => post.featured) || posts[0]
+  const heroPosts = selectHeroPosts(posts)
+  const featured = heroPosts[0]
   const remaining = posts.filter((post) => post.id !== featured?.id)
-  const compactStories = remaining.slice(0, 4)
+  const compactStories = posts.slice(0, 4)
   const editorsPick =
     remaining.find((post) => post.editorsPick) || remaining[4] || remaining[0] || featured
   const latestCandidates = remaining.filter((post) => post.id !== editorsPick?.id)
@@ -188,7 +190,8 @@ export function InsightsHome({
         <div className="insights-shell">
           <div className={styles.editionTop}>
             <strong>
-              TRIGENYS INSIGHTS · {t.newsroom.edition.toUpperCase()} {editionDate(locale).toUpperCase()}
+              TRIGENYS INSIGHTS · {t.newsroom.edition.toUpperCase()}{' '}
+              {editionDate(locale).toUpperCase()}
             </strong>
             <div className={styles.editionMeta}>
               <span className={styles.liveDot} />
@@ -225,103 +228,28 @@ export function InsightsHome({
         </div>
       </section>
 
-      <section className={styles.lead}>
-        <div className={'insights-shell ' + styles.leadGrid}>
-          <TrackedArticleLink
-            aria-label={`${t.home.read} ${featured.title}`}
-            category={categorySlug(featured)}
-            className={styles.visual}
-            href={withLocale(locale, `/posts/${featured.slug}`)}
-            locale={locale}
-            placement="home_lead"
-            slug={featured.slug || ''}
-          >
-            <ArticleImage post={featured} priority />
-          </TrackedArticleLink>
-
-          <ArticleImpressionBoundary
-            category={categorySlug(featured)}
-            locale={locale}
-            placement="home_lead"
-            slug={featured.slug || ''}
-          >
-            <article className={styles.leadCopy}>
-            <p className="story-kicker">
-              <span>{primaryCategoryLabel(featured, locale)}</span> · {postKindLabel(featured, locale)}
-            </p>
-            <h1 className={styles.leadTitle}>
-              <TrackedArticleLink
-                category={categorySlug(featured)}
-                href={withLocale(locale, `/posts/${featured.slug}`)}
-                locale={locale}
-                placement="home_lead"
-                slug={featured.slug || ''}
-              >
-                {featured.title}
-              </TrackedArticleLink>
-            </h1>
-            <p className={styles.leadDeck}>{featured.excerpt || featured.meta?.description}</p>
-            <div className={styles.meta}>
-              <span>{authorNames(featured)}</span>
-              <span>{formatPostDate(featured.publishedAt, locale, true)}</span>
-              <span>{featured.readingTime || 8} {t.home.minutes}</span>
-            </div>
-            <TrackedArticleLink
-              category={categorySlug(featured)}
-              className="text-link"
-              href={withLocale(locale, `/posts/${featured.slug}`)}
-              locale={locale}
-              placement="home_lead"
-              slug={featured.slug || ''}
-            >
-              {t.home.read} <ArrowRight aria-hidden="true" size={15} />
-            </TrackedArticleLink>
-            </article>
-          </ArticleImpressionBoundary>
-
-          {trending.length > 0 && (
-            <aside className={styles.trending} aria-label={t.newsroom.trending}>
-              <div className={styles.asideHeading}>
-                <h2>{t.newsroom.trending}</h2>
-                <span>{t.newsroom.now}</span>
-              </div>
-              <div className={styles.trendingList}>
-                {trending.map((post, index) => (
-                  <ArticleImpressionBoundary
-                    category={categorySlug(post)}
-                    key={post.id}
-                    locale={locale}
-                    placement="home_trending"
-                    slug={post.slug || ''}
-                  >
-                    <article className={'relative cursor-pointer ' + styles.trendingItem}>
-                      <ArticleCardOverlay post={post} locale={locale} placement="home_trending" />
-                      <span className={styles.trendingNumber}>
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
-                      <div>
-                        <TrackedArticleLink
-                          category={categorySlug(post)}
-                          className="relative z-20"
-                          href={withLocale(locale, `/posts/${post.slug}`)}
-                          locale={locale}
-                          placement="home_trending"
-                          slug={post.slug || ''}
-                        >
-                          {post.title}
-                        </TrackedArticleLink>
-                        <span className={styles.trendingMeta}>
-                          {primaryCategoryLabel(post, locale)} · {post.readingTime || 8} {t.home.minutes}
-                        </span>
-                      </div>
-                    </article>
-                  </ArticleImpressionBoundary>
-                ))}
-              </div>
-            </aside>
-          )}
-        </div>
-      </section>
+      <HeroCarousel
+        locale={locale}
+        stories={heroPosts.map((post) => {
+          const media = asMedia(post.heroImage) || asMedia(post.meta?.image)
+          return {
+            id: post.id,
+            slug: post.slug!,
+            href: withLocale(locale, `/posts/${post.slug}`),
+            title: post.title!,
+            excerpt:
+              (post.excerpt || post.meta?.description || '').split(/\s+/).slice(0, 12).join(' ') +
+              ((post.excerpt || '').split(/\s+/).length > 12 ? '…' : ''),
+            category: categorySlug(post),
+            categoryLabel: primaryCategoryLabel(post, locale),
+            kindLabel: postKindLabel(post, locale),
+            author: authorNames(post),
+            date: formatPostDate(post.publishedAt, locale, true),
+            minutes: post.readingTime || 8,
+            image: media?.url ? { url: media.url, alt: media.alt || '' } : null,
+          }
+        })}
+      />
 
       {compactStories.length > 0 && (
         <section className={styles.compact}>
@@ -371,7 +299,8 @@ export function InsightsHome({
                       </TrackedArticleLink>
                     </h3>
                     <span className={styles.compactCardMeta}>
-                      {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8} {t.home.minutes}
+                      {formatPostDate(post.publishedAt, locale)} · {post.readingTime || 8}{' '}
+                      {t.home.minutes}
                     </span>
                   </article>
                 </ArticleImpressionBoundary>
@@ -450,22 +379,12 @@ export function InsightsHome({
                   placement="home_editors_pick"
                   slug={editorsPick.slug || ''}
                 >
-                <article className={'relative cursor-pointer ' + styles.editorCard}>
-                  <ArticleCardOverlay post={editorsPick} locale={locale} placement="home_editors_pick" />
-                  <TrackedArticleLink
-                    className="relative z-20"
-                    category={categorySlug(editorsPick)}
-                    href={withLocale(locale, `/posts/${editorsPick.slug}`)}
-                    locale={locale}
-                    placement="home_editors_pick"
-                    slug={editorsPick.slug || ''}
-                  >
-                    <ArticleImage post={editorsPick} />
-                  </TrackedArticleLink>
-                  <p className="story-kicker">
-                    {primaryCategoryLabel(editorsPick, locale)} · {postKindLabel(editorsPick, locale)}
-                  </p>
-                  <h3 className={styles.editorTitle}>
+                  <article className={'relative cursor-pointer ' + styles.editorCard}>
+                    <ArticleCardOverlay
+                      post={editorsPick}
+                      locale={locale}
+                      placement="home_editors_pick"
+                    />
                     <TrackedArticleLink
                       className="relative z-20"
                       category={categorySlug(editorsPick)}
@@ -474,17 +393,34 @@ export function InsightsHome({
                       placement="home_editors_pick"
                       slug={editorsPick.slug || ''}
                     >
-                      {editorsPick.title}
+                      <ArticleImage post={editorsPick} />
                     </TrackedArticleLink>
-                  </h3>
-                  <p className={styles.editorDeck}>
-                    {editorsPick.excerpt || editorsPick.meta?.description}
-                  </p>
-                  <div className={styles.meta}>
-                    <span>{authorNames(editorsPick)}</span>
-                    <span>{editorsPick.readingTime || 8} {t.home.minutes}</span>
-                  </div>
-                </article>
+                    <p className="story-kicker">
+                      {primaryCategoryLabel(editorsPick, locale)} ·{' '}
+                      {postKindLabel(editorsPick, locale)}
+                    </p>
+                    <h3 className={styles.editorTitle}>
+                      <TrackedArticleLink
+                        className="relative z-20"
+                        category={categorySlug(editorsPick)}
+                        href={withLocale(locale, `/posts/${editorsPick.slug}`)}
+                        locale={locale}
+                        placement="home_editors_pick"
+                        slug={editorsPick.slug || ''}
+                      >
+                        {editorsPick.title}
+                      </TrackedArticleLink>
+                    </h3>
+                    <p className={styles.editorDeck}>
+                      {editorsPick.excerpt || editorsPick.meta?.description}
+                    </p>
+                    <div className={styles.meta}>
+                      <span>{authorNames(editorsPick)}</span>
+                      <span>
+                        {editorsPick.readingTime || 8} {t.home.minutes}
+                      </span>
+                    </div>
+                  </article>
                 </ArticleImpressionBoundary>
               </aside>
             )}
@@ -515,7 +451,9 @@ export function InsightsHome({
                   <p className={styles.channelLabel}>
                     {t.newsroom.deskPrefix} {channel.title}
                   </p>
-                  <h3><Link href={channel.path}>{channel.title}</Link></h3>
+                  <h3>
+                    <Link href={channel.path}>{channel.title}</Link>
+                  </h3>
                   <p className={styles.channelDescription}>{channel.description}</p>
 
                   {channelPost ? (
