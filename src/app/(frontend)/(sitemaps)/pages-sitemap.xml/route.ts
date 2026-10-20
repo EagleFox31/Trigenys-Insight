@@ -5,6 +5,7 @@ import { unstable_cache } from 'next/cache'
 
 import { SITE_IDENTITY } from '@/seo/structuredData'
 import { editorialRubrics, localizedRubricPath } from '@/editorial/rubrics'
+import { buildLocalizedAuthorSitemapEntries } from '@/seo/authorsSitemap'
 
 const localizedEditorialPaths = [
   '',
@@ -43,6 +44,37 @@ const getPagesSitemap = unstable_cache(
     const dateFallback = new Date().toISOString()
     const locales = ['fr', 'en'] as const
 
+    // Author profiles exist only through the posts they sign, per locale.
+    const authorPages = []
+    for (const locale of locales) {
+      const posts = await payload.find({
+        collection: 'posts',
+        overrideAccess: false,
+        draft: false,
+        depth: 0,
+        fallbackLocale: false,
+        locale,
+        limit: 1000,
+        pagination: false,
+        where: {
+          _status: {
+            equals: 'published',
+          },
+        },
+        select: {
+          title: true,
+          slug: true,
+          excerpt: true,
+          content: true,
+          updatedAt: true,
+          authors: true,
+          populatedAuthors: true,
+        },
+      })
+
+      authorPages.push(...buildLocalizedAuthorSitemapEntries(locale, posts.docs, dateFallback))
+    }
+
     const localizedEditorialPages = locales.flatMap((locale) => [
       ...localizedEditorialPaths.map((path) => ({
         loc: `${SITE_URL}/${locale}${path}`,
@@ -64,9 +96,9 @@ const getPagesSitemap = unstable_cache(
           }))
       : []
 
-    return [...localizedEditorialPages, ...cmsPages]
+    return [...localizedEditorialPages, ...authorPages, ...cmsPages]
   },
-  ['pages-sitemap-v4'],
+  ['pages-sitemap-v5'],
   {
     tags: ['pages-sitemap'],
     revalidate: 86400,
