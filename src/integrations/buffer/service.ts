@@ -7,6 +7,7 @@ import { relationId } from '@/automation/contentInspection'
 import { BufferClient, BufferAPIError, type BufferChannel } from './client'
 import { socialQuery, summarizeExport, type SocialExport, type SocialRequest } from './store'
 import type { EditorialOperation } from '../../../packages/insight-automation/src/schema'
+import { wakePublicationScheduler } from '@/automation/publicationScheduler'
 
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 export async function syncBufferConnection(req: PayloadRequest, client = new BufferClient()) {
@@ -227,7 +228,7 @@ async function executeBufferOperationUnlocked(
 
 // Use the delivery lock for approval/cancellation too: a worker cannot overwrite
 // a newer cancellation while it is waiting for the provider response.
-export async function executeBufferOperation(
+async function executeBufferOperationWithLock(
   req: PayloadRequest,
   input: Parameters<typeof executeBufferOperationUnlocked>[1],
 ) {
@@ -250,6 +251,16 @@ export async function executeBufferOperation(
       lock.release()
     }
   }
+}
+
+export async function executeBufferOperation(
+  req: PayloadRequest,
+  input: Parameters<typeof executeBufferOperationUnlocked>[1],
+) {
+  const result = await executeBufferOperationWithLock(req, input)
+  if (!['buffer-status', 'buffer-list-posts'].includes(input.operation))
+    await wakePublicationScheduler(Date.now(), req.payload.logger)
+  return result
 }
 
 export function bootstrapChannel(channels: BufferChannel[]): BufferChannel | null {

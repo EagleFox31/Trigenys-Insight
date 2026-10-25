@@ -280,11 +280,24 @@ lock as the worker. Native CMS changes use Payload's own queue controls.
 
 ### Worker and operations
 
-The Cloudflare Worker `trigenys-insight-publisher` runs every minute and calls
-`POST /api/editorial/scheduled-publish`. Its source and configuration are in
-`workers/publication-cron/`. The Worker's HTTP endpoint and preview URLs are
-disabled: only the scheduled handler can request a publication tick. Cron timing
-is best effort; new Cloudflare triggers can take up to 15 minutes to propagate.
+The Cloudflare Worker `trigenys-insight-publisher` uses a SQLite-backed Durable
+Object alarm for the next due publication. Creating a publication job in either
+the native CMS or MCP sends an authenticated wake notification. Explicit Buffer
+requests also wake the worker for delivery; Buffer retains responsibility for
+its own already-confirmed social publication deadlines.
+
+The Worker stores alarm times and execution receipts only. It does not read Neon
+while waiting. An hourly recovery check (`17 * * * *`, UTC) reconciles the durable
+CMS queues if a notification was lost. The CMS response provides `nextWakeAt`;
+empty queues produce no new alarm. Rescheduling/cancellation may leave one safe
+extra wakeup, which reads the current jobs and cannot publish a cancelled job.
+
+The HTTP interface exposes only HMAC-authenticated `POST /v1/wake` and
+`GET /v1/status`; neither can publish content directly. The signature binds the
+method, path, exact body and a short-lived timestamp. `PUBLICATION_SCHEDULER_SECRET`
+is shared only between Vercel production and the Worker's encrypted bindings.
+Preview environments never notify the production clock. Source and configuration
+are in `workers/publication-cron/`.
 
 Each tick uses an Ed25519-signed JWT valid for 60 seconds, with a fixed issuer,
 subject, audience and key ID. The server pins its public verification key in
@@ -305,15 +318,19 @@ claiming. The server runs at most ten due `schedulePublish` jobs for **posts** p
 call, across queues; never pages, globals, unpublication jobs or arbitrary tasks.
 Payload handles due-date filtering, persistence, validation and publication hooks
 (cache refresh and sitemap updates). The endpoint returns processed/failed counts.
-HTTP 409 means another worker owns the lock; the next minute retries. Other HTTP
-errors or failed jobs cause an errored Cloudflare invocation, not a success log.
+HTTP 409 means another worker owns the lock. The Durable Object persists an
+exponential retry from one minute up to one hour. Failed executions are recorded
+as failures in `lastRun` and `publication_retry`, never as successful publication.
 
-Monitor Cloudflare Workers Logs for `publication_tick`, its scheduled/start time
-and processed/failed counts. For a release check, schedule an authorized existing
-draft three minutes ahead, confirm it stays a draft before the deadline, then
-observe a real cron invocation, the public CMS status and public article URL after
-the deadline. A successful deployment or a manual call alone is insufficient.
-No exact-time delivery guarantee is implied.
+Monitor Workers Logs for `publication_tick` and `publication_retry`, and inspect
+`/v1/status` using a signed request. Track actual processed/failed counts and
+missed editorial deadlines rather than treating a clock invocation as a new
+article. For a technical release check, register a short alarm against an empty
+queue, observe the real `alarm` execution, and confirm `nextWakeAt: null` afterward.
+This verifies routing and sleep behavior without publishing editorial content.
+For an authorized publication test, schedule the approved draft, confirm it stays
+a draft before the deadline, then inspect its CMS status and public URL after the
+alarm. No exact-time delivery guarantee is implied.
 
 Inspect failed jobs via `listSchedules` or Payload Jobs. Fix the underlying article
 or validation issue, then reprogram the draft to replace its failed job. Do not

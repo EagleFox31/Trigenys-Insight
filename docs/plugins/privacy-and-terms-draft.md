@@ -112,8 +112,8 @@ publication lorsque les deux versions sont prévues.
 
 La programmation enregistre une échéance et publie la dernière version du brouillon
 sauvegardée avant l’exécution. Elle ne fige pas le texte au moment de la demande.
-Le déclencheur vérifie les tâches environ toutes les cinq minutes et peut être
-retardé. Le service ne doit pas être présenté comme garantissant une publication
+Le déclenchement est programmé à l’échéance choisie, avec une récupération horaire
+en cas de notification manquée, et peut être retardé. Le service ne doit pas être présenté comme garantissant une publication
 à la minute exacte. Une programmation peut être modifiée ou annulée avant son
 exécution ; une tâche déjà en cours peut ne plus être annulable.
 

@@ -1,6 +1,6 @@
 name: Publish scheduled articles
 on:
-  # Automatic minute ticks run in Cloudflare; this is manual recovery only.
+  # Cloudflare alarms run due work; this is manual recovery only.
   workflow_dispatch:
 permissions:
   id-token: write

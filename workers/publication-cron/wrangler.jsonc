@@ -2,11 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "trigenys-insight-publisher",
   "main": "index.mjs",
-  "compatibility_date": "2026-10-15",
+  "compatibility_date": "2026-10-25",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": false,
+  "workers_dev": true,
   "preview_urls": false,
-  "triggers": { "crons": ["* * * * *"] },
+  "triggers": { "crons": ["17 * * * *"] },
+  "durable_objects": {
+    "bindings": [{ "name": "PUBLICATION_CLOCK", "class_name": "PublicationClock" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PublicationClock"] }],
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "keep_vars": true,
 }

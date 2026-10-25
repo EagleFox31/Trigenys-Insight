@@ -1,28 +1,41 @@
 # Trigenys Insight publication clock
 
-This scheduled-only Cloudflare Worker calls the CMS publication endpoint every
-minute. GitHub Actions is manual recovery, not the primary clock.
+Publication jobs wake a SQLite-backed Durable Object at their next due time.
+There is no permanent minute polling of Neon. The only recurring database check
+is hourly recovery at minute 17 UTC (`17 * * * *`). GitHub Actions stays available
+for manual recovery.
 
-`wrangler.jsonc` records the deployed Worker configuration. Deploy code updates
-with `wrangler deploy --keep-vars` from this directory, using the account's normal
-Cloudflare authentication. Keep HTTP access and preview URLs disabled. This
-Worker does not need access to the CMS database or its publishing token.
+The CMS jobs collection enables hooks so native CMS and MCP scheduling both
+notify the clock. Explicit Buffer mutations also notify it. After processing,
+the CMS returns `nextWakeAt`; an empty queue does not create another alarm.
+A cancelled/rescheduled job can cause one harmless extra wakeup, but the CMS
+always rechecks the current job before publishing. Retries back off from one
+minute to one hour and persist failure receipts in the Durable Object.
 
-The existing `PUBLICATION_SIGNING_KEY` encrypted secret contains the Ed25519
-private key (PKCS8 DER, base64). It is not in this repository. Preserve it on
-updates; never print it. To rotate it, generate a fresh Ed25519 pair, deploy the
-matching public JWK to `src/automation/publicationCronAuth.ts`, then provision the
-private key through Cloudflare's encrypted secret mechanism. Coordinate rollout
-and confirm a real cron tick before declaring the rotation complete.
+## Configuration and secrets
 
-Cloudflare supports `redirect: 'manual'`; treat any 3xx as a failed request and
-never forward the signed Authorization header to another endpoint. Errors must
-fail the scheduled invocation. HTTP 409 is the expected lock-contention case and
-retries on the next tick. Monitor Workers Logs for `publication_tick`, processed,
-failed and scheduled/start timestamps. No secrets or article contents are logged.
+`wrangler.jsonc` records the Worker, binding and SQLite migration. Deploy with
+`wrangler deploy --keep-vars` using the account's normal authentication. Preserve
+both encrypted bindings; never print their values:
 
-Run `pnpm exec vitest run --config vitest.config.mts tests/unit/publicationCron.spec.ts`
-from the repository root for authentication and handler checks. These do not
-replace a real runtime test. New cron triggers may take up to 15 minutes to
-propagate. Follow the live three-minute verification in
-`docs/publishing-automation.md` after a change.
+- `PUBLICATION_SIGNING_KEY`: existing Ed25519 private PKCS8 key (base64), used only
+  to call the fixed CMS publication endpoint. The CMS pins the matching public
+  verification key in `src/automation/publicationCronAuth.ts`.
+- `PUBLICATION_SCHEDULER_SECRET`: HMAC secret shared with Vercel **production**,
+  authenticating deadline notifications and technical status requests. Preview
+  deployments never notify the production clock.
+
+HTTP access is enabled only for `POST /v1/wake` and `GET /v1/status`. Both require
+`X-Scheduler-Timestamp` (Unix seconds) and `X-Scheduler-Signature` (HMAC-SHA256 hex)
+over `${timestamp}\n${method}\n${pathname}\n${exactBody}`. Signatures expire after
+60 seconds; bodies are capped at 256 bytes. A wake body is `{ "at": <Unix ms> }`.
+Neither endpoint can publish an article directly. Preview URLs stay disabled.
+
+## Verification
+
+Run `pnpm test:unit` and `pnpm exec tsc --noEmit`. Tests cover authentication,
+queue draining, nearest deadline preservation, concurrent notifications and
+persisted backoff. Verify an actual short alarm on an empty queue in production,
+then check `lastRun.ok` and `nextWakeAt: null`. Confirm the Neon compute becomes
+idle after its five-minute inactivity timeout; public traffic or other clients
+can still wake it. Monitor `publication_tick` and `publication_retry` logs.

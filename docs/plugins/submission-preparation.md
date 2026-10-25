@@ -28,7 +28,7 @@ articles liés, publication explicite et programmation. Liste filtrée des artic
 modification complète par ID et audit technique FR/EN sont également disponibles.
 Limites : pas de gestion de comptes, d’autres sites, de réseaux sociaux ou de
 paiements. La programmation publie la dernière version du brouillon ; statut
-commun FR/EN et vérification environ toutes les cinq minutes, sans garantie de
+commun FR/EN et déclenchement à l’échéance avec récupération horaire, sans garantie de
 publication à la minute exacte.
 
 Présentation publique déployée et vérifiée (HTTP 200 et contenu) :
