@@ -5,6 +5,7 @@ import { authorizedPublicationWorker } from '@/automation/workerAuth'
 import { authorizedPublicationCron } from '@/automation/publicationCronAuth'
 import { publicationJobsWhere, withPublicationLock } from '@/automation/scheduling'
 import { EditorialError } from '@/automation/service'
+import { nextPublicationWakeAt } from '@/automation/publicationQueueState'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -56,7 +57,10 @@ export async function POST(request: Request) {
     } catch {
       buffer = { processed: 0, failed: 1, error: 'buffer_worker_unavailable' }
     }
-    return Response.json({ ...publication, buffer }, { headers })
+    const nextWakeAt = await nextPublicationWakeAt(req)
+    if (publication.failed || buffer.failed)
+      payload.logger.error('Scheduled publication or Buffer delivery failed; inspect the job queue')
+    return Response.json({ ...publication, buffer, nextWakeAt }, { headers })
   } catch (error) {
     if (error instanceof EditorialError)
       return Response.json({ error: error.code }, { status: error.status, headers })

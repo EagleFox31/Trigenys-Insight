@@ -96,7 +96,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_buffer_create_draft',
     {
       description:
-        'Prepare a Buffer social draft linked to an already public, translated CMS article. Choose an actual connected LinkedIn/Facebook channelId and supply platform-adapted text, plus a stable idempotencyKey. Omitting text uses a simple title/excerpt/link template, not AI generation. Uses the public version, never a pending CMS revision. Copies the public cover image and includes a tracked source link in the default template. Delivery runs on the next minute tick. Creates only a Buffer draft; never publishes or schedules. Read insight_buffer_list_posts to confirm remote status before claiming success.',
+        'Prepare a Buffer social draft linked to an already public, translated CMS article. Choose an actual connected LinkedIn/Facebook channelId and supply platform-adapted text, plus a stable idempotencyKey. Omitting text uses a simple title/excerpt/link template, not AI generation. Uses the public version, never a pending CMS revision. Copies the public cover image and includes a tracked source link in the default template. Delivery wakes the background worker on request, with hourly recovery if notification fails. Creates only a Buffer draft; never publishes or schedules. Read insight_buffer_list_posts to confirm remote status before claiming success.',
       inputSchema: bufferDraftSchema.shape,
       annotations: { ...write, destructiveHint: false, openWorldHint: true },
       _meta: oauth(['editorial:write']),
@@ -229,7 +229,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:write', 'editorial:publish']),
       description:
-        'Schedule an existing draft for future publication, or replace its pending publication date. Provide exactly one postId or idempotencyKey, publishAt as ISO 8601 with an explicit UTC offset, and the IANA timeZone (default Africa/Douala). Ask for a date if none was specified. Does not publish immediately or change content. Publishes the latest saved draft and the shared FR/EN publication status. Cloudflare triggers the worker about every minute; execution may be delayed. An already published article is rejected. Use expectedUpdatedAt to reject stale edits.',
+        'Schedule an existing draft for future publication, or replace its pending publication date. Provide exactly one postId or idempotencyKey, publishAt as ISO 8601 with an explicit UTC offset, and the IANA timeZone (default Africa/Douala). Ask for a date if none was specified. Does not publish immediately or change content. Publishes the latest saved draft and the shared FR/EN publication status. Cloudflare wakes the worker at the requested deadline, with hourly recovery if notification fails; execution may be delayed. An already published article is rejected. Use expectedUpdatedAt to reject stale edits.',
       inputSchema: schedulePostSchema.shape,
       annotations: write,
     },

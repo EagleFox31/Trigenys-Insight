@@ -8,7 +8,8 @@ import {
   CRON_SUBJECT,
 } from '@/automation/publicationCronAuth'
 import { WORKER_AUDIENCE } from '@/automation/workerAuth'
-import worker from '../../workers/publication-cron/index.mjs'
+import worker from '../../workers/publication-cron/handlers.mjs'
+import { runPublicationTick } from '../../workers/publication-cron/runner.mjs'
 
 const { privateKey, publicKey } = generateKeyPairSync('ed25519')
 const now = () => Math.floor(Date.now() / 1000)
@@ -80,30 +81,28 @@ describe('automatic scheduled handler', () => {
     })
     vi.stubGlobal('fetch', fetch)
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
-    await worker.scheduled({ scheduledTime: Date.now() }, env)
+    await runPublicationTick(env, 'test')
     expect(fetch).toHaveBeenCalledTimes(1)
     expect(log).toHaveBeenCalledWith(expect.stringContaining('"processed":1'))
     expect(log.mock.calls.flat().join()).not.toContain('Bearer')
   })
-  it('surfaces HTTP and publication failures instead of reporting success; a busy worker retries on the next tick', async () => {
+  it('surfaces HTTP and publication failures instead of reporting success; lock contention is reported to the durable retry clock', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(null, { status: 401 })),
     )
-    await expect(worker.scheduled({ scheduledTime: Date.now() }, env)).rejects.toThrow('HTTP 401')
+    await expect(runPublicationTick(env, 'test')).rejects.toThrow('HTTP 401')
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => Response.json({ ok: true, processed: 1, failed: 1 })),
     )
-    await expect(worker.scheduled({ scheduledTime: Date.now() }, env)).rejects.toThrow(
-      'jobs failed',
-    )
+    await expect(runPublicationTick(env, 'test')).rejects.toThrow('jobs failed')
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response(null, { status: 409 })),
     )
-    await expect(worker.scheduled({ scheduledTime: Date.now() }, env)).resolves.toBeUndefined()
+    await expect(runPublicationTick(env, 'test')).rejects.toThrow('HTTP 409')
   })
   it('does not expose an HTTP endpoint to run or sign publications', async () => {
     expect((await worker.fetch()).status).toBe(404)

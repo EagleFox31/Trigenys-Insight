@@ -41,7 +41,7 @@ await insight.cancelSchedule({ postId: 42 })
 The matching MCP tools are `insight_schedule_post`, `insight_list_schedules` and
 `insight_cancel_schedule`. Repeating the same instant is idempotent; a new date
 replaces pending publication jobs. The latest saved draft is published. The worker
-is triggered by Cloudflare every minute, with possible infrastructure delays. See the full
+is woken by Cloudflare at the deadline, with hourly recovery and possible infrastructure delays. See the full
 guide for permissions, native CMS scheduling and worker monitoring.
 
 Editorial management: `listPosts({ status: 'DRAFT', heroImage: 'missing' })` returns
@@ -61,7 +61,7 @@ The server can use `BUFFER_API_KEY` to prepare public articles as LinkedIn/Faceb
 Buffer drafts. `bufferStatus()` lists actual connected channels;
 `bufferCreateDraft({ postId, locale, channelId, idempotencyKey, text? })` enqueues a
 safe draft request. Verify the remote receipt with `bufferListPosts({ postId })`
-after the next minute tick. Scheduling requires explicit approval and
+after background delivery completes. Scheduling requires explicit approval and
 `bufferSchedulePost({ exportId, expectedUpdatedAt, publishAt })`; cancellation uses
 `bufferCancelSchedule({ exportId, expectedUpdatedAt })`. Buffer credentials stay
 on the server. See [the distribution guide](../../docs/buffer-distribution.md).

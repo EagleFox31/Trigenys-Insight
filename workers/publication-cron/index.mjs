@@ -1,69 +1,26 @@
-const endpoint = 'https://insight.trigenys.com/api/editorial/scheduled-publish'
-const issuer = 'urn:trigenys:insight:cloudflare-cron'
-const subject = 'trigenys-insight-publisher'
-const keyId = 'cloudflare-publication-20261015'
+import { DurableObject } from 'cloudflare:workers'
+import worker from './handlers.mjs'
+import { PublicationClockState } from './clock.mjs'
 
-function base64url(bytes) {
-  return btoa(String.fromCharCode(...bytes))
-    .replaceAll('+', '-')
-    .replaceAll('/', '_')
-    .replace(/=+$/, '')
-}
-function encode(value) {
-  return base64url(new TextEncoder().encode(JSON.stringify(value)))
-}
-
-const worker = {
-  async scheduled(controller, env) {
-    const startedAt = new Date().toISOString()
-    const now = Math.floor(Date.now() / 1000)
-    const key = await crypto.subtle.importKey(
-      'pkcs8',
-      Uint8Array.from(atob(env.PUBLICATION_SIGNING_KEY), (c) => c.charCodeAt(0)),
-      'Ed25519',
-      false,
-      ['sign'],
-    )
-    const message = `${encode({ alg: 'EdDSA', kid: keyId, typ: 'JWT' })}.${encode({ iss: issuer, sub: subject, aud: endpoint, iat: now, exp: now + 60 })}`
-    const signature = await crypto.subtle.sign('Ed25519', key, new TextEncoder().encode(message))
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      redirect: 'manual',
-      headers: { Authorization: `Bearer ${message}.${base64url(new Uint8Array(signature))}` },
-      signal: AbortSignal.timeout(55000),
-    })
-    if (response.status === 409) {
-      console.log(
-        JSON.stringify({
-          event: 'publication_tick_busy',
-          scheduledTime: controller.scheduledTime,
-          startedAt,
-        }),
-      )
-      await response.body?.cancel()
-      return
-    }
-    if (!response.ok) {
-      await response.body?.cancel()
-      throw new Error(`Publication worker returned HTTP ${response.status}`)
-    }
-    const result = await response.json()
-    console.log(
-      JSON.stringify({
-        event: 'publication_tick',
-        scheduledTime: controller.scheduledTime,
-        startedAt,
-        processed: result.processed,
-        failed: result.failed,
-        remaining: result.remaining,
-      }),
-    )
-    if (result.ok !== true || result.failed > 0)
-      throw new Error('Scheduled publication jobs failed; inspect Payload jobs')
-  },
-  async fetch() {
-    return new Response('Not found', { status: 404 })
-  },
+// One coordination object for this application's publication queue. Article
+// data stays in the CMS; only the next alarm and execution receipts live here.
+export class PublicationClock extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env)
+    this.clock = new PublicationClockState(ctx.storage, env)
+  }
+  wake(at) {
+    return this.clock.wake(at)
+  }
+  status() {
+    return this.clock.status()
+  }
+  reconcile(reason) {
+    return this.clock.reconcile(reason)
+  }
+  alarm() {
+    return this.clock.reconcile('alarm')
+  }
 }
 
 export default worker

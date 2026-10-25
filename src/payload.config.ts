@@ -18,6 +18,7 @@ import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { editorialOSEndpoint } from './endpoints/editorialOS'
+import { wakeQueuedPublication } from './automation/publicationScheduler'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -105,6 +106,15 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   jobs: {
+    // Queue hooks cover both native CMS schedules and MCP/API schedules.
+    runHooks: true,
+    jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
+      ...defaultJobsCollection,
+      hooks: {
+        ...defaultJobsCollection.hooks,
+        afterChange: [...(defaultJobsCollection.hooks?.afterChange ?? []), wakeQueuedPublication],
+      },
+    }),
     access: {
       run: ({ req }: { req: PayloadRequest }): boolean => {
         // Allow logged in users to execute this endpoint (default)

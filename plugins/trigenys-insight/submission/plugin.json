@@ -13,7 +13,7 @@
       "interface": {
         "displayName": "Trigenys Insight",
         "shortDescription": "Manage editorial publishing",
-        "longDescription": "Trigenys Insight helps authorized editors manage the existing Trigenys Insight publication from ChatGPT. Read drafts, list authors and categories, create or revise articles, upload images, manage research sources and related articles, publish explicitly requested content, and schedule, reschedule or cancel future publication. Content supports French and English. An existing authorized Trigenys Insight editorial account is required. The plugin does not create accounts or manage unrelated websites, social networks, payments or purchases. Scheduling publishes the latest saved draft and checks due jobs approximately every minute, with possible delays.",
+        "longDescription": "Trigenys Insight helps authorized editors manage the existing Trigenys Insight publication from ChatGPT. Read drafts, list authors and categories, create or revise articles, upload images, manage research sources and related articles, publish explicitly requested content, and schedule, reschedule or cancel future publication. Content supports French and English. An existing authorized Trigenys Insight editorial account is required. The plugin does not create accounts or manage unrelated websites, social networks, payments or purchases. Scheduling publishes the latest saved draft and wakes at the requested deadline, with possible infrastructure delays.",
         "developerName": "Jennifer Aka’a",
         "category": "Productivity",
         "defaultPrompt": [

@@ -36,7 +36,7 @@ export function ChatGPTIntegrationPage({ locale }: { locale: 'fr' | 'en' }) {
         ],
         [
           'Choose a publication time',
-          'Schedule a draft with a date, time and time zone. Reschedule or cancel before execution starts. The worker checks approximately every minute; delays are possible. The latest saved draft will be published.',
+          'Schedule a draft with a date, time and time zone. Reschedule or cancel before execution starts. Execution is scheduled for the chosen time; infrastructure delays are possible. The latest saved draft will be published.',
         ],
         [
           'Authorized editorial access',
