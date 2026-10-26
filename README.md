@@ -1,10 +1,62 @@
-# Trigenys Insights
+<!-- appfactory:hero:start -->
+<div align="center">
 
-**Independent research and analysis on technology, cybersecurity, business and digital systems — built from Douala for Africa and beyond.**
+# Trigenys Insight
 
-**Live:** https://trigenys-insight.vercel.app/
+### Research deserves a newsroom. Not just a feed.
 
-Trigenys Insights is both a public publication and an editorial platform. The public site serves articles and research, while the same application provides the newsroom with content management, source tracking, scheduled publishing and report workflows.
+**An independent bilingual publication and source-aware editorial platform for African technology, digital business and systems that shape decisions.**
+
+[![Stage: Production](https://img.shields.io/badge/Stage-Production-green)](#project-status)
+[![Languages: FR + EN](https://img.shields.io/badge/Languages-FR%20%2B%20EN-2563eb)](#editorial-production-flow)
+[![CMS: Payload 3](https://img.shields.io/badge/CMS-Payload%203-263238)](#stack)
+[![Automation: API + MCP](https://img.shields.io/badge/Automation-API%20%2B%20MCP-6d28d9)](#publishing-automation)
+[![Distribution: Buffer](https://img.shields.io/badge/Distribution-Buffer-0969da)](#capabilities-and-limits)
+
+[**Why Insight**](#why-trigenys-insight) · [**Editorial flow**](#editorial-production-flow) · [**Architecture**](#architecture-and-trust-model) · [**Capabilities**](#capabilities-and-limits) · [**Stack**](#stack) · [**Publishing**](#publishing-automation) · [**Status**](#project-status)
+
+</div>
+
+---
+<!-- appfactory:hero:end -->
+
+## Why Trigenys Insight
+
+**A credible publication is more than an article feed.** Trigenys Insight combines public technology and business reporting with a private editorial workspace for source tracking, translation/localization, media and scheduled publication. The focus is research readers can trace, not inflated traffic claims.
+
+**Public publication:** [insight.trigenys.com](https://insight.trigenys.com/) · [Legacy Vercel deployment](https://trigenys-insight.vercel.app/).
+
+## Editorial production flow
+
+1. **Research:** register source links, editorial categories and authored context.
+2. **Draft:** compose in **FR/EN**, with images, charts, takeaways and SEO metadata.
+3. **Review and schedule:** distinguish a saved draft from a scheduled or published article.
+4. **Distribute intentionally:** submit approved public content to Buffer; a pending export or draft is not a delivered social publication.
+5. **Measure and refine:** treat source verification and discoverability as repeatable editorial operations, not a promise of audience reach.
+
+See [automation guide](docs/publishing-automation.md) and [social distribution boundary](docs/buffer-distribution.md).
+
+## Architecture and trust model
+
+```mermaid
+flowchart LR
+ R[Reader] --> W[Next.js publication]
+ E[Editor] --> CMS[Payload CMS / admin]
+ A[Automation client] --> API[Authenticated REST + MCP]
+ API --> CMS
+ CMS --> DB[(Neon PostgreSQL)]
+ CMS --> MEDIA[Vercel Blob]
+ CMS -. reviewed public content .-> BUF[Buffer distribution]
+```
+
+Payload serves public pages and admin workflows through one Next.js application. Private source registries, API tokens and research operations remain on trusted server boundaries; an automation correlation key alone is not a permission grant.
+
+## Capabilities and limits
+
+- **Implemented contracts:** bilingual articles, author and category metadata, source references, media, charts, draft/schedule/publish operations and authenticated SDK/MCP access. [Evidence](docs/publishing-automation.md).
+- **External social workflow:** Buffer draft creation, editing and scheduling with idempotency, receipts and explicit publication timestamps. [Evidence](docs/buffer-distribution.md).
+- **Operational limits:** a working scheduled publishing API does not establish that every intended article was published. A Buffer draft is neither automatically scheduled nor proof of publication on LinkedIn or Facebook.
+- **Editorial constraints:** automated text and SEO metadata still require human verification of sources, originality and claims.
 
 ## Stack
 
