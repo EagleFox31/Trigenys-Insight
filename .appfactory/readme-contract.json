@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "name": "Trigenys Insight",
+  "stage": "production",
+  "tagline": "Publish source-traceable research in French and English through one editorial newsroom, rather than treating every article as an isolated page.",
+  "problem": "Technology and business news can be fast yet shallow when sources, translations, media, distribution and corrections are handled in disconnected tools. An independent publication needs a reproducible research workflow as well as a clear public experience.",
+  "scenario": "A researcher registers verifiable sources, creates a French or English draft in the authenticated CMS, attaches charts and media, reviews SEO and publication scheduling, then distributes approved public content through separate social workflows.",
+  "differentiation": "A unified Next.js + Payload publication couples public research, authoring, bilingual editorial objects and an authenticated REST/SDK/MCP automation boundary while keeping source registries and publishing credentials private.",
+  "architecture": "Public Next.js 16 site and Payload CMS -> authenticated editorial REST/GraphQL + SDK/MCP -> PostgreSQL on Neon, media in Vercel Blob, scheduled publishing -> controlled external distribution via Buffer with independently tracked draft and schedule states.",
+  "limitations": "A deployed CMS does not demonstrate a guaranteed publication cadence, subscriber conversion, factual correctness or delivery to social channels. Social drafts are not scheduled by default; editorial review and provider receipts remain essential.",
+  "capabilities": [
+    {
+      "name": "Localized editorial CMS",
+      "description": "Manage localized articles, source references, author/category metadata, media, drafts and scheduling.",
+      "status": "shipped",
+      "evidence": "docs/publishing-automation.md"
+    },
+    {
+      "name": "SDK and MCP publishing",
+      "description": "Expose authenticated authoring operations through an HTTP API and reusable automation clients.",
+      "status": "shipped",
+      "evidence": "docs/publishing-automation.md"
+    },
+    {
+      "name": "Buffer distribution",
+      "description": "Create and schedule external social drafts with explicit authorization and receipt-state checks.",
+      "status": "shipped",
+      "evidence": "docs/buffer-distribution.md"
+    },
+    {
+      "name": "Research computation",
+      "description": "Evaluate reproducible analysis engines outside browser presentation components.",
+      "status": "planned"
+    }
+  ],
+  "roadmap": [
+    {
+      "name": "Reliable editorial cadence",
+      "exitCriteria": "A verified run demonstrates scheduled article publication, language consistency, editorial review and correct failure handling."
+    },
+    {
+      "name": "Measurable discoverability",
+      "exitCriteria": "Publish source-backed SEO observations and distinguish impressions, clicks and sampled reports from audience promises."
+    }
+  ],
+  "references": [
+    {
+      "name": "Publishing automation architecture",
+      "url": "https://github.com/EagleFox31/Trigenys-Insight/blob/main/docs/publishing-automation.md",
+      "relevance": "Authenticated CMS, SDK/MCP and bilingual publication contract."
+    },
+    {
+      "name": "RAIDER README assurance",
+      "url": "https://github.com/Trigenys/appfactory/blob/main/docs/product-readme-contract.md",
+      "relevance": "Consumer-owned narrative and evidence-backed maturity checks."
+    }
+  ],
+  "requiredHeadings": [
+    "Why Trigenys Insight",
+    "Editorial production flow",
+    "Architecture and trust model",
+    "Capabilities and limits",
+    "Stack",
+    "Publishing automation",
+    "Project status"
+  ],
+  "requiredTerms": [
+    "Payload",
+    "Next.js",
+    "FR/EN",
+    "MCP",
+    "SEO",
+    "Buffer",
+    "production"
+  ],
+  "requiredFiles": [
+    "docs/publishing-automation.md",
+    "docs/buffer-distribution.md",
+    "docs/database-model.md",
+    "docs/deployment.md"
+  ],
+  "presentation": {
+    "variant": "centered",
+    "headline": "Research deserves a newsroom. Not just a feed.",
+    "summary": "An independent bilingual publication and source-aware editorial platform for African technology, digital business and systems that shape decisions.",
+    "badges": [
+      {
+        "label": "Stage",
+        "value": "Production",
+        "color": "green",
+        "href": "#project-status"
+      },
+      {
+        "label": "Languages",
+        "value": "FR + EN",
+        "color": "2563eb",
+        "href": "#editorial-production-flow"
+      },
+      {
+        "label": "CMS",
+        "value": "Payload 3",
+        "color": "263238",
+        "href": "#stack"
+      },
+      {
+        "label": "Automation",
+        "value": "API + MCP",
+        "color": "6d28d9",
+        "href": "#publishing-automation"
+      },
+      {
+        "label": "Distribution",
+        "value": "Buffer",
+        "color": "0969da",
+        "href": "#capabilities-and-limits"
+      }
+    ],
+    "navigation": [
+      {
+        "label": "Why Insight",
+        "href": "#why-trigenys-insight"
+      },
+      {
+        "label": "Editorial flow",
+        "href": "#editorial-production-flow"
+      },
+      {
+        "label": "Architecture",
+        "href": "#architecture-and-trust-model"
+      },
+      {
+        "label": "Capabilities",
+        "href": "#capabilities-and-limits"
+      },
+      {
+        "label": "Stack",
+        "href": "#stack"
+      },
+      {
+        "label": "Publishing",
+        "href": "#publishing-automation"
+      },
+      {
+        "label": "Status",
+        "href": "#project-status"
+      }
+    ]
+  }
+}
