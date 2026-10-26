@@ -1,0 +1,22 @@
+{
+  "project": {
+    "owner": "EagleFox31",
+    "title": "Trigenys Insight Product Development",
+    "bootstrap": true,
+    "template": "appfactory-product",
+    "linkRepository": true,
+    "importOpenIssues": true,
+    "createBoardView": true
+  },
+  "bootstrap": {
+    "boardViewName": "AppFactory Board",
+    "phases": [
+      "Foundation",
+      "Editorial",
+      "Growth",
+      "Quality",
+      "Release"
+    ]
+  },
+  "metadataCommentKey": "appfactory-project"
+}
