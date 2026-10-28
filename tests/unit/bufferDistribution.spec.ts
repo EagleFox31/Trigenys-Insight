@@ -515,6 +515,22 @@ describe('reviewed social banners', () => {
       f.query.mock.calls.some(([sql]) => sql.includes('INSERT INTO insight_social_exports')),
     ).toBe(false)
   })
+  it('does not silently reuse a French banner when changing the source locale', async () => {
+    const f = setup()
+    f.row.state = 'draft'
+    f.row.remote_post_id = 'buffer-1'
+    Object.assign(f.row.request, await socialRequest(f.req, post, 'fr', channel, text, false, 9))
+    await expect(
+      executeBufferOperation(f.req, {
+        operation: 'buffer-update-draft',
+        exportId: f.row.id,
+        expectedUpdatedAt: f.row.updated_at.toISOString(),
+        postId: 1,
+        locale: 'en',
+        text,
+      }),
+    ).rejects.toMatchObject({ code: 'social_new_source_requires_reviewed_banner' })
+  })
   it('records the actual Buffer media only after a reviewed banner is confirmed', async () => {
     vi.stubEnv('BUFFER_API_KEY', 'test-secret')
     const f = setup()

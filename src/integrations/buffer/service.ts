@@ -196,6 +196,12 @@ async function executeBufferOperationUnlocked(
       throw new EditorialError(409, 'social_retry_source_must_match')
     if (retrying && !input.socialMediaId && !row.request.socialAsset)
       throw new EditorialError(422, 'social_retry_requires_reviewed_banner')
+    if (
+      row.request.socialAsset &&
+      !input.socialMediaId &&
+      (input.postId !== row.post_id || input.locale !== row.request.locale)
+    )
+      throw new EditorialError(422, 'social_new_source_requires_reviewed_banner')
     const post = await publicPost(req, input.postId, input.locale)
     const request = {
       ...(await socialRequest(
