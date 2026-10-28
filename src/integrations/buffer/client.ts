@@ -1,8 +1,106 @@
 // Server-side only. Never return request headers, the key, or raw provider errors.
+export type BufferDiagnostic = {
+  kind: 'graphql' | 'mutation'
+  providerType?: string
+  operation?: string
+  field?: string
+  reason: string
+  message: string
+}
+const providerTypes = new Set([
+  'NotFoundError',
+  'UnauthorizedError',
+  'UnexpectedError',
+  'RestProxyError',
+  'LimitReachedError',
+  'InvalidInputError',
+  'VoidMutationError',
+  'GRAPHQL_VALIDATION_FAILED',
+  'GRAPHQL_PARSE_FAILED',
+  'BAD_USER_INPUT',
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+  'INTERNAL_SERVER_ERROR',
+])
+// Return a fixed, actionable explanation, never a provider string that might echo
+// a token, the post body, a private URL or other account data.
+export function bufferDiagnostic(kind: BufferDiagnostic['kind'], raw: unknown): BufferDiagnostic {
+  const value = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const extensions = value.extensions as Record<string, unknown> | undefined
+  const type = value.__typename ?? extensions?.code
+  const providerType = typeof type === 'string' && providerTypes.has(type) ? type : undefined
+  const message = typeof value.message === 'string' ? value.message : ''
+  const field = [
+    'externalLink',
+    'channelId',
+    'assets',
+    'source',
+    'mimeType',
+    'text',
+    'metadata',
+    'type',
+    'needsApproval',
+    'status',
+  ].find((name) => message.includes(`\"${name}\"`) || message.includes(`'${name}'`))
+  const reasons: Array<[RegExp, string, string]> = [
+    [
+      /facebook.*(?:type|required)|(?:metadata|post).*(?:type).*required/i,
+      'facebook_post_type_required',
+      'Facebook requires metadata.facebook.type: post.',
+    ],
+    [
+      /cannot query field|cannot return null|unknown (?:argument|type)|not defined by type|variable .* (?:invalid|required)|graphql_validation/i,
+      'schema_validation',
+      'Buffer rejected a GraphQL field, argument or input type.',
+    ],
+    [
+      /not authorized|unauthori[sz]ed|permission|access denied|forbidden/i,
+      'permission_denied',
+      'Buffer denied access to the selected channel or operation.',
+    ],
+    [
+      /disconnect|reconnect|authentication.*expired|token.*expired/i,
+      'channel_disconnected',
+      'The selected social channel needs reconnection in Buffer.',
+    ],
+    [
+      /image|media|asset|mime|file.*(?:type|format)/i,
+      'media_rejected',
+      'Buffer rejected the attached media; check its public URL and supported format.',
+    ],
+    [
+      /text.*(?:long|limit)|character.*limit/i,
+      'text_too_long',
+      'The post exceeds the channel text limit.',
+    ],
+    [
+      /rate.*limit|too many requests|quota|limit.*reach/i,
+      'limit_reached',
+      'Buffer reported an account or request limit.',
+    ],
+    [
+      /not found|does not exist/i,
+      'not_found',
+      'Buffer could not find the selected channel or post.',
+    ],
+  ]
+  const reason = reasons.find(([pattern]) => pattern.test(message))
+  return {
+    kind,
+    ...(providerType ? { providerType } : {}),
+    ...(field ? { field } : {}),
+    reason:
+      reason?.[1] ?? (providerType === 'InvalidInputError' ? 'invalid_input' : 'provider_rejected'),
+    message:
+      reason?.[2] ??
+      'Buffer rejected the request; the provider error type is retained when recognized.',
+  }
+}
 export class BufferAPIError extends Error {
   constructor(
     public code: string,
     public ambiguous = false,
+    public diagnostic?: BufferDiagnostic,
   ) {
     super(code)
   }
@@ -15,8 +113,9 @@ export type BufferPost = {
   dueAt?: string | null
   channelId: string
   externalLink?: string | null
+  assets?: Array<{ id?: string | null; mimeType: string; source: string; thumbnail?: string }>
 }
-const postFields = 'id text status dueAt channelId externalLink'
+const postFields = 'id text status dueAt channelId assets { id mimeType source }'
 export class BufferClient {
   constructor(
     private key = process.env.BUFFER_API_KEY?.trim(),
@@ -58,8 +157,25 @@ export class BufferClient {
     } catch {
       throw new BufferAPIError('buffer_invalid_response', mutation)
     }
-    if (body.errors?.length || !body.data)
-      throw new BufferAPIError('buffer_graphql_error', mutation)
+    if (body.errors?.length || !body.data) {
+      const diagnostic = bufferDiagnostic('graphql', body.errors?.[0])
+      diagnostic.operation = [
+        'InsightOrganizations',
+        'InsightChannels',
+        'InsightSocialPost',
+        'InsightDrafts',
+        'InsightSocialMutation',
+      ].find((name) => query.includes(name))
+      const rejectedBeforeExecution = [
+        'GRAPHQL_VALIDATION_FAILED',
+        'GRAPHQL_PARSE_FAILED',
+      ].includes(diagnostic.providerType ?? '')
+      throw new BufferAPIError(
+        'buffer_graphql_error',
+        mutation && !rejectedBeforeExecution,
+        diagnostic,
+      )
+    }
     return body.data
   }
   async channels(): Promise<BufferChannel[]> {
@@ -87,7 +203,11 @@ export class BufferClient {
     if (!result.post?.id) throw new BufferAPIError('buffer_post_not_found')
     return result.post
   }
-  async findMatching(channel: BufferChannel, text: string): Promise<BufferPost | null> {
+  async findMatching(
+    channel: BufferChannel,
+    text: string,
+    sourceURL?: string,
+  ): Promise<BufferPost | null> {
     let after: string | null = null
     for (let page = 0; page < 10; page++) {
       const r: {
@@ -100,13 +220,22 @@ export class BufferClient {
         {
           input: {
             organizationId: channel.organizationId,
-            filter: { channelIds: [channel.id], status: ['draft'] },
+            // Include scheduled/sent posts too: an external state change must
+            // never turn a retry into a duplicate public post.
+            filter: { channelIds: [channel.id] },
           },
           after,
         },
       )
-      const match = r.posts.edges.find((item) => item.node.text === text)?.node
-      if (match) return match
+      const matches = r.posts.edges
+        .map((item) => item.node)
+        .filter(
+          (post) =>
+            post.channelId === channel.id &&
+            (post.text === text || (sourceURL && post.text.includes(sourceURL))),
+        )
+      if (matches.length > 1) throw new BufferAPIError('buffer_duplicate_matches_review_required')
+      if (matches[0]) return matches[0]
       if (!r.posts.pageInfo.hasNextPage) return null
       after = r.posts.pageInfo.endCursor
       if (!after) break
@@ -117,16 +246,32 @@ export class BufferClient {
     name: 'createPost' | 'editPost',
     input: Record<string, unknown>,
   ): Promise<BufferPost> {
-    const result = await this.query<Record<string, { __typename: string; post?: BufferPost }>>(
+    const result = await this.query<
+      Record<string, { __typename: string; post?: BufferPost; message?: string }>
+    >(
       `mutation InsightSocialMutation($input: ${name === 'createPost' ? 'CreatePostInput' : 'EditPostInput'}!) { ${name}(input: $input) { __typename ... on PostActionSuccess { post { ${postFields} } } ... on MutationError { message } } }`,
       { input },
       true,
     )
     const payload = result[name]
-    if (!payload?.post?.id) throw new BufferAPIError('buffer_mutation_rejected')
+    if (!payload?.post?.id) {
+      const diagnostic = bufferDiagnostic('mutation', payload)
+      diagnostic.operation = name
+      const ambiguous =
+        !payload ||
+        payload.__typename === 'UnexpectedError' ||
+        !providerTypes.has(payload.__typename)
+      throw new BufferAPIError('buffer_mutation_rejected', ambiguous, diagnostic)
+    }
     return payload.post
   }
-  createDraft(channelId: string, text: string, imageURL?: string): Promise<BufferPost> {
+  createDraft(
+    channelId: string,
+    text: string,
+    imageURL?: string,
+    service?: string,
+    altText?: string,
+  ): Promise<BufferPost> {
     return this.mutation('createPost', {
       channelId,
       text,
@@ -134,18 +279,34 @@ export class BufferClient {
       mode: 'addToQueue',
       saveToDraft: true,
       needsApproval: false,
-      assets: imageURL ? [{ image: { url: imageURL } }] : [],
+      assets: imageURL
+        ? [{ image: { url: imageURL, ...(altText ? { metadata: { altText } } : {}) } }]
+        : [],
+      ...(service?.toLowerCase() === 'facebook'
+        ? { metadata: { facebook: { type: 'post' } } }
+        : {}),
       source: 'trigenys-insight',
       aiAssisted: true,
     })
   }
-  editDraft(id: string, text: string, imageURL?: string): Promise<BufferPost> {
+  editDraft(
+    id: string,
+    text: string,
+    imageURL?: string,
+    service?: string,
+    altText?: string,
+  ): Promise<BufferPost> {
     return this.mutation('editPost', {
       id,
       text,
       saveToDraft: true,
       aiAssisted: true,
-      assets: imageURL ? [{ image: { url: imageURL } }] : [],
+      assets: imageURL
+        ? [{ image: { url: imageURL, ...(altText ? { metadata: { altText } } : {}) } }]
+        : [],
+      ...(service?.toLowerCase() === 'facebook'
+        ? { metadata: { facebook: { type: 'post' } } }
+        : {}),
     })
   }
   schedule(id: string, dueAt: string): Promise<BufferPost> {

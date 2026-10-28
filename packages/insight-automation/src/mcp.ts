@@ -74,7 +74,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_buffer_update_draft',
     {
       description:
-        'Revise the text, article link and cover of an existing Buffer draft, reusing its remote ID. Requires a fresh exportId/expectedUpdatedAt, public postId, locale and the complete reviewed social text. Never publishes or schedules. The worker refuses scheduled/sent posts or external text changes. Read list_posts after delivery to verify the final draft.',
+        'Revise a Buffer draft on the same export and remote ID, or retry a definitive failed creation after remote reconciliation. Requires fresh exportId/expectedUpdatedAt, public postId, locale and complete reviewed text. Optional socialMediaId selects a reviewed CMS social banner for this article, locale and channel (1080x1350 PNG/JPEG/WebP, max 3 MiB, alt text and public HTTPS URL). Required for retrying legacy failures; omission preserves a previously selected social banner. Never publishes or schedules. Refuses unknown outcomes, scheduled/sent posts and external text/media edits. Read list_posts to confirm the remote ID and actual Buffer media.',
       inputSchema: bufferUpdateDraftSchema.shape,
       annotations: { ...write, destructiveHint: true, openWorldHint: true },
       _meta: oauth(['editorial:write']),
@@ -96,7 +96,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_buffer_create_draft',
     {
       description:
-        'Prepare a Buffer social draft linked to an already public, translated CMS article. Choose an actual connected LinkedIn/Facebook channelId and supply platform-adapted text, plus a stable idempotencyKey. Omitting text uses a simple title/excerpt/link template, not AI generation. Uses the public version, never a pending CMS revision. Copies the public cover image and includes a tracked source link in the default template. Delivery wakes the background worker on request, with hourly recovery if notification fails. Creates only a Buffer draft; never publishes or schedules. Read insight_buffer_list_posts to confirm remote status before claiming success.',
+        'Prepare a Buffer draft from an already public translated article. Choose a live LinkedIn/Facebook channelId, platform-adapted text and stable idempotencyKey. Optional socialMediaId explicitly selects a reviewed CMS social banner for this article, locale and channel (1080x1350 PNG/JPEG/WebP, max 3 MiB, alt and public HTTPS URL); never modifies heroImage. Omission retains the legacy public-cover fallback for draft creation only; scheduling requires a reviewed social banner. Without text, uses a basic title/excerpt/UTM-link template. Uses the public version, never a private revision. Worker delivery creates only a draft, never schedules or publishes. Confirm remote ID and actual Buffer media through insight_buffer_list_posts.',
       inputSchema: bufferDraftSchema.shape,
       annotations: { ...write, destructiveHint: false, openWorldHint: true },
       _meta: oauth(['editorial:write']),
@@ -107,7 +107,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_buffer_list_posts',
     {
       description:
-        'List persisted social export requests and confirmed Buffer draft/schedule IDs, target channel, text, errors and timestamps. Status is the last observed Buffer response, not a live social-network delivery guarantee. Supports postId and pagination; get_post also includes recent social distribution records for that article.',
+        'List persisted social requests, confirmed Buffer IDs, selected socialAsset, actual bufferAssets, safe typed lastFailure diagnostics, channel, text and timestamps. Status is the last observed Buffer response, not a live delivery guarantee. Supports postId and pagination; get_post includes recent social records too.',
       inputSchema: bufferListSchema.shape,
       annotations: read,
       _meta: oauth(['editorial:read']),

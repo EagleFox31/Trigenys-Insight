@@ -1,5 +1,6 @@
 import type { PayloadRequest } from 'payload'
-import type { BufferChannel } from './client'
+import type { BufferChannel, BufferDiagnostic, BufferPost } from './client'
+import type { SocialAsset } from './socialAsset'
 export type SocialState =
   | 'pending-bootstrap'
   | 'pending-channel-draft'
@@ -21,6 +22,10 @@ export type SocialRequest = {
   channelId?: string
   text?: string
   imageURL?: string
+  socialAsset?: SocialAsset
+  previousImageURL?: string
+  remoteAssets?: BufferPost['assets']
+  lastFailure?: BufferDiagnostic
   sourceURL?: string
   channel?: BufferChannel
   bootstrap?: boolean
@@ -82,11 +87,15 @@ export function summarizeExport(row: SocialExport) {
     channel: row.request.channel ?? null,
     text: row.request.text ?? null,
     imageURL: row.request.imageURL ?? null,
+    socialAsset: row.request.socialAsset ?? null,
+    bufferAssets: row.request.remoteAssets ?? null,
+    lastFailure: row.request.lastFailure ?? null,
     sourceURL: row.request.sourceURL ?? null,
     bufferPostId: row.remote_post_id,
     bufferStatus: row.remote_status,
     publishAt: row.request.publishAt ?? null,
     lastError: row.last_error,
+    attempts: row.attempts,
     updatedAt: new Date(row.updated_at).toISOString(),
     createdAt: new Date(row.created_at).toISOString(),
   }

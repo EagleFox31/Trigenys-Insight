@@ -59,13 +59,20 @@ and preservation details. The matching MCP tools are `insight_list_posts`,
 
 The server can use `BUFFER_API_KEY` to prepare public articles as LinkedIn/Facebook
 Buffer drafts. `bufferStatus()` lists actual connected channels;
-`bufferCreateDraft({ postId, locale, channelId, idempotencyKey, text? })` enqueues a
+`bufferCreateDraft({ postId, locale, channelId, idempotencyKey, text?, socialMediaId? })` enqueues a
 safe draft request. Verify the remote receipt with `bufferListPosts({ postId })`
 after background delivery completes. Scheduling requires explicit approval and
 `bufferSchedulePost({ exportId, expectedUpdatedAt, publishAt })`; cancellation uses
 `bufferCancelSchedule({ exportId, expectedUpdatedAt })`. Buffer credentials stay
 on the server. See [the distribution guide](../../docs/buffer-distribution.md).
 
-`bufferUpdateDraft({ exportId, expectedUpdatedAt, postId, locale, text })` edits
-the same confirmed remote draft, including its article link and cover. It never
-schedules the post and refuses external text changes or scheduled/sent posts.
+`bufferUpdateDraft({ exportId, expectedUpdatedAt, postId, locale, text, socialMediaId? })`
+edits the same confirmed remote draft, including image-only changes. An explicit
+socialMediaId selects a reviewed 1080×1350 CMS banner for that article, locale and
+channel; omission preserves the prior selection. A public image, alt text and
+supported MIME type are validated. It never changes heroImage, schedules or
+publishes. Definitive failed creations can be retried on the same export with a
+reviewed banner; unknown outcomes and external text/media changes require review.
+Scheduling requires a reviewed social banner and actual Buffer media confirmation.
+Read selected socialAsset, actual bufferAssets and safe typed lastFailure details
+through bufferListPosts.
