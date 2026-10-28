@@ -330,6 +330,7 @@ export const bufferDraftSchema = z
     channelId: text.max(200),
     idempotencyKey: text.max(200),
     text: text.max(3000).optional(),
+    socialMediaId: id.optional(),
   })
   .strict()
 export const bufferListSchema = z
@@ -349,6 +350,7 @@ export const bufferUpdateDraftSchema = z
     postId: id,
     locale: locale.default('fr'),
     text: text.max(3000),
+    socialMediaId: id.optional(),
   })
   .strict()
 export type BufferUpdateDraftInput = z.input<typeof bufferUpdateDraftSchema>

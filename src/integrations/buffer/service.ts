@@ -4,10 +4,11 @@ import type { PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
 import { EditorialError } from '@/automation/errors'
 import { relationId } from '@/automation/contentInspection'
-import { BufferClient, BufferAPIError, type BufferChannel } from './client'
+import { BufferClient, BufferAPIError, type BufferChannel, type BufferPost } from './client'
 import { socialQuery, summarizeExport, type SocialExport, type SocialRequest } from './store'
 import type { EditorialOperation } from '../../../packages/insight-automation/src/schema'
 import { wakePublicationScheduler } from '@/automation/publicationScheduler'
+import { imageMatches, publicMediaURL, selectSocialAsset } from './socialAsset'
 
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 export async function syncBufferConnection(req: PayloadRequest, client = new BufferClient()) {
@@ -57,6 +58,7 @@ export async function socialRequest(
   channel: BufferChannel,
   suppliedText?: string,
   bootstrap = false,
+  socialMediaId?: number,
 ): Promise<SocialRequest> {
   if (!['linkedin', 'facebook'].includes(channel.service.toLowerCase()))
     throw new EditorialError(422, 'social_channel_not_supported_yet')
@@ -72,9 +74,12 @@ export async function socialRequest(
     suppliedText ??
     `${bootstrap ? '[Test d’intégration — brouillon à relire]\n\n' : ''}${defaultText}`
   if (text.length > 3000) throw new EditorialError(422, 'social_text_too_long')
-  let imageURL: string | undefined
+  const socialAsset = socialMediaId
+    ? await selectSocialAsset(req, socialMediaId, post.id, locale, channel.id)
+    : undefined
+  let imageURL: string | undefined = socialAsset?.url
   const mediaId = relationId(post.heroImage)
-  if (mediaId) {
+  if (!socialAsset && mediaId) {
     const media = await req.payload.findByID({
       collection: 'media',
       id: mediaId,
@@ -83,18 +88,7 @@ export async function socialRequest(
       req,
     })
     if (media.url) {
-      const url = new URL(media.url, 'https://insight.trigenys.com')
-      if (
-        url.protocol !== 'https:' ||
-        url.username ||
-        url.password ||
-        !(
-          url.hostname === 'insight.trigenys.com' ||
-          url.hostname.endsWith('.public.blob.vercel-storage.com')
-        )
-      )
-        throw new EditorialError(422, 'social_image_url_not_supported')
-      imageURL = url.toString()
+      imageURL = publicMediaURL(media.url)
     }
   }
   return {
@@ -105,6 +99,7 @@ export async function socialRequest(
     text,
     sourceURL: sourceURL.toString(),
     ...(imageURL ? { imageURL } : {}),
+    ...(socialAsset ? { socialAsset } : {}),
     ...(bootstrap ? { bootstrap: true } : {}),
   }
 }
@@ -154,7 +149,15 @@ async function executeBufferOperationUnlocked(
     const connection = await syncBufferConnection(req)
     const channel = connection.channels.find((item) => item.id === input.channelId)
     if (!channel) throw new EditorialError(422, 'buffer_channel_not_found')
-    const request = await socialRequest(req, post, input.locale, channel, input.text)
+    const request = await socialRequest(
+      req,
+      post,
+      input.locale,
+      channel,
+      input.text,
+      false,
+      input.socialMediaId,
+    )
     const fingerprint = hash(request)
     const rows = await socialQuery<SocialExport>(
       req,
@@ -177,17 +180,54 @@ async function executeBufferOperationUnlocked(
     if (!row) throw new EditorialError(404, 'social_export_not_found')
     if (new Date(row.updated_at).getTime() !== Date.parse(input.expectedUpdatedAt))
       throw new EditorialError(409, 'stale_social_export')
-    if (row.state !== 'draft' || !row.remote_post_id || !row.request.channel || !row.request.text)
+    // These two legacy failures definitively happened before creation or were
+    // explicit mutation rejections. Unknown outcomes remain blocked for review.
+    const retrying =
+      row.state === 'failed' &&
+      !row.remote_post_id &&
+      ['buffer_graphql_error', 'buffer_mutation_rejected'].includes(row.last_error ?? '')
+    if (
+      (!retrying && (row.state !== 'draft' || !row.remote_post_id)) ||
+      !row.request.channel ||
+      !row.request.text
+    )
       throw new EditorialError(409, 'social_export_not_a_draft')
+    if (retrying && (input.postId !== row.post_id || input.locale !== row.request.locale))
+      throw new EditorialError(409, 'social_retry_source_must_match')
+    if (retrying && !input.socialMediaId && !row.request.socialAsset)
+      throw new EditorialError(422, 'social_retry_requires_reviewed_banner')
+    if (
+      row.request.socialAsset &&
+      !input.socialMediaId &&
+      (input.postId !== row.post_id || input.locale !== row.request.locale)
+    )
+      throw new EditorialError(422, 'social_new_source_requires_reviewed_banner')
     const post = await publicPost(req, input.postId, input.locale)
     const request = {
-      ...(await socialRequest(req, post, input.locale, row.request.channel, input.text)),
+      ...(await socialRequest(
+        req,
+        post,
+        input.locale,
+        row.request.channel,
+        input.text,
+        false,
+        input.socialMediaId ?? row.request.socialAsset?.mediaId,
+      )),
       previousText: row.request.text,
+      ...(row.request.imageURL ? { previousImageURL: row.request.imageURL } : {}),
     }
     const updated = await socialQuery<SocialExport>(
       req,
-      `UPDATE insight_social_exports SET post_id=$2,state='pending-revision',request=$3::jsonb,body_hash=$4,last_error=NULL,updated_at=GREATEST(date_trunc('milliseconds', now()), updated_at + interval '1 millisecond') WHERE id=$1 AND updated_at=$5::timestamptz AND state='draft' RETURNING *`,
-      [row.id, post.id, JSON.stringify(request), hash(request), row.updated_at],
+      `UPDATE insight_social_exports SET post_id=$2,state=$6,request=$3::jsonb,body_hash=$4,last_error=NULL,updated_at=GREATEST(date_trunc('milliseconds', now()), updated_at + interval '1 millisecond') WHERE id=$1 AND updated_at=$5::timestamptz AND state=$7 RETURNING *`,
+      [
+        row.id,
+        post.id,
+        JSON.stringify(request),
+        hash(request),
+        row.updated_at,
+        retrying ? 'pending-draft' : 'pending-revision',
+        row.state,
+      ],
     )
     if (!updated.length) throw new EditorialError(409, 'stale_social_export')
     return { ok: true, export: summarizeExport(updated[0]) }
@@ -212,6 +252,25 @@ async function executeBufferOperationUnlocked(
     !row.remote_post_id
   )
     throw new EditorialError(409, 'social_export_not_ready')
+  if (!cancellation) {
+    const asset = row.request.socialAsset
+    if (
+      !asset ||
+      asset.postId !== row.post_id ||
+      asset.locale !== row.request.locale ||
+      asset.channelId !== row.request.channel?.id
+    )
+      throw new EditorialError(422, 'social_schedule_requires_reviewed_banner')
+    const current = await selectSocialAsset(
+      req,
+      asset.mediaId,
+      row.post_id,
+      asset.locale,
+      asset.channelId,
+    )
+    if (current.url !== asset.url)
+      throw new EditorialError(409, 'social_asset_changed_review_required')
+  }
   const request = {
     ...row.request,
     ...(cancellation ? {} : { publishAt: input.publishAt }),
@@ -301,10 +360,11 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
     const row = pending[0]
     let mutationAttempted = false
     let receiptPending = false
+    let request = row.request
+    let remote: BufferPost | null | undefined
     try {
       // Withdrawal of the article must never prevent cancelling its social schedule.
       if (row.state !== 'pending-cancel') await publicPost(req, row.post_id, row.request.locale)
-      let request = row.request
       if (['pending-bootstrap', 'pending-channel-draft'].includes(row.state)) {
         const named = row.state === 'pending-channel-draft'
         if (named && (!request.targetChannelName || !request.text))
@@ -344,8 +404,11 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
             request.locale,
             request.channel,
             request.text,
+            false,
+            request.socialAsset?.mediaId,
           )),
           ...(request.previousText ? { previousText: request.previousText } : {}),
+          ...(request.previousImageURL ? { previousImageURL: request.previousImageURL } : {}),
         }
         await socialQuery(
           req,
@@ -355,7 +418,24 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
       }
       if (!request.channel || !request.text)
         throw new EditorialError(422, 'buffer_export_incomplete')
-      let remote
+      if (request.socialAsset) {
+        const asset = request.socialAsset
+        if (
+          asset.postId !== row.post_id ||
+          asset.locale !== request.locale ||
+          asset.channelId !== request.channel.id
+        )
+          throw new EditorialError(409, 'social_asset_scope_mismatch')
+        const current = await selectSocialAsset(
+          req,
+          asset.mediaId,
+          row.post_id,
+          request.locale,
+          request.channel.id,
+        )
+        if (current.url !== request.imageURL || current.alt !== asset.alt)
+          throw new EditorialError(409, 'social_asset_changed_review_required')
+      }
       if (
         [
           'pending-draft',
@@ -366,7 +446,11 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
         ].includes(row.state) &&
         !row.remote_post_id
       ) {
-        remote = await client.findMatching(request.channel, request.text)
+        remote = await client.findMatching(
+          request.channel,
+          request.previousText ?? request.text,
+          request.sourceURL,
+        )
         if (!remote && row.state === 'uncertain')
           throw new EditorialError(409, 'buffer_outcome_unknown_review_required')
         if (!remote) {
@@ -376,7 +460,28 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
             [row.id],
           )
           mutationAttempted = true
-          remote = await client.createDraft(request.channel.id, request.text, request.imageURL)
+          remote = await client.createDraft(
+            request.channel.id,
+            request.text,
+            request.imageURL,
+            request.channel.service,
+            request.socialAsset?.alt,
+          )
+        } else if (
+          remote.status === 'draft' &&
+          remote.text === request.previousText &&
+          (remote.text !== request.text || !imageMatches(remote, request.imageURL))
+        ) {
+          if (request.previousImageURL && !imageMatches(remote, request.previousImageURL))
+            throw new EditorialError(409, 'buffer_post_media_changed_review_required')
+          mutationAttempted = true
+          remote = await client.editDraft(
+            remote.id,
+            request.text,
+            request.imageURL,
+            request.channel.service,
+            request.socialAsset?.alt,
+          )
         }
         if (
           remote.status !== 'draft' ||
@@ -395,9 +500,21 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           throw new EditorialError(409, 'buffer_post_changed_review_required')
         if (row.state === 'pending-revision') {
           if (remote.status !== 'draft') throw new EditorialError(409, 'buffer_post_not_a_draft')
-          if (remote.text !== request.text) {
+          if (remote.text !== request.text || !imageMatches(remote, request.imageURL)) {
+            if (
+              request.previousImageURL &&
+              !imageMatches(remote, request.previousImageURL) &&
+              !imageMatches(remote, request.imageURL)
+            )
+              throw new EditorialError(409, 'buffer_post_media_changed_review_required')
             mutationAttempted = true
-            remote = await client.editDraft(remote.id, request.text, request.imageURL)
+            remote = await client.editDraft(
+              remote.id,
+              request.text,
+              request.imageURL,
+              request.channel.service,
+              request.socialAsset?.alt,
+            )
           }
           if (
             remote.id !== row.remote_post_id ||
@@ -407,6 +524,8 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           )
             throw new BufferAPIError('buffer_revision_state_unexpected', true)
         } else if (row.state === 'pending-schedule') {
+          if (!request.socialAsset || !imageMatches(remote, request.imageURL))
+            throw new EditorialError(409, 'social_schedule_requires_reviewed_banner')
           if (Date.parse(request.publishAt ?? '') <= Date.now() + 15000)
             throw new EditorialError(422, 'social_schedule_is_no_longer_future')
           if (
@@ -436,10 +555,16 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
             throw new BufferAPIError('buffer_cancel_state_unexpected', true)
         } else if (
           row.state === 'uncertain' &&
-          !(request.previousText && remote.status === 'draft' && remote.text === request.text)
+          !(!request.publishAt && remote.status === 'draft' && remote.text === request.text)
         )
           throw new EditorialError(409, 'buffer_outcome_unknown_review_required')
       }
+      if (
+        request.socialAsset &&
+        row.state !== 'pending-cancel' &&
+        !imageMatches(remote, request.imageURL)
+      )
+        throw new BufferAPIError('buffer_media_not_confirmed', mutationAttempted)
       receiptPending = true
       const state =
         remote.status === 'draft' ? 'draft' : remote.status === 'sent' ? 'sent' : 'scheduled'
@@ -454,6 +579,9 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           JSON.stringify({
             ...request,
             previousText: undefined,
+            previousImageURL: undefined,
+            lastFailure: undefined,
+            remoteAssets: remote.assets,
             ...(row.state === 'pending-cancel' ? { publishAt: undefined } : {}),
           }),
         ],
@@ -469,7 +597,7 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           : 'buffer_delivery_failed'
       await socialQuery(
         req,
-        "UPDATE insight_social_exports SET state=$2,last_error=$3,updated_at=GREATEST(date_trunc('milliseconds', now()), updated_at + interval '1 millisecond') WHERE id=$1",
+        "UPDATE insight_social_exports SET state=$2,last_error=$3,request=$4::jsonb,remote_post_id=COALESCE($5,remote_post_id),remote_status=COALESCE($6,remote_status),updated_at=GREATEST(date_trunc('milliseconds', now()), updated_at + interval '1 millisecond') WHERE id=$1",
         [
           row.id,
           ambiguous
@@ -478,6 +606,12 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
               ? 'blocked'
               : 'failed',
           code,
+          JSON.stringify({
+            ...request,
+            lastFailure: error instanceof BufferAPIError ? error.diagnostic : undefined,
+          }),
+          remote?.channelId === request.channel?.id ? remote?.id : null,
+          remote?.channelId === request.channel?.id ? remote?.status : null,
         ],
       )
       return { processed: 0, failed: 1, error: code }

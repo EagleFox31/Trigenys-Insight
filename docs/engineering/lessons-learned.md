@@ -4,6 +4,20 @@ This file is the RAIDER failure-memory location for Trigenys Insights.
 
 Capture meaningful incidents and near misses that reveal a reusable lesson. Do not record noise.
 
+## 2026-10-28 — A queued social request is not a confirmed Buffer draft
+
+**Classification**
+Automation / API contracts / observability
+
+**Context and symptom**
+Six Trigenys Group social requests were persisted but failed before any remote draft was confirmed. The client retained only generic error codes and always selected the article's hero image.
+
+**Root cause and resolution**
+Facebook's platform-specific post type was omitted. Generic GraphQL/mutation errors also concealed the distinction between input rejection and an unknown mutation outcome. Add the required Facebook metadata, fixed-vocabulary typed diagnostics, an explicit locale/channel-bound social media selection and actual remote-media receipts. LinkedIn's production cause must be established from those diagnostics rather than inferred from Facebook's error.
+
+**Prevention and generalized lesson**
+Test platform-specific request contracts, image-only edits, external changes, safe diagnostics and retry reconciliation. Reuse export and remote IDs. Treat persistence, remote draft confirmation and approved scheduling as separate states; never report or infer the next state from the previous one.
+
 ## Template
 
 ### YYYY-MM-DD — Short title

@@ -78,6 +78,8 @@ describe('recreate drafts on the newly connected brand', () => {
       'agen',
       text.replace('utm_source=linkedin', 'utm_source=facebook'),
       undefined,
+      'facebook',
+      undefined,
     )
     expect(f.lock.release).toHaveBeenCalled()
   })
