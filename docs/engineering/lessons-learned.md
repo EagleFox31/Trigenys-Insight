@@ -4,6 +4,18 @@ This file is the RAIDER failure-memory location for Trigenys Insights.
 
 Capture meaningful incidents and near misses that reveal a reusable lesson. Do not record noise.
 
+## 2026-10-28 — Original image metadata pointed to a thumbnail
+
+The live social upload exposed an original 1080×1350 media record whose filename
+and URL referred to a 300×375 size. Its initial unsuffixed URL returned 404.
+The installed cloud-storage hook uploads sizes concurrently with a shared
+metadata object, while the Blob adapter mutates that object's filename.
+Social uploads now persist a canonical original Blob filename using the verified
+input bytes, repair the existing media ID on retry and point invalid derivative
+references at the verified original. Asset validation compares the public file length with the original's
+length. Tests cover the thumbnail/original mismatch and idempotent repair.
+Dimensions in a database record do not prove that its URL serves that image.
+
 ## 2026-10-28 — A queued social request is not a confirmed Buffer draft
 
 **Classification**

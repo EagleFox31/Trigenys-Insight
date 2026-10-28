@@ -120,6 +120,8 @@ async function executeBufferOperationUnlocked(
 ) {
   if (input.operation === 'buffer-status') return syncBufferConnection(req)
   if (input.operation === 'buffer-list-posts') {
+    if (input.refresh && input.limit > 6)
+      throw new EditorialError(422, 'social_refresh_limit_is_six')
     const where = input.postId ? 'WHERE post_id=$1' : ''
     const values = input.postId ? [input.postId] : []
     const [docs, count] = await Promise.all([
@@ -135,9 +137,35 @@ async function executeBufferOperationUnlocked(
       ),
     ])
     const totalDocs = Number(count[0].count)
+    const summaries = await Promise.all(
+      docs.map(async (row) => {
+        const summary = summarizeExport(row)
+        if (!input.refresh) return summary
+        try {
+          const client = new BufferClient()
+          const remote = row.remote_post_id
+            ? await client.post(row.remote_post_id)
+            : row.request.channel && row.request.text
+              ? await client.findMatching(
+                  row.request.channel,
+                  row.request.previousText ?? row.request.text,
+                  row.request.sourceURL,
+                )
+              : null
+          return { ...summary, remote }
+        } catch (error) {
+          return {
+            ...summary,
+            remote: null,
+            remoteReadError: error instanceof BufferAPIError ? error.code : 'buffer_read_failed',
+            remoteFailure: error instanceof BufferAPIError ? error.diagnostic : undefined,
+          }
+        }
+      }),
+    )
     return {
       ok: true,
-      docs: docs.map(summarizeExport),
+      docs: summaries,
       totalDocs,
       page: input.page,
       limit: input.limit,
@@ -186,16 +214,42 @@ async function executeBufferOperationUnlocked(
       row.state === 'failed' &&
       !row.remote_post_id &&
       ['buffer_graphql_error', 'buffer_mutation_rejected'].includes(row.last_error ?? '')
+    const recovering =
+      row.state === 'failed' &&
+      Boolean(row.remote_post_id) &&
+      [
+        'buffer_post_changed_review_required',
+        'buffer_post_media_changed_review_required',
+        'buffer_media_not_confirmed',
+      ].includes(row.last_error ?? '') &&
+      input.expectedRemoteText !== undefined &&
+      input.expectedRemoteImageURL !== undefined &&
+      !row.request.publishAt
     if (
-      (!retrying && (row.state !== 'draft' || !row.remote_post_id)) ||
+      (!retrying && !recovering && (row.state !== 'draft' || !row.remote_post_id)) ||
       !row.request.channel ||
       !row.request.text
     )
       throw new EditorialError(409, 'social_export_not_a_draft')
-    if (retrying && (input.postId !== row.post_id || input.locale !== row.request.locale))
+    if (
+      (retrying || recovering) &&
+      (input.postId !== row.post_id || input.locale !== row.request.locale)
+    )
       throw new EditorialError(409, 'social_retry_source_must_match')
     if (retrying && !input.socialMediaId && !row.request.socialAsset)
       throw new EditorialError(422, 'social_retry_requires_reviewed_banner')
+    if (recovering && !input.socialMediaId)
+      throw new EditorialError(422, 'social_retry_requires_reviewed_banner')
+    if (recovering) {
+      const remote = await new BufferClient().post(row.remote_post_id!)
+      if (
+        remote.status !== 'draft' ||
+        remote.channelId !== row.request.channel!.id ||
+        remote.text !== input.expectedRemoteText ||
+        !imageMatches(remote, input.expectedRemoteImageURL ?? undefined)
+      )
+        throw new EditorialError(409, 'buffer_remote_review_is_stale')
+    }
     if (
       row.request.socialAsset &&
       !input.socialMediaId &&
@@ -213,8 +267,12 @@ async function executeBufferOperationUnlocked(
         false,
         input.socialMediaId ?? row.request.socialAsset?.mediaId,
       )),
-      previousText: row.request.text,
-      ...(row.request.imageURL ? { previousImageURL: row.request.imageURL } : {}),
+      previousText: recovering ? input.expectedRemoteText : row.request.text,
+      ...(recovering
+        ? { previousImageURL: input.expectedRemoteImageURL }
+        : row.request.imageURL
+          ? { previousImageURL: row.request.imageURL }
+          : {}),
     }
     const updated = await socialQuery<SocialExport>(
       req,
@@ -408,7 +466,9 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
             request.socialAsset?.mediaId,
           )),
           ...(request.previousText ? { previousText: request.previousText } : {}),
-          ...(request.previousImageURL ? { previousImageURL: request.previousImageURL } : {}),
+          ...(request.previousImageURL !== undefined
+            ? { previousImageURL: request.previousImageURL }
+            : {}),
         }
         await socialQuery(
           req,
@@ -472,7 +532,10 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           remote.text === request.previousText &&
           (remote.text !== request.text || !imageMatches(remote, request.imageURL))
         ) {
-          if (request.previousImageURL && !imageMatches(remote, request.previousImageURL))
+          if (
+            request.previousImageURL !== undefined &&
+            !imageMatches(remote, request.previousImageURL ?? undefined)
+          )
             throw new EditorialError(409, 'buffer_post_media_changed_review_required')
           mutationAttempted = true
           remote = await client.editDraft(
@@ -502,8 +565,8 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           if (remote.status !== 'draft') throw new EditorialError(409, 'buffer_post_not_a_draft')
           if (remote.text !== request.text || !imageMatches(remote, request.imageURL)) {
             if (
-              request.previousImageURL &&
-              !imageMatches(remote, request.previousImageURL) &&
+              request.previousImageURL !== undefined &&
+              !imageMatches(remote, request.previousImageURL ?? undefined) &&
               !imageMatches(remote, request.imageURL)
             )
               throw new EditorialError(409, 'buffer_post_media_changed_review_required')

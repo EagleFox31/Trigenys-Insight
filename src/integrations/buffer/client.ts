@@ -216,7 +216,7 @@ export class BufferClient {
           pageInfo: { hasNextPage: boolean; endCursor: string | null }
         }
       } = await this.query(
-        `query InsightDrafts($input: PostsInput!, $after: String) { posts(first: 100, after: $after, input: $input) { edges { node { ${postFields} } } pageInfo { hasNextPage endCursor } } }`,
+        `query InsightDrafts($input: PostsInput!, $after: String) { posts(first: 20, after: $after, input: $input) { edges { node { ${postFields} } } pageInfo { hasNextPage endCursor } } }`,
         {
           input: {
             organizationId: channel.organizationId,
