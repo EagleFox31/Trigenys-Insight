@@ -75,20 +75,23 @@ export async function uploadOriginalSocialMedia(
     throw new EditorialError(503, 'social_original_upload_failed')
   }
   const url = publicMediaURL(uploaded.url)
-  const emptySize = {
-    url: null,
-    filename: null,
-    width: null,
-    height: null,
-    mimeType: null,
-    filesize: null,
+  const originalFilename = path.posix.basename(uploaded.pathname)
+  // beforeChange falls back to a previous filename when a size is cleared.
+  // Point invalid derived entries at the verified original instead.
+  const originalSize = {
+    url,
+    filename: originalFilename,
+    width: 1080,
+    height: 1350,
+    mimeType,
+    filesize: data.length,
   }
   await req.payload.update({
     collection: 'media',
     id: media.id,
     data: {
       alt,
-      filename: path.posix.basename(uploaded.pathname),
+      filename: originalFilename,
       url,
       prefix: 'media',
       mimeType,
@@ -96,13 +99,13 @@ export async function uploadOriginalSocialMedia(
       width: 1080,
       height: 1350,
       sizes: {
-        thumbnail: emptySize,
-        square: emptySize,
-        small: emptySize,
-        medium: emptySize,
-        large: emptySize,
-        xlarge: emptySize,
-        og: emptySize,
+        thumbnail: originalSize,
+        square: originalSize,
+        small: originalSize,
+        medium: originalSize,
+        large: originalSize,
+        xlarge: originalSize,
+        og: originalSize,
       },
     },
     context: { skipCloudStorage: true },

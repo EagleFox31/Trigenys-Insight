@@ -11,8 +11,8 @@ and URL referred to a 300×375 size. Its initial unsuffixed URL returned 404.
 The installed cloud-storage hook uploads sizes concurrently with a shared
 metadata object, while the Blob adapter mutates that object's filename.
 Social uploads now persist a canonical original Blob filename using the verified
-input bytes, repair the existing media ID on retry and clear invalid derivative
-metadata. Asset validation compares the public file length with the original's
+input bytes, repair the existing media ID on retry and point invalid derivative
+references at the verified original. Asset validation compares the public file length with the original's
 length. Tests cover the thumbnail/original mismatch and idempotent repair.
 Dimensions in a database record do not prove that its URL serves that image.
 

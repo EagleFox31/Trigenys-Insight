@@ -62,7 +62,7 @@ describe('original social media upload', () => {
           height: 1350,
           filesize: input.data.length,
           sizes: expect.objectContaining({
-            thumbnail: expect.objectContaining({ filename: null }),
+            thumbnail: expect.objectContaining({ filename, url, width: 1080, height: 1350 }),
           }),
         }),
       }),
