@@ -248,6 +248,28 @@ describe('social draft source and selection', () => {
 })
 
 describe('durable social delivery', () => {
+  it('can read the current remote draft for review without changing the outbox', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = fixture('failed', 'buffer-1')
+    const query = vi.fn(async (sql: string) => ({
+      rows: sql.includes('COUNT(*)') ? [{ count: '1' }] : sql.includes('SELECT *') ? [f.row] : [],
+    }))
+    Object.assign(f.req.payload.db.pool, { query })
+    const current = { ...remote, text: 'Current Buffer copy', assets: [] }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ data: { post: current } })),
+    )
+    const result = await executeBufferOperation(f.req, {
+      operation: 'buffer-list-posts',
+      postId: 1,
+      page: 1,
+      limit: 2,
+      refresh: true,
+    })
+    expect(result).toMatchObject({ docs: [{ remote: current }] })
+    expect(query.mock.calls.some(([sql]) => sql.includes('UPDATE'))).toBe(false)
+  })
   it('changes the image even when the reviewed text is unchanged, preserving the remote ID', async () => {
     vi.stubEnv('BUFFER_API_KEY', 'test-secret')
     const f = fixture('pending-revision', 'buffer-1')
@@ -458,7 +480,12 @@ describe('reviewed social banners', () => {
   function setup(overrides = {}) {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(null, { headers: { 'content-type': 'image/webp' } })),
+      vi.fn(
+        async () =>
+          new Response(null, {
+            headers: { 'content-type': 'image/webp', 'content-length': '200000' },
+          }),
+      ),
     )
     const f = fixture('failed')
     Object.assign(f.row, { last_error: 'buffer_mutation_rejected' })
@@ -490,7 +517,7 @@ describe('reviewed social banners', () => {
     const f = setup()
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 403 }))
     await expect(selectSocialAsset(f.req, 9, 1, 'fr', channel.id)).rejects.toMatchObject({
-      code: 'social_asset_not_publicly_accessible',
+      code: 'social_asset_requires_public_original_file',
     })
   })
   it('retries a definitive failure on the same export with the chosen banner', async () => {
@@ -514,6 +541,76 @@ describe('reviewed social banners', () => {
     expect(
       f.query.mock.calls.some(([sql]) => sql.includes('INSERT INTO insight_social_exports')),
     ).toBe(false)
+  })
+  it('rejects a thumbnail response even when the CMS dimensions describe the original', async () => {
+    const f = setup()
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(null, { headers: { 'content-type': 'image/webp', 'content-length': '20000' } }),
+    )
+    await expect(selectSocialAsset(f.req, 9, 1, 'fr', channel.id)).rejects.toMatchObject({
+      code: 'social_asset_requires_public_original_file',
+    })
+  })
+  it('recovers a reviewed remote draft on the same ID while preserving its current text', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = setup()
+    f.row.remote_post_id = 'buffer-1'
+    Object.assign(f.row, { last_error: 'buffer_post_changed_review_required' })
+    const reviewedText = 'Reviewed current Buffer text #TrigenysInsights'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url === 'https://api.buffer.com'
+          ? Response.json({ data: { post: { ...remote, text: reviewedText, assets: [] } } })
+          : new Response(null, {
+              headers: { 'content-type': 'image/webp', 'content-length': '200000' },
+            }),
+      ),
+    )
+    await executeBufferOperation(f.req, {
+      operation: 'buffer-update-draft',
+      exportId: f.row.id,
+      expectedUpdatedAt: f.row.updated_at.toISOString(),
+      postId: 1,
+      locale: 'fr',
+      text: reviewedText,
+      socialMediaId: 9,
+      expectedRemoteText: reviewedText,
+      expectedRemoteImageURL: null,
+    })
+    expect(f.row.state).toBe('pending-revision')
+    const update = f.query.mock.calls.find(([sql]) => sql.includes('SET post_id=$2'))!
+    expect(JSON.parse(update[1]![2] as string)).toMatchObject({
+      text: reviewedText,
+      previousText: reviewedText,
+      previousImageURL: null,
+    })
+  })
+  it('refuses recovery when the reviewed remote version has changed again', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = setup()
+    f.row.remote_post_id = 'buffer-1'
+    Object.assign(f.row, { last_error: 'buffer_post_changed_review_required' })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({ data: { post: { ...remote, text: 'A new external edit', assets: [] } } }),
+      ),
+    )
+    await expect(
+      executeBufferOperation(f.req, {
+        operation: 'buffer-update-draft',
+        exportId: f.row.id,
+        expectedUpdatedAt: f.row.updated_at.toISOString(),
+        postId: 1,
+        locale: 'fr',
+        text,
+        socialMediaId: 9,
+        expectedRemoteText: text,
+        expectedRemoteImageURL: null,
+      }),
+    ).rejects.toMatchObject({ code: 'buffer_remote_review_is_stale' })
+    expect(f.query.mock.calls.some(([sql]) => sql.includes('SET post_id=$2'))).toBe(false)
   })
   it('does not silently reuse a French banner when changing the source locale', async () => {
     const f = setup()

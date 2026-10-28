@@ -77,8 +77,12 @@ export async function selectSocialAsset(
     throw new EditorialError(422, 'social_asset_not_publicly_accessible')
   }
   await response.body?.cancel()
-  if (!response.ok || response.headers.get('content-type')?.split(';')[0] !== media.mimeType)
-    throw new EditorialError(422, 'social_asset_not_publicly_accessible')
+  if (
+    !response.ok ||
+    response.headers.get('content-type')?.split(';')[0] !== media.mimeType ||
+    Number(response.headers.get('content-length')) !== media.filesize
+  )
+    throw new EditorialError(422, 'social_asset_requires_public_original_file')
   return {
     mediaId,
     postId,

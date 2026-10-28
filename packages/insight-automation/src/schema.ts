@@ -334,7 +334,12 @@ export const bufferDraftSchema = z
   })
   .strict()
 export const bufferListSchema = z
-  .object({ postId: id.optional(), page: id.default(1), limit: id.max(100).default(25) })
+  .object({
+    postId: id.optional(),
+    page: id.default(1),
+    limit: id.max(100).default(25),
+    refresh: z.boolean().optional(),
+  })
   .strict()
 export const bufferScheduleSchema = z
   .object({
@@ -351,6 +356,8 @@ export const bufferUpdateDraftSchema = z
     locale: locale.default('fr'),
     text: text.max(3000),
     socialMediaId: id.optional(),
+    expectedRemoteText: text.max(3000).optional(),
+    expectedRemoteImageURL: z.string().url().nullable().optional(),
   })
   .strict()
 export type BufferUpdateDraftInput = z.input<typeof bufferUpdateDraftSchema>

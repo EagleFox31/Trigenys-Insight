@@ -23,7 +23,7 @@ export type SocialRequest = {
   text?: string
   imageURL?: string
   socialAsset?: SocialAsset
-  previousImageURL?: string
+  previousImageURL?: string | null
   remoteAssets?: BufferPost['assets']
   lastFailure?: BufferDiagnostic
   sourceURL?: string

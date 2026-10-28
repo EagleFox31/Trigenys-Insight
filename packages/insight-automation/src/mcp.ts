@@ -74,7 +74,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_buffer_update_draft',
     {
       description:
-        'Revise a Buffer draft on the same export and remote ID, or retry a definitive failed creation after remote reconciliation. Requires fresh exportId/expectedUpdatedAt, public postId, locale and complete reviewed text. Optional socialMediaId selects a reviewed CMS social banner for this article, locale and channel (1080x1350 PNG/JPEG/WebP, max 3 MiB, alt text and public HTTPS URL). Required for retrying legacy failures; omission preserves a previously selected social banner. Never publishes or schedules. Refuses unknown outcomes, scheduled/sent posts and external text/media edits. Read list_posts to confirm the remote ID and actual Buffer media.',
+        'Revise a draft on the same export and remote ID, or retry a definitive failed creation after remote reconciliation. Requires fresh exportId/expectedUpdatedAt, public postId, locale and reviewed text. socialMediaId selects a reviewed CMS banner for this article/locale/channel (1080x1350 PNG/JPEG/WebP, max 3 MiB, alt and public original file); required for legacy retries, otherwise omission preserves selection. To recover a failed known draft after external changes, supply expectedRemoteText and expectedRemoteImageURL (or null) from list_posts refresh; the server rereads and rejects stale reviews. Never publishes or schedules; refuses unknown outcomes and scheduled/sent posts. Confirm ID and media with list_posts.',
       inputSchema: bufferUpdateDraftSchema.shape,
       annotations: { ...write, destructiveHint: true, openWorldHint: true },
       _meta: oauth(['editorial:write']),
@@ -107,7 +107,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_buffer_list_posts',
     {
       description:
-        'List persisted social requests, confirmed Buffer IDs, selected socialAsset, actual bufferAssets, safe typed lastFailure diagnostics, channel, text and timestamps. Status is the last observed Buffer response, not a live delivery guarantee. Supports postId and pagination; get_post includes recent social records too.',
+        'List persisted social requests, confirmed Buffer IDs, selected socialAsset, confirmed bufferAssets, safe lastFailure diagnostics and timestamps. Status is the last observed response, not a delivery guarantee. Optional refresh:true (limit at most 6) reads current remote text, state and assets, or searches for an existing draft when the ID is missing, without modifying anything. Review remote before recovering external changes. Supports postId and pagination.',
       inputSchema: bufferListSchema.shape,
       annotations: read,
       _meta: oauth(['editorial:read']),

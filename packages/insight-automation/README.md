@@ -76,3 +76,12 @@ reviewed banner; unknown outcomes and external text/media changes require review
 Scheduling requires a reviewed social banner and actual Buffer media confirmation.
 Read selected socialAsset, actual bufferAssets and safe typed lastFailure details
 through bufferListPosts.
+
+`bufferListPosts({ postId, limit: 2, refresh: true })` also returns the current
+remote draft text, state and media without modifying it (refresh limit: six).
+After reviewing a known failed draft, recovery requires `expectedRemoteText` and
+`expectedRemoteImageURL` (or `null` when there is no image), plus socialMediaId.
+A fresh remote read rejects stale reviews. Preserve valid remote copy when only
+the banner needs changing. Social uploads preserve the original 1080×1350 file,
+and asset validation rejects a thumbnail whose byte size differs from the CMS
+original.
