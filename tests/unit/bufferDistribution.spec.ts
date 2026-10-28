@@ -529,6 +529,20 @@ describe('reviewed social banners', () => {
       socialAsset: { mediaId: 9 },
     })
   })
+  it('reconciles a known draft ID after its image finishes processing, without creating or editing again', async () => {
+    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+    const f = setup()
+    f.row.state = 'uncertain'
+    f.row.remote_post_id = 'buffer-1'
+    Object.assign(f.row.request, await socialRequest(f.req, post, 'fr', channel, text, false, 9))
+    vi.mocked(f.client.post).mockResolvedValue({
+      ...remote,
+      assets: [{ mimeType: 'image/webp', source: url }],
+    })
+    expect(await processBufferOutbox(f.req, f.client)).toMatchObject({ state: 'draft' })
+    expect(f.client.createDraft).not.toHaveBeenCalled()
+    expect(f.client.editDraft).not.toHaveBeenCalled()
+  })
   it('does not retry an ambiguous outcome or a failure without a reviewed banner', async () => {
     const f = setup()
     const input = {

@@ -549,7 +549,7 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
             throw new BufferAPIError('buffer_cancel_state_unexpected', true)
         } else if (
           row.state === 'uncertain' &&
-          !(request.previousText && remote.status === 'draft' && remote.text === request.text)
+          !(!request.publishAt && remote.status === 'draft' && remote.text === request.text)
         )
           throw new EditorialError(409, 'buffer_outcome_unknown_review_required')
       }
