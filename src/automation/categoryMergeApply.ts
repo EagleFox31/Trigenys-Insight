@@ -34,7 +34,7 @@ export async function applyCategoryMerge(
         // Retain the source category and its historical relationships in
         // Payload versions. Never delete category IDs or rewrite version history.
         if (!plan.affectedPostIds.length)
-          return { ...plan, changed: false, updatedPostIds: [], retainedSourceCategory: true }
+          return { ...plan, dryRun: false as const, changed: false, updatedPostIds: [], retainedSourceCategory: true }
 
         const ownsTransaction = await initTransaction(req)
         try {
