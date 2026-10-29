@@ -90,7 +90,7 @@ describe('hosted MCP route', () => {
     }
     const response = await POST(request(body, headers))
     expect(response.status).toBe(200)
-    expect((await response.json()).result.tools).toHaveLength(23)
+    expect((await response.json()).result.tools).toHaveLength(25)
     expect(
       (await POST(request(body, { ...headers, Origin: 'https://foreign.example' }))).status,
     ).toBe(401)
