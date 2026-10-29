@@ -117,6 +117,13 @@ describe('category creation and localized rename', () => {
     await expect(createCategory(req, {
       slug: 'business-finance', titleFr: 'Faux nom', titleEn: 'Wrong name', confirm: true,
     })).rejects.toMatchObject({ status: 409, code: 'canonical_rubric_requires_editorial_setup' })
+    await expect(createCategory(req, {
+      slug: 'tech-ia', titleFr: 'Nouvelle', titleEn: 'New', confirm: true,
+    })).rejects.toMatchObject({ status: 409, code: 'canonical_rubric_requires_editorial_setup' })
+    await expect(createCategory(req, {
+      slug: 'technology', titleFr: 'Technologie', titleEn: 'Technology',
+      color: '#000000', confirm: true,
+    })).rejects.toMatchObject({ status: 409, code: 'category_slug_already_exists' })
     expect(create).not.toHaveBeenCalled()
   })
 
