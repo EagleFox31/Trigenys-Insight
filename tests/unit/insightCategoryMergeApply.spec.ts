@@ -82,7 +82,7 @@ describe('category merge apply', () => {
     })
     expect(result).toMatchObject({
       ok: true, changed: true, updatedPostIds: [21, 22],
-      retainedSourceCategory: true, dryRun: true,
+      retainedSourceCategory: true, dryRun: false,
     })
     expect(posts().find((p) => p.id === 21)).toMatchObject({ categories: [7, 5], content: { text: 'Never replace body' } })
     expect(posts().find((p) => p.id === 22)).toMatchObject({ categories: [5, 7], content: { text: 'Keep content' } })
