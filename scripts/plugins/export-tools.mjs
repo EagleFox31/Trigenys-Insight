@@ -23,7 +23,16 @@ try {
   }
   const output = JSON.stringify(stable({ tools: tools.sort((a, b) => a.name.localeCompare(b.name)) }), null, 2) + '\n'
   if (process.argv.includes('--write')) await writeFile(path, output)
-  else if (await readFile(path, 'utf8') !== output) throw new Error('MCP contract changed. Review names, schemas, annotations and scopes, then run: node scripts/plugins/export-tools.mjs --write. This does not refresh ChatGPT or approve a public tool update.')
+  else {
+    const reviewed = await readFile(path, 'utf8')
+    if (reviewed !== output) {
+      const lines = reviewed.split('\n')
+      const actual = output.split('\n')
+      const first = lines.findIndex((line, index) => line !== actual[index])
+      const offset = first < 0 ? Math.min(lines.length, actual.length) : first
+      throw new Error(`MCP contract changed at line ${offset + 1}. Reviewed: ${JSON.stringify(lines.slice(offset, offset + 4))}; generated: ${JSON.stringify(actual.slice(offset, offset + 4))}. Review the tool contract and run export-tools.mjs --write. This does not refresh a plugin or approve publication.`)
+    }
+  }
   console.log(`Verified ${tools.length} MCP tools; SHA-256 ${createHash('sha256').update(output).digest('hex')}`)
 } finally {
   await client.close()
