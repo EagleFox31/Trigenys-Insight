@@ -174,8 +174,14 @@ export const categoryMergePlanSchema = z.object({
   locale: locale.default('fr'),
 }).strict()
 export type CategoryMergePlanInput = z.input<typeof categoryMergePlanSchema>
+export const categoryMergeApplySchema = categoryMergePlanSchema.extend({
+  expectedFingerprint: z.string().regex(/^[a-f0-9]{64}$/, 'Use the exact fingerprint from a fresh preview'),
+  confirm: z.literal(true),
+}).strict()
+export type CategoryMergeApplyInput = z.input<typeof categoryMergeApplySchema>
 export type CategoryMergePlanResult = {
   ok: true
+  fingerprint: string
   source: { id: number; slug: string; title: string }
   target: { id: number; slug: string; title: string }
   affectedPostIds: number[]
@@ -214,6 +220,11 @@ export type CategoryWriteResult = {
   updatedAt: string
   changed: boolean
   created: boolean
+}
+export type CategoryMergeApplyResult = CategoryMergePlanResult & {
+  changed: boolean
+  updatedPostIds: number[]
+  retainedSourceCategory: true
 }
 export const updatePostSchema = postSelectorSchema
   .extend({
@@ -464,6 +475,7 @@ export const operationSchema = z.discriminatedUnion('operation', [
   slugPlanSchema.extend({ operation: z.literal('plan-slug-change') }),
   slugApplySchema.extend({ operation: z.literal('apply-slug-change') }),
   categoryMergePlanSchema.extend({ operation: z.literal('plan-category-merge') }),
+  categoryMergeApplySchema.extend({ operation: z.literal('apply-category-merge') }),
   categoryCreateSchema.extend({ operation: z.literal('create-category') }),
   categoryRenameSchema.extend({ operation: z.literal('rename-category') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
