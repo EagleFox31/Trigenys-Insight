@@ -66,6 +66,54 @@
         "securitySchemes": [
           {
             "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Move ONE post into native Payload trash; retain translations, media relations, content versions and ID. Run plan_post_archive first, obtain explicit user approval for this specific post, then pass fresh expectedUpdatedAt and confirm=true. Blocks pending publication jobs. Never permanently deletes.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "const": true,
+            "type": "boolean"
+          },
+          "expectedUpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "postId",
+          "expectedUpdatedAt",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "insight_archive_post"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
               "editorial:read"
             ],
             "type": "oauth2"
@@ -1158,6 +1206,43 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
+      "description": "Preview an article archive or restoration without changing anything. Shows original published/draft state, any newer draft, pending publication jobs, deletedAt and expectedUpdatedAt. Uses native Payload trash; do not confuse draft revisions with public withdrawal.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "postId"
+        ],
+        "type": "object"
+      },
+      "name": "insight_plan_post_archive"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Read-only preview of renaming a post slug, including FR/EN/legacy URLs and any conflicts. A live article with a newer unpublished draft is BLOCKED to avoid publishing draft content. Never changes an article or URL. Use this before requesting explicit human approval.",
       "execution": {
         "taskSupport": "forbidden"
@@ -1515,6 +1600,58 @@
         "type": "object"
       },
       "name": "insight_publish"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Restore ONE trashed post by id after explicit user approval. Requires exact expectedDeletedAt from plan_post_archive and confirm=true. A previously public post WOULD become public again: requires allowPublicRestore=true explicitly. Never changes the article text, translations, slug or history.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "allowPublicRestore": {
+            "default": false,
+            "type": "boolean"
+          },
+          "confirm": {
+            "const": true,
+            "type": "boolean"
+          },
+          "expectedDeletedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "postId",
+          "expectedDeletedAt",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "insight_restore_post"
     },
     {
       "_meta": {
