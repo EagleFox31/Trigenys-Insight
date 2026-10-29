@@ -79,7 +79,7 @@ export async function applyCategoryMerge(
             updatedPostIds.push(id)
           }
           if (ownsTransaction) await commitTransaction(req)
-          return { ...plan, changed: true, updatedPostIds, retainedSourceCategory: true }
+          return { ...plan, dryRun: false as const, changed: true, updatedPostIds, retainedSourceCategory: true }
         } catch (error) {
           if (ownsTransaction) await killTransaction(req)
           throw error
