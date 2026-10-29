@@ -11,6 +11,7 @@ import RichText from '@/components/RichText'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { PostHero } from '@/heros/PostHero'
 import { ArticleHighlights } from '@/components/insights/ArticleHighlights'
+import { redirectOldPostSlug } from '@/components/insights/resolvePostSlugRedirect'
 import { ArticleFaq } from '@/components/insights/ArticleFaq'
 import { ArticleBodyEnhancer } from '@/components/insights/ArticleBodyEnhancer'
 import { PaymentFinder } from '@/components/payment-finder/PaymentFinder'
@@ -74,7 +75,10 @@ export async function LocalizedPostPage({
   const decodedSlug = decodeURIComponent(slug)
   const post = await queryPostBySlug({ locale, slug: decodedSlug, draft })
 
-  if (!post) notFound()
+  if (!post) {
+    await redirectOldPostSlug(decodedSlug, locale)
+    notFound()
+  }
 
   const t = getMessages(locale).post
   const highlights = extractArticleHighlights(post.content)

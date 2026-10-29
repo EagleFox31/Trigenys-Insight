@@ -8,6 +8,8 @@ import {
   bufferCancelSchema,
   articleSchema,
   getPostSchema,
+  slugPlanSchema,
+  slugApplySchema,
   postSelectorSchema,
   referenceSchema,
   sourceSchema,
@@ -169,6 +171,28 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       annotations: read,
     },
     (input) => execute({ ...input, operation: 'get-post' }),
+  )
+  server.registerTool(
+    'insight_plan_slug_change',
+    {
+      _meta: oauth(['editorial:read']),
+      description:
+        'Read-only preview of renaming a post slug, including FR/EN/legacy URLs and any conflicts. A live article with a newer unpublished draft is BLOCKED to avoid publishing draft content. Never changes an article or URL. Use this before requesting explicit human approval.',
+      inputSchema: slugPlanSchema.shape,
+      annotations: read,
+    },
+    (input) => execute({ ...input, operation: 'plan-slug-change' }),
+  )
+  server.registerTool(
+    'insight_apply_slug_change',
+    {
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+      description:
+        'Change an article slug and atomically create permanent old-URL aliases to the SAME post. Only call after the user explicitly authorizes THIS exact post ID and new slug, and after a successful insight_plan_slug_change preview. Requires expectedSlug and expectedUpdatedAt from that preview and confirm=true; stale writes, conflicting slugs, scheduled posts, and live articles with divergent draft revisions are rejected. No article content is edited. Do NOT use for bulk renaming without individual approvals.',
+      inputSchema: slugApplySchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'apply-slug-change' }),
   )
   server.registerTool(
     'insight_update_post',

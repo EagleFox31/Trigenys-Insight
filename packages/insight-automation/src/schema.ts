@@ -137,6 +137,36 @@ export const postSelectorSchema = z
 export const getPostSchema = postSelectorSchema
   .extend({ version: z.enum(['latest', 'published']).default('latest') })
   .strict()
+export const slugPlanSchema = z
+  .object({
+    postId: id,
+    newSlug: z.string().min(4).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase URL words separated by hyphens').refine((slug) => !['page', 'admin', 'api', 'preview', 'search'].includes(slug), 'Reserved article slug'),
+  })
+  .strict()
+export const slugApplySchema = slugPlanSchema
+  .extend({
+    expectedSlug: z.string().min(1).max(200),
+    expectedUpdatedAt: z.string().datetime({ offset: true }),
+    confirm: z.literal(true),
+  })
+  .strict()
+export type SlugPlanInput = z.input<typeof slugPlanSchema>
+export type SlugApplyInput = z.input<typeof slugApplySchema>
+export type SlugPlanResult = {
+  ok: true
+  postId: number
+  title: string
+  currentSlug: string
+  newSlug: string
+  expectedUpdatedAt: string
+  isPublic: boolean
+  hasPendingRevision: boolean
+  canApply: boolean
+  reason: string | null
+  oldPaths: string[]
+  newPaths: string[]
+}
+export type SlugApplyResult = SlugPlanResult & { changed: boolean }
 export const updatePostSchema = postSelectorSchema
   .extend({
     title: text.max(500).optional(),
@@ -383,6 +413,8 @@ export const operationSchema = z.discriminatedUnion('operation', [
   uploadSchema.extend({ operation: z.literal('upload-media') }),
   sourceSchema.extend({ operation: z.literal('upsert-source') }),
   getPostSchema.extend({ operation: z.literal('get-post') }),
+  slugPlanSchema.extend({ operation: z.literal('plan-slug-change') }),
+  slugApplySchema.extend({ operation: z.literal('apply-slug-change') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
   schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
   postSelectorSchema.extend({ operation: z.literal('cancel-schedule') }),
