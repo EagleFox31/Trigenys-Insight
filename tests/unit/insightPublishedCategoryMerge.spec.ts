@@ -56,7 +56,7 @@ function fixture(options: {
       if (args.where?.id?.in && !args.where.id.in.includes(item.id)) return false
       if (args.where?.parent) return false
       if (args.where?.categories && (!('categories' in item) ||
-        !item.categories.some((cat: number) => args.where!.categories!.in.includes(cat)))) return false
+        (!Array.isArray(item.categories) || !item.categories.some((cat: number) => args.where!.categories!.in.includes(cat))))) return false
       return true
     })
     return { docs, totalDocs: docs.length }
