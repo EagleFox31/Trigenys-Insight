@@ -11,6 +11,7 @@ import {
   slugPlanSchema,
   slugApplySchema,
   categoryMergePlanSchema,
+  categoryMergeApplySchema,
   categoryCreateSchema,
   categoryRenameSchema,
   postSelectorSchema,
@@ -229,6 +230,17 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       annotations: write,
     },
     (input) => execute({ ...input, operation: 'rename-category' }),
+  )
+  server.registerTool(
+    'insight_apply_category_merge',
+    {
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+      description:
+        'After explicit approval of a specific sourceId to targetId category pair, apply a matching fresh insight_plan_category_merge fingerprint to reassign current draft article relationships atomically. Preserves order, removes duplicates, does NOT publish or touch published article versions, and retains the source category for historical references. Refuses all merges involving published articles, nested categories, or unrelated rubrics. Never deletes a category.',
+      inputSchema: categoryMergeApplySchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'apply-category-merge' }),
   )
   server.registerTool(
     'insight_update_post',
