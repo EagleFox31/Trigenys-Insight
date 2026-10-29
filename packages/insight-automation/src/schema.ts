@@ -188,6 +188,33 @@ export type CategoryMergePlanResult = {
   projectedPostCount: number
   dryRun: true
 }
+// Category titles are localized; slugs are stable editorial identifiers.
+export const categoryCreateSchema = z.object({
+  slug: z.string().min(3).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase hyphenated URL words'),
+  titleFr: text.max(160),
+  titleEn: text.max(160),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  confirm: z.literal(true),
+}).strict()
+export const categoryRenameSchema = z.object({
+  categoryId: id,
+  titleFr: text.max(160),
+  titleEn: text.max(160),
+  expectedUpdatedAt: z.string().datetime({ offset: true }),
+  confirm: z.literal(true),
+}).strict()
+export type CategoryCreateInput = z.input<typeof categoryCreateSchema>
+export type CategoryRenameInput = z.input<typeof categoryRenameSchema>
+export type CategoryWriteResult = {
+  ok: true
+  id: number
+  slug: string
+  titleFr: string
+  titleEn: string
+  updatedAt: string
+  changed: boolean
+  created: boolean
+}
 export const updatePostSchema = postSelectorSchema
   .extend({
     title: text.max(500).optional(),
@@ -437,6 +464,8 @@ export const operationSchema = z.discriminatedUnion('operation', [
   slugPlanSchema.extend({ operation: z.literal('plan-slug-change') }),
   slugApplySchema.extend({ operation: z.literal('apply-slug-change') }),
   categoryMergePlanSchema.extend({ operation: z.literal('plan-category-merge') }),
+  categoryCreateSchema.extend({ operation: z.literal('create-category') }),
+  categoryRenameSchema.extend({ operation: z.literal('rename-category') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
   schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
   postSelectorSchema.extend({ operation: z.literal('cancel-schedule') }),
@@ -465,7 +494,7 @@ export type PublicationResult = {
 export type MediaResult = { ok: true; id: number; url: string | null; reused: boolean }
 export type ReferenceResult = {
   ok: true
-  docs: Array<{ id: number; title?: string; slug?: string; name?: string }>
+  docs: Array<{ id: number; title?: string; slug?: string; name?: string; updatedAt?: string }>
 }
 export type PostResult = { ok: true; version: 'latest' | 'published'; publicPath: string | null; post: Record<string, unknown> }
 

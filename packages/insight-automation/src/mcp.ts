@@ -11,6 +11,8 @@ import {
   slugPlanSchema,
   slugApplySchema,
   categoryMergePlanSchema,
+  categoryCreateSchema,
+  categoryRenameSchema,
   postSelectorSchema,
   referenceSchema,
   sourceSchema,
@@ -145,7 +147,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_list_categories',
     {
       _meta: oauth(['editorial:read']),
-      description: 'List available editorial category IDs and names.',
+      description: 'List category IDs, localized titles, stable slugs and updatedAt timestamps. Use updatedAt as the expectedUpdatedAt guard for insight_rename_category.',
       inputSchema: referenceSchema.shape,
       annotations: read,
     },
@@ -205,6 +207,28 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       annotations: read,
     },
     (input) => execute({ ...input, operation: 'plan-category-merge' }),
+  )
+  server.registerTool(
+    'insight_create_category',
+    {
+      _meta: oauth(['editorial:write']),
+      description:
+        'Create ONE new category with a stable URL slug and both French/English titles. Requires explicit user approval (confirm=true); returns an existing category only if the slug and both titles match exactly. Canonical editorial rubrics are managed in the existing site setup. Never creates or reclassifies articles.',
+      inputSchema: categoryCreateSchema.shape,
+      annotations: { ...write, destructiveHint: false },
+    },
+    (input) => execute({ ...input, operation: 'create-category' }),
+  )
+  server.registerTool(
+    'insight_rename_category',
+    {
+      _meta: oauth(['editorial:write']),
+      description:
+        'Rename French and English category titles on ONE existing category, atomically. Requires explicit user approval, categoryId, expectedUpdatedAt and confirm=true. Preserves category slug and all article relations. Canonical rubric titles are defined in code and cannot be changed here.',
+      inputSchema: categoryRenameSchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'rename-category' }),
   )
   server.registerTool(
     'insight_update_post',

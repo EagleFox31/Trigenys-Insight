@@ -561,6 +561,66 @@
         ]
       },
       "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Create ONE new category with a stable URL slug and both French/English titles. Requires explicit user approval (confirm=true); returns an existing category only if the slug and both titles match exactly. Canonical editorial rubrics are managed in the existing site setup. Never creates or reclassifies articles.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "type": "string"
+          },
+          "confirm": {
+            "const": true,
+            "type": "boolean"
+          },
+          "slug": {
+            "maxLength": 80,
+            "minLength": 3,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleFr": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "titleFr",
+          "titleEn",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "insight_create_category"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
         "destructiveHint": true,
         "idempotentHint": true,
         "openWorldHint": false,
@@ -979,7 +1039,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List available editorial category IDs and names.",
+      "description": "List category IDs, localized titles, stable slugs and updatedAt timestamps. Use updatedAt as the expectedUpdatedAt guard for insight_rename_category.",
       "execution": {
         "taskSupport": "forbidden"
       },
@@ -1564,6 +1624,65 @@
         "type": "object"
       },
       "name": "insight_publish"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Rename French and English category titles on ONE existing category, atomically. Requires explicit user approval, categoryId, expectedUpdatedAt and confirm=true. Preserves category slug and all article relations. Canonical rubric titles are defined in code and cannot be changed here.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "categoryId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "confirm": {
+            "const": true,
+            "type": "boolean"
+          },
+          "expectedUpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleFr": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "titleFr",
+          "titleEn",
+          "expectedUpdatedAt",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "insight_rename_category"
     },
     {
       "_meta": {
