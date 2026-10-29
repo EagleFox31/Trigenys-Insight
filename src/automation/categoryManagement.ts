@@ -48,7 +48,8 @@ export async function createCategory(req: PayloadRequest, input: CategoryCreateI
   if (existing) {
     const english = await findCategory(req, { id: { equals: existing.id } }, 'en')
     // Retrying an identical creation is a read-only, idempotent no-op.
-    if (existing.title === input.titleFr && english?.title === input.titleEn)
+    if (existing.title === input.titleFr && english?.title === input.titleEn &&
+        (input.color === undefined || existing.color?.toLowerCase() === input.color.toLowerCase()))
       return {
         ok: true, id: existing.id, slug: existing.slug,
         titleFr: existing.title, titleEn: english.title,
@@ -57,7 +58,8 @@ export async function createCategory(req: PayloadRequest, input: CategoryCreateI
     throw new EditorialError(409, 'category_slug_already_exists')
   }
   // Canonical rubrics have independently reviewed labels and URLs in code.
-  if (editorialRubrics.some((rubric) => rubric.id === input.slug))
+  if (editorialRubrics.some((rubric) => rubric.id === input.slug ||
+        rubric.paths.fr === input.slug || rubric.paths.en === input.slug))
     throw new EditorialError(409, 'canonical_rubric_requires_editorial_setup')
 
   const owns = await initTransaction(req)
