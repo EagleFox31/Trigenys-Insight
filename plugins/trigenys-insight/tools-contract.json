@@ -18,6 +18,66 @@
         "openWorldHint": false,
         "readOnlyHint": false
       },
+      "description": "After explicit approval of a specific sourceId to targetId category pair, apply a matching fresh insight_plan_category_merge fingerprint to reassign current draft article relationships atomically. Preserves order, removes duplicates, does NOT publish or touch published article versions, and retains the source category for historical references. Refuses all merges involving published articles, nested categories, or unrelated rubrics. Never deletes a category.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "const": true,
+            "type": "boolean"
+          },
+          "expectedFingerprint": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "sourceId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "targetId": {
+            "$ref": "#/properties/sourceId"
+          }
+        },
+        "required": [
+          "sourceId",
+          "targetId",
+          "expectedFingerprint",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "insight_apply_category_merge"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
       "description": "Change an article slug and atomically create permanent old-URL aliases to the SAME post. Only call after the user explicitly authorizes THIS exact post ID and new slug, and after a successful insight_plan_slug_change preview. Requires expectedSlug and expectedUpdatedAt from that preview and confirm=true; stale writes, conflicting slugs, scheduled posts, and live articles with divergent draft revisions are rejected. No article content is edited. Do NOT use for bulk renaming without individual approvals.",
       "execution": {
         "taskSupport": "forbidden"

@@ -44,12 +44,14 @@ describe('category merge preview (no writes)', () => {
     expect(result).toMatchObject({
       dryRun: true,
       matchingEditorialRubric: true,
-      canAutoMerge: true,
+      canAutoMerge: false,
+      reason: 'published_posts_require_separate_migration',
       affectedPostIds: [21, 22, 23],
       alreadyInTarget: [21],
       publishedPostIds: [21, 22],
       projectedPostCount: 3,
     })
+    expect(result.fingerprint).toMatch(/^[a-f0-9]{64}$/)
     expect(create).not.toHaveBeenCalled()
     expect(update).not.toHaveBeenCalled()
     expect(del).not.toHaveBeenCalled()

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import type { PayloadRequest } from 'payload'
 import { editorialRubrics, sectionForCategorySlug } from '@/editorial/rubrics'
 import type {
@@ -73,20 +74,36 @@ export async function planCategoryMerge(
   )
   const protectedCanonical = editorialRubrics.some((item) => item.id === source.slug)
   const hasChildren = children.docs.length > 0
+  const publishedPostIds = publicPosts.docs.filter((post) => post._status === 'published').map((post) => post.id).sort((a, b) => a - b)
+  const latestNotDraft = latest.docs.some((post) => post._status !== 'draft')
+  const fingerprint = createHash('sha256').update(JSON.stringify({
+    source: [source.id, source.slug, source.updatedAt],
+    target: [target.id, target.slug, target.updatedAt],
+    latest: latest.docs.map((post) => [
+      post.id, post.updatedAt, post._status, relationIds(post.categories),
+    ]).sort((a, b) => Number(a[0]) - Number(b[0])),
+    published: publishedPostIds,
+    children: children.docs.map((child) => child.id).sort((a, b) => a - b),
+  })).digest('hex')
   const reason = protectedCanonical
     ? 'source_is_canonical_editorial_rubric'
     : hasChildren
       ? 'source_has_nested_categories'
       : !matchingEditorialRubric
         ? 'categories_belong_to_different_rubrics_requires_editorial_review'
-        : null
+        : publishedPostIds.length > 0
+          ? 'published_posts_require_separate_migration'
+          : latestNotDraft
+            ? 'category_contains_non_draft_revision'
+            : null
   return {
     ok: true,
+    fingerprint,
     source: { id: source.id, slug: source.slug, title: source.title },
     target: { id: target.id, slug: target.slug, title: target.title },
     affectedPostIds: latest.docs.map((post) => post.id),
     alreadyInTarget: latest.docs.filter((post) => relationIds(post.categories).includes(input.targetId)).map((post) => post.id),
-    publishedPostIds: publicPosts.docs.filter((post) => post._status === 'published').map((post) => post.id),
+    publishedPostIds,
     childCategoryIds: children.docs.map((category) => category.id),
     matchingEditorialRubric,
     canAutoMerge: reason === null,

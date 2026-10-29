@@ -155,6 +155,7 @@ describe('MCP OAuth authorization-code flow', () => {
     expect(operationScopes({ operation: 'get-post' })).toEqual(['editorial:read'])
     expect(operationScopes({ operation: 'create-category' })).toEqual(['editorial:write'])
     expect(operationScopes({ operation: 'rename-category' })).toEqual(['editorial:write'])
+    expect(operationScopes({ operation: 'apply-category-merge' })).toEqual(['editorial:write', 'editorial:publish'])
     expect(operationScopes({ operation: 'update-post' })).toEqual(['editorial:write'])
     expect(operationScopes({ operation: 'update-post', status: 'PUBLISHED' })).toEqual(['editorial:write', 'editorial:publish'])
     expect(operationScopes({ operation: 'publish' })).toEqual(['editorial:write', 'editorial:publish'])

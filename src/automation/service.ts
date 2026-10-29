@@ -11,6 +11,7 @@ import { createAutomationContent } from './content'
 import { requireReferences, validateRelatedPosts } from './references'
 import { listEditorialPosts } from './postInventory'
 import { planCategoryMerge } from './categoryMergePreview'
+import { applyCategoryMerge } from './categoryMergeApply'
 import { createCategory, renameCategory } from './categoryManagement'
 import { auditEditorialPosts } from './postAudit'
 import { updateEditorialContent } from './updateContent'
@@ -45,6 +46,7 @@ export async function executeEditorialOperation(
   if (input.operation === 'update-content') return updateEditorialContent(req, input)
   if (input.operation === 'list-schedules') return listPublicationSchedules(req, input)
   if (input.operation === 'plan-category-merge') return planCategoryMerge(req, input)
+  if (input.operation === 'apply-category-merge') return applyCategoryMerge(req, input)
   if (input.operation === 'create-category') return createCategory(req, input)
   if (input.operation === 'rename-category') return renameCategory(req, input)
   if (input.operation === 'list-categories') {

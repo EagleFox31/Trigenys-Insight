@@ -38,7 +38,7 @@ export function parseScopes(value: unknown): string[] {
 }
 export function operationScopes(input: { operation: string; status?: string }): string[] {
   if (['get-post', 'list-authors', 'list-categories', 'list-schedules', 'list-posts', 'audit-posts', 'buffer-status', 'buffer-list-posts', 'plan-slug-change', 'plan-category-merge'].includes(input.operation)) return ['editorial:read']
-  if (['publish', 'schedule-post', 'cancel-schedule', 'update-content', 'buffer-schedule-post', 'buffer-cancel-schedule', 'apply-slug-change'].includes(input.operation) || input.status === 'PUBLISHED') return ['editorial:write', 'editorial:publish']
+  if (['publish', 'schedule-post', 'cancel-schedule', 'update-content', 'buffer-schedule-post', 'buffer-cancel-schedule', 'apply-slug-change', 'apply-category-merge'].includes(input.operation) || input.status === 'PUBLISHED') return ['editorial:write', 'editorial:publish']
   return ['editorial:write']
 }
 export function challenge(error = 'invalid_token') {
