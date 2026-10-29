@@ -50,3 +50,6 @@ jobs:
 
       - name: Unit tests
         run: pnpm test:unit
+
+      - name: Database migration deployment guard tests
+        run: pnpm test:deploy-guard
