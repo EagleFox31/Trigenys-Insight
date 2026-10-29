@@ -128,7 +128,7 @@ export async function planCategoryMerge(
   return {
     ok: true,
     fingerprint,
-    includePublished: input.includePublished,
+    includePublished: input.includePublished ?? false,
     source: { id: source.id, slug: source.slug, title: source.title },
     target: { id: target.id, slug: target.slug, title: target.title },
     affectedPostIds: latest.map((post) => post.id),
