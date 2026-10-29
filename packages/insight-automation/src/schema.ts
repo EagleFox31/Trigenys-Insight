@@ -140,7 +140,7 @@ export const getPostSchema = postSelectorSchema
 export const slugPlanSchema = z
   .object({
     postId: id,
-    newSlug: z.string().min(4).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase URL words separated by hyphens'),
+    newSlug: z.string().min(4).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase URL words separated by hyphens').refine((slug) => !['page', 'admin', 'api', 'preview', 'search'].includes(slug), 'Reserved article slug'),
   })
   .strict()
 export const slugApplySchema = slugPlanSchema
