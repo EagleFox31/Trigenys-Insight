@@ -22,7 +22,7 @@ describe('OAuth consent document and native form submission', () => {
     // Fetch Standard: no-referrer serializes Origin as null for native form
     // navigation; same-origin keeps it on this POST and strips it cross-origin.
     expect(page.headers.get('Referrer-Policy')).toBe('same-origin')
-    expect(page.headers.get('Content-Security-Policy')).toContain("form-action 'self' https://chatgpt.com;")
+    expect(page.headers.get('Content-Security-Policy')).toContain("form-action 'self' https://chatgpt.com https://claude.ai;")
     const document = await page.text()
     const nonce = document.match(/name="request" value="([^"]+)"/)![1]
     const result = await POST(new Request('https://insight.example/oauth/authorize', {
@@ -35,6 +35,18 @@ describe('OAuth consent document and native form submission', () => {
     expect(callback.origin).toBe('https://chatgpt.com')
     expect(callback.searchParams.get('state')).toBe('original-state')
     expect(callback.searchParams.get('iss')).toBe('https://insight.example')
+  })
+  it('displays the actual MCP client name instead of hard-coding ChatGPT', async () => {
+    backend.oauth.consent.mockResolvedValueOnce({
+      name: 'Claude', nonce: 'claude-consent-nonce', scopes: ['editorial:read'],
+      redirect: 'https://claude.ai/api/mcp/auth_callback',
+    })
+    const page = await GET(new Request('https://insight.example/oauth/authorize?client_id=claude'))
+    const html = await page.text()
+    expect(html).toContain('<title>Autoriser Claude | Trigenys Insight</title>')
+    expect(html).toContain('Cette connexion permettra à Claude')
+    expect(html).toContain('Retour sécurisé vers claude.ai')
+    expect(html).not.toContain('Cette connexion permettra à ChatGPT')
   })
   it('continues rejecting null and foreign origins before granting any access', async () => {
     for (const origin of ['null', 'https://evil.example']) {
