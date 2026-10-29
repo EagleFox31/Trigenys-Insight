@@ -71,7 +71,7 @@ export async function applyCategoryMerge(
         try {
           const updatedPostIds: number[] = []
           for (const id of plan.affectedPostIds) {
-            const current = await postSnapshot(req, id, input.locale, true)
+            const current = await postSnapshot(req, id, input.locale ?? 'fr', true)
             if (!current) throw new EditorialError(409, 'post_changed_during_category_merge')
             const isPublic = publicIds.has(id)
             if (current._status !== (isPublic ? 'published' : 'draft'))
