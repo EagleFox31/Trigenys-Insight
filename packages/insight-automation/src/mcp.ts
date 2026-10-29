@@ -10,6 +10,7 @@ import {
   getPostSchema,
   slugPlanSchema,
   slugApplySchema,
+  categoryMergePlanSchema,
   postSelectorSchema,
   referenceSchema,
   sourceSchema,
@@ -193,6 +194,17 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       annotations: write,
     },
     (input) => execute({ ...input, operation: 'apply-slug-change' }),
+  )
+  server.registerTool(
+    'insight_plan_category_merge',
+    {
+      _meta: oauth(['editorial:read']),
+      description:
+        'Pure read-only preview of merging two category IDs. Reports affected latest and published articles, duplicate relationships, nested child categories and editorial rubric conflicts. A legacy category may only be auto-merged into its matching canonical rubric; cross-rubric changes require editorial review. NEVER modifies article categories or deletes a category.',
+      inputSchema: categoryMergePlanSchema.shape,
+      annotations: read,
+    },
+    (input) => execute({ ...input, operation: 'plan-category-merge' }),
   )
   server.registerTool(
     'insight_update_post',

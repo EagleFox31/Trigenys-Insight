@@ -167,6 +167,27 @@ export type SlugPlanResult = {
   newPaths: string[]
 }
 export type SlugApplyResult = SlugPlanResult & { changed: boolean }
+// A pure, explainable preview before any taxonomy mutation.
+export const categoryMergePlanSchema = z.object({
+  sourceId: id,
+  targetId: id,
+  locale: locale.default('fr'),
+}).strict()
+export type CategoryMergePlanInput = z.input<typeof categoryMergePlanSchema>
+export type CategoryMergePlanResult = {
+  ok: true
+  source: { id: number; slug: string; title: string }
+  target: { id: number; slug: string; title: string }
+  affectedPostIds: number[]
+  alreadyInTarget: number[]
+  publishedPostIds: number[]
+  childCategoryIds: number[]
+  matchingEditorialRubric: boolean
+  canAutoMerge: boolean
+  reason: string | null
+  projectedPostCount: number
+  dryRun: true
+}
 export const updatePostSchema = postSelectorSchema
   .extend({
     title: text.max(500).optional(),
@@ -415,6 +436,7 @@ export const operationSchema = z.discriminatedUnion('operation', [
   getPostSchema.extend({ operation: z.literal('get-post') }),
   slugPlanSchema.extend({ operation: z.literal('plan-slug-change') }),
   slugApplySchema.extend({ operation: z.literal('apply-slug-change') }),
+  categoryMergePlanSchema.extend({ operation: z.literal('plan-category-merge') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
   schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
   postSelectorSchema.extend({ operation: z.literal('cancel-schedule') }),

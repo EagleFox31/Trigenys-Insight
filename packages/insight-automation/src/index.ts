@@ -13,6 +13,8 @@ import {
   type SlugApplyInput,
   type SlugPlanResult,
   type SlugApplyResult,
+  type CategoryMergePlanInput,
+  type CategoryMergePlanResult,
   type UpdatePostInput,
   type UpdatePostResult,
   type SchedulePostInput,
@@ -135,6 +137,9 @@ export class InsightClient {
   }
   applySlugChange(input: SlugApplyInput) {
     return this.request<SlugApplyResult>({ ...input, operation: 'apply-slug-change' })
+  }
+  planCategoryMerge(input: CategoryMergePlanInput) {
+    return this.request<CategoryMergePlanResult>({ ...input, operation: 'plan-category-merge' })
   }
   updatePost(input: UpdatePostInput) {
     return this.request<UpdatePostResult>({ ...input, operation: 'update-post' })
