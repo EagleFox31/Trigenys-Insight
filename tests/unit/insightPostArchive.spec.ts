@@ -31,10 +31,10 @@ function fixture({ publicPost = true, pendingDraft = false, scheduled = false, t
     main = { ...main, deletedAt, updatedAt: deletedAt }
     return main
   })
-  const update = vi.fn(async (args: { trash?: boolean; data: { deletedAt: null }; draft?: boolean }) => {
+  const update = vi.fn(async (args: { trash?: boolean; data: { deletedAt: null; _status: 'published' | 'draft' }; draft?: boolean }) => {
     expect(args.trash).toBe(true)
     expect(args.draft).toBe(false)
-    expect(args.data).toEqual({ deletedAt: null })
+    expect(args.data).toEqual({ deletedAt: null, _status: main._status })
     main = { ...main, deletedAt: null, updatedAt: '2026-10-29T09:13:00.000Z' }
     return main
   })
