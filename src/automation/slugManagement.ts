@@ -85,6 +85,15 @@ export async function planSlugChange(req: PayloadRequest, input: SlugPlanInput):
     overrideAccess: true,
     req,
   })
+  const publishedCollision = await req.payload.find({
+    collection: 'posts',
+    where: { slug: { equals: input.newSlug } },
+    draft: false,
+    depth: 0,
+    limit: 2,
+    overrideAccess: true,
+    req,
+  })
   const reservedAlias = await req.payload.find({
     collection: 'redirects',
     where: { from: { in: newPaths } },
@@ -93,7 +102,7 @@ export async function planSlugChange(req: PayloadRequest, input: SlugPlanInput):
     overrideAccess: true,
     req,
   })
-  const conflictingPost = collision.docs.some((other) => other.id !== post.id)
+  const conflictingPost = [...collision.docs, ...publishedCollision.docs].some((other) => other.id !== post.id)
   const differentSlug = post.slug !== input.newSlug
   // Old paths cannot already be somebody else's redirects.
   const oldAliases = differentSlug ? await req.payload.find({
