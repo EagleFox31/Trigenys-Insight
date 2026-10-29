@@ -14,7 +14,7 @@ import { EditorialError } from './errors'
 
 // Serialize writes on one category. Updates in the Payload transaction are
 // atomic across both locales, while the advisory lock protects the stale check.
-async function withCategoryLock<T>(req: PayloadRequest, id: number, fn: () => Promise<T>): Promise<T> {
+export async function withCategoryLock<T>(req: PayloadRequest, id: number, fn: () => Promise<T>): Promise<T> {
   const connection = await req.payload.db.pool.connect()
   let locked = false
   try {
