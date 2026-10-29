@@ -203,7 +203,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:read']),
       description:
-        'Pure read-only preview of merging two category IDs. Reports affected latest and published articles, duplicate relationships, nested child categories and editorial rubric conflicts. A legacy category may only be auto-merged into its matching canonical rubric; cross-rubric changes require editorial review. NEVER modifies article categories or deletes a category.',
+        'Read-only category merge plan for a single sourceId to targetId pair. Reports latest and published references, nested categories, and editorial rubric conflicts. Set includePublished=true to analyze public snapshots; any newer pending draft blocks automatic migration. An immutable fingerprint must be passed back to insight_apply_category_merge. No changes are made.',
       inputSchema: categoryMergePlanSchema.shape,
       annotations: read,
     },
@@ -236,7 +236,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:write', 'editorial:publish']),
       description:
-        'After explicit approval of a specific sourceId to targetId category pair, apply a matching fresh insight_plan_category_merge fingerprint to reassign current draft article relationships atomically. Preserves order, removes duplicates, does NOT publish or touch published article versions, and retains the source category for historical references. Refuses all merges involving published articles, nested categories, or unrelated rubrics. Never deletes a category.',
+        'Apply a specifically approved category merge using the matching fingerprint from insight_plan_category_merge. With includePublished=false only draft records change. includePublished=true also migrates published category references ONLY if no newer draft exists and the full FR/EN public snapshots remain identical except category relationships; the transaction rolls back otherwise. Retains the source category and all historical versions. Explicit confirm=true required.',
       inputSchema: categoryMergeApplySchema.shape,
       annotations: write,
     },
