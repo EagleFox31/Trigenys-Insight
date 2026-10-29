@@ -15,6 +15,8 @@ import {
   type SlugApplyResult,
   type CategoryMergePlanInput,
   type CategoryMergePlanResult,
+  type CategoryMergeApplyInput,
+  type CategoryMergeApplyResult,
   type CategoryCreateInput,
   type CategoryRenameInput,
   type CategoryWriteResult,
@@ -143,6 +145,9 @@ export class InsightClient {
   }
   planCategoryMerge(input: CategoryMergePlanInput) {
     return this.request<CategoryMergePlanResult>({ ...input, operation: 'plan-category-merge' })
+  }
+  applyCategoryMerge(input: CategoryMergeApplyInput) {
+    return this.request<CategoryMergeApplyResult>({ ...input, operation: 'apply-category-merge' })
   }
   createCategory(input: CategoryCreateInput) {
     return this.request<CategoryWriteResult>({ ...input, operation: 'create-category' })
