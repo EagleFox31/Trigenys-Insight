@@ -172,6 +172,8 @@ export const categoryMergePlanSchema = z.object({
   sourceId: id,
   targetId: id,
   locale: locale.default('fr'),
+  // Published migrations require a separate explicit opt-in.
+  includePublished: z.boolean().default(false),
 }).strict()
 export type CategoryMergePlanInput = z.input<typeof categoryMergePlanSchema>
 export const categoryMergeApplySchema = categoryMergePlanSchema.extend({
@@ -182,6 +184,7 @@ export type CategoryMergeApplyInput = z.input<typeof categoryMergeApplySchema>
 export type CategoryMergePlanResult = {
   ok: true
   fingerprint: string
+  includePublished: boolean
   source: { id: number; slug: string; title: string }
   target: { id: number; slug: string; title: string }
   affectedPostIds: number[]
