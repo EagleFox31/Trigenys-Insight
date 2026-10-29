@@ -413,6 +413,6 @@ export type ReferenceResult = {
   ok: true
   docs: Array<{ id: number; title?: string; slug?: string; name?: string }>
 }
-export type PostResult = { ok: true; post: Record<string, unknown> }
+export type PostResult = { ok: true; version: 'latest' | 'published'; publicPath: string | null; post: Record<string, unknown> }
 
 export type SourceInput = z.input<typeof sourceSchema>
