@@ -99,7 +99,8 @@ export async function restorePost(req: PayloadRequest, input: RestorePostInput) 
     await req.payload.update({
       collection: 'posts',
       id: input.postId,
-      data: { deletedAt: null },
+      // Preserve the original publication state; Payload defaults omitted _status to draft.
+      data: { deletedAt: null, _status: plan.isPublic ? 'published' : 'draft' },
       trash: true,
       draft: false,
       depth: 0,
