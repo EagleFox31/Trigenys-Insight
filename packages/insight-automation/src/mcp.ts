@@ -8,6 +8,7 @@ import {
   bufferCancelSchema,
   articleSchema,
   getPostSchema,
+  postSelectorSchema,
   referenceSchema,
   sourceSchema,
   uploadSchema,
@@ -241,7 +242,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       _meta: oauth(['editorial:write', 'editorial:publish']),
       description:
         'Cancel all pending publication jobs for an article without changing its content or publication status. Provide exactly one postId or idempotencyKey. A publication already processing cannot be cancelled.',
-      inputSchema: getPostSchema.shape,
+      inputSchema: postSelectorSchema.shape,
       annotations: write,
     },
     (input) => execute({ ...input, operation: 'cancel-schedule' }),
