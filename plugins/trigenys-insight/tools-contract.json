@@ -1179,8 +1179,7 @@
             "type": "integer"
           },
           "targetId": {
-            "exclusiveMinimum": 0,
-            "type": "integer"
+            "$ref": "#/properties/sourceId"
           }
         },
         "required": [
