@@ -153,6 +153,11 @@ describe('MCP OAuth authorization-code flow', () => {
   })
   it('does not grant write or publishing permissions with read-only access', () => {
     expect(operationScopes({ operation: 'get-post' })).toEqual(['editorial:read'])
+    expect(operationScopes({ operation: 'plan-slug-change' })).toEqual(['editorial:read'])
+    expect(operationScopes({ operation: 'plan-post-archive' })).toEqual(['editorial:read'])
+    expect(operationScopes({ operation: 'apply-slug-change' })).toEqual(['editorial:write', 'editorial:publish'])
+    expect(operationScopes({ operation: 'archive-post' })).toEqual(['editorial:write', 'editorial:publish'])
+    expect(operationScopes({ operation: 'restore-post' })).toEqual(['editorial:write', 'editorial:publish'])
     expect(operationScopes({ operation: 'update-post' })).toEqual(['editorial:write'])
     expect(operationScopes({ operation: 'update-post', status: 'PUBLISHED' })).toEqual(['editorial:write', 'editorial:publish'])
     expect(operationScopes({ operation: 'publish' })).toEqual(['editorial:write', 'editorial:publish'])
