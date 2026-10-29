@@ -9,6 +9,10 @@ import {
   type MediaResult,
   type ReferenceResult,
   type PostResult,
+  type SlugPlanInput,
+  type SlugApplyInput,
+  type SlugPlanResult,
+  type SlugApplyResult,
   type UpdatePostInput,
   type UpdatePostResult,
   type SchedulePostInput,
@@ -125,6 +129,12 @@ export class InsightClient {
   }
   getPost(idempotencyKey: string, locale: 'fr' | 'en' = 'fr', version: 'latest' | 'published' = 'latest') {
     return this.request<PostResult>({ operation: 'get-post', idempotencyKey, locale, version })
+  }
+  planSlugChange(input: SlugPlanInput) {
+    return this.request<SlugPlanResult>({ ...input, operation: 'plan-slug-change' })
+  }
+  applySlugChange(input: SlugApplyInput) {
+    return this.request<SlugApplyResult>({ ...input, operation: 'apply-slug-change' })
   }
   updatePost(input: UpdatePostInput) {
     return this.request<UpdatePostResult>({ ...input, operation: 'update-post' })
