@@ -150,18 +150,23 @@ export async function executeEditorialOperation(
     where: byID && input.postId ? { id: { equals: input.postId } } : { slug: { equals: slug } },
     limit: 1,
     depth: 0,
-    draft: true,
+    // The public website reads draft:false. Explicitly match that snapshot when requested.
+    draft: input.operation !== 'get-post' || input.version === 'latest',
     locale: input.locale,
     fallbackLocale: false,
     overrideAccess: true,
     req,
   })
   if (input.operation === 'get-post') {
-    if (!existing.docs[0]) throw new EditorialError(404, 'post_not_found')
-    const socialDistribution = await socialArticleStatus(req, existing.docs[0].id)
+    const post = existing.docs[0]
+    if (!post || (input.version === 'published' && post._status !== 'published'))
+      throw new EditorialError(404, input.version === 'published' ? 'published_post_not_found' : 'post_not_found')
+    const socialDistribution = await socialArticleStatus(req, post.id)
     return {
       ok: true,
-      post: existing.docs[0],
+      version: input.version,
+      publicPath: input.version === 'published' ? `/${input.locale}/posts/${encodeURIComponent(post.slug)}` : null,
+      post,
       ...(socialDistribution ? { socialDistribution } : {}),
     }
   }

@@ -123,14 +123,14 @@ export class InsightClient {
   upsertSource(input: SourceInput) {
     return this.request<{ ok: true; id: number }>({ ...input, operation: 'upsert-source' })
   }
-  getPost(idempotencyKey: string, locale: 'fr' | 'en' = 'fr') {
-    return this.request<PostResult>({ operation: 'get-post', idempotencyKey, locale })
+  getPost(idempotencyKey: string, locale: 'fr' | 'en' = 'fr', version: 'latest' | 'published' = 'latest') {
+    return this.request<PostResult>({ operation: 'get-post', idempotencyKey, locale, version })
   }
   updatePost(input: UpdatePostInput) {
     return this.request<UpdatePostResult>({ ...input, operation: 'update-post' })
   }
-  getPostById(postId: number, locale: 'fr' | 'en' = 'fr') {
-    return this.request<PostResult>({ operation: 'get-post', postId, locale })
+  getPostById(postId: number, locale: 'fr' | 'en' = 'fr', version: 'latest' | 'published' = 'latest') {
+    return this.request<PostResult>({ operation: 'get-post', postId, locale, version })
   }
   bufferUpdateDraft(input: BufferUpdateDraftInput) {
     return this.request({ ...input, operation: 'buffer-update-draft' })

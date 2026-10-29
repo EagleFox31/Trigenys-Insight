@@ -126,14 +126,18 @@ export const sourceSchema = z
     notes: z.string().max(10000).optional(),
   })
   .strict()
-export const getPostSchema = z
+export const postSelectorSchema = z
   .object({
     idempotencyKey: text.max(200).optional(),
     postId: id.optional(),
     locale: locale.default('fr'),
   })
   .strict()
-export const updatePostSchema = getPostSchema
+// Only read operations can choose the public snapshot; writes always target the latest revision.
+export const getPostSchema = postSelectorSchema
+  .extend({ version: z.enum(['latest', 'published']).default('latest') })
+  .strict()
+export const updatePostSchema = postSelectorSchema
   .extend({
     title: text.max(500).optional(),
     excerpt: text.max(320).optional(),
@@ -280,7 +284,7 @@ export type AuditPostsResult = {
   }>
 }
 
-export const schedulePostSchema = getPostSchema
+export const schedulePostSchema = postSelectorSchema
   .extend({
     publishAt: z.string().datetime({ offset: true }),
     timeZone: text
@@ -301,7 +305,7 @@ export const listSchedulesSchema = z
   .object({ postId: id.optional(), limit: id.max(100).default(50), page: id.default(1) })
   .strict()
 export type SchedulePostInput = z.input<typeof schedulePostSchema>
-export type PostSelector = z.input<typeof getPostSchema>
+export type PostSelector = z.input<typeof postSelectorSchema>
 export type ScheduleResult = {
   ok: true
   postId: number
@@ -381,7 +385,7 @@ export const operationSchema = z.discriminatedUnion('operation', [
   getPostSchema.extend({ operation: z.literal('get-post') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
   schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
-  getPostSchema.extend({ operation: z.literal('cancel-schedule') }),
+  postSelectorSchema.extend({ operation: z.literal('cancel-schedule') }),
   listSchedulesSchema.extend({ operation: z.literal('list-schedules') }),
   listPostsSchema.extend({ operation: z.literal('list-posts') }),
   updateContentSchema.extend({ operation: z.literal('update-content') }),
@@ -409,6 +413,6 @@ export type ReferenceResult = {
   ok: true
   docs: Array<{ id: number; title?: string; slug?: string; name?: string }>
 }
-export type PostResult = { ok: true; post: Record<string, unknown> }
+export type PostResult = { ok: true; version: 'latest' | 'published'; publicPath: string | null; post: Record<string, unknown> }
 
 export type SourceInput = z.input<typeof sourceSchema>

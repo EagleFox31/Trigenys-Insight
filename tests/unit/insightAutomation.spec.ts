@@ -43,6 +43,7 @@ function persistence() {
       collection: string
       where?: Record<string, { equals?: unknown; in?: unknown[] }>
       locale?: string
+      draft?: boolean
     }) => {
       const docs = tables[args.collection].filter(
         (doc) =>
@@ -128,6 +129,47 @@ describe('publishing API and SDK contract', () => {
     expect(db.posts[0].featured).toBe(true)
     expect(published.url).toBe(`/fr/posts/${first.slug}`)
     expect((await client.getPost(article.idempotencyKey)).post._status).toBe('published')
+  })
+  it('reads the published article separately from an unpublished revision and fails closed if none exists', async () => {
+    const { db, client } = setup()
+    const draft = { id: 35, slug: 'cameroun-commerce', title: 'Updated draft', _status: 'draft', content: { root: { children: ['draft revision'] } } }
+    const published = { id: 35, slug: 'cameroun-commerce', title: 'Published copy', _status: 'published', content: { root: { children: ['public copy'] } } }
+    const originalFind = db.payload.find.getMockImplementation()!
+    let publicExists = true
+    db.payload.find.mockImplementation(async (args) => {
+      if (args.collection === 'posts' && args.where?.id?.equals === 35) {
+        const docs = args.draft ? [draft] : publicExists ? [published] : []
+        return { docs, totalDocs: docs.length }
+      }
+      return originalFind(args)
+    })
+
+    const latest = await client.getPostById(35)
+    expect(latest).toMatchObject({ version: 'latest', publicPath: null, post: { title: 'Updated draft', _status: 'draft' } })
+    const live = await client.getPostById(35, 'fr', 'published')
+    expect(live).toMatchObject({
+      version: 'published',
+      publicPath: '/fr/posts/cameroun-commerce',
+      post: { title: 'Published copy', _status: 'published' },
+    })
+    expect(db.payload.find).toHaveBeenCalledWith(expect.objectContaining({
+      collection: 'posts', draft: false, locale: 'fr', fallbackLocale: false,
+      where: { id: { equals: 35 } },
+    }))
+    expect(() => operationSchema.parse({
+      operation: 'update-post', postId: 35, version: 'published', excerpt: 'Bad edit',
+    })).toThrow()
+    expect(() => operationSchema.parse({
+      operation: 'schedule-post', postId: 35, version: 'published',
+      publishAt: '2026-10-31T10:00:00+01:00',
+    })).toThrow()
+
+    publicExists = false
+    await expect(client.getPostById(35, 'fr', 'published')).rejects.toMatchObject({
+      status: 404, code: 'published_post_not_found',
+    })
+    // An unpublished revision remains readable after the public snapshot disappears.
+    expect((await client.getPostById(35)).post.title).toBe('Updated draft')
   })
   it('updates only the excerpt and SEO description while preserving the published article', async () => {
     const { db, client } = setup()
