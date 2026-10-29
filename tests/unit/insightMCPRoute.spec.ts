@@ -63,7 +63,7 @@ describe('hosted MCP route', () => {
     expect((await response.json()).result.serverInfo.name).toBe('trigenys-insight')
     const tools = await POST(request({ jsonrpc: '2.0', id: 2, method: 'tools/list' }))
     const listed = (await tools.json()).result.tools
-    expect(listed).toHaveLength(22)
+    expect(listed).toHaveLength(25)
     expect(listed.find((tool: { name: string }) => tool.name === 'insight_publish')._meta.securitySchemes).toEqual([{ type: 'oauth2', scopes: ['editorial:write', 'editorial:publish'] }])
     expect(getPayload).not.toHaveBeenCalled()
   })
@@ -90,7 +90,7 @@ describe('hosted MCP route', () => {
     }
     const response = await POST(request(body, headers))
     expect(response.status).toBe(200)
-    expect((await response.json()).result.tools).toHaveLength(22)
+    expect((await response.json()).result.tools).toHaveLength(25)
     expect(
       (await POST(request(body, { ...headers, Origin: 'https://foreign.example' }))).status,
     ).toBe(401)
