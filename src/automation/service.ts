@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import sharp from 'sharp'
 import { uploadOriginalSocialMedia } from './socialMediaUpload'
 import { changePublicationSchedule, listPublicationSchedules } from './scheduling'
+import { applySlugChange, planSlugChange, resolveAutomationSlugAlias } from './slugManagement'
 import type { PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
 import { createAutomationContent } from './content'
@@ -36,6 +37,8 @@ export async function executeEditorialOperation(
     return executeBufferOperation(req, input)
   const payload = req.payload
   if (input.operation === 'list-posts') return listEditorialPosts(req, input)
+  if (input.operation === 'plan-slug-change') return planSlugChange(req, input)
+  if (input.operation === 'apply-slug-change') return applySlugChange(req, input)
   if (input.operation === 'audit-posts') return auditEditorialPosts(req, input)
   if (input.operation === 'update-content') return updateEditorialContent(req, input)
   if (input.operation === 'list-schedules') return listPublicationSchedules(req, input)
@@ -145,18 +148,28 @@ export async function executeEditorialOperation(
   if (byID && Boolean(input.idempotencyKey) === Boolean(input.postId))
     throw new EditorialError(400, 'provide_exactly_one_post_identifier')
   const slug = editorialSlug(input.idempotencyKey ?? '')
-  const existing = await payload.find({
-    collection: 'posts',
-    where: byID && input.postId ? { id: { equals: input.postId } } : { slug: { equals: slug } },
+  const findOptions = {
+    collection: 'posts' as const,
     limit: 1,
     depth: 0,
-    // The public website reads draft:false. Explicitly match that snapshot when requested.
     draft: input.operation !== 'get-post' || input.version === 'latest',
     locale: input.locale,
-    fallbackLocale: false,
+    fallbackLocale: false as const,
     overrideAccess: true,
     req,
+  }
+  let existing = await payload.find({
+    ...findOptions,
+    where: byID && input.postId ? { id: { equals: input.postId } } : { slug: { equals: slug } },
   })
+  // A stable automation key must continue to resolve after a human-readable
+  // slug replaces the original editorial-os hash; Redirects stores the post ID.
+  if (!existing.docs.length && input.idempotencyKey) {
+    const aliasId = await resolveAutomationSlugAlias(req, slug)
+    if (aliasId) {
+      existing = await payload.find({ ...findOptions, where: { id: { equals: aliasId } } })
+    }
+  }
   if (input.operation === 'get-post') {
     const post = existing.docs[0]
     if (!post || (input.version === 'published' && post._status !== 'published'))
@@ -285,7 +298,8 @@ export async function executeEditorialOperation(
         .trim()
         .slice(0, 320),
     content,
-    slug,
+    slug: previous?.slug ?? slug,
+    generateSlug: false,
     authors,
     categories,
     ...(relatedPosts !== undefined ? { relatedPosts } : {}),
@@ -338,11 +352,11 @@ export async function executeEditorialOperation(
     }
     throw error
   }
-  const publicPath = `/${input.locale}/posts/${slug}`
+  const publicPath = `/${input.locale}/posts/${stored.slug}`
   return {
     ok: true,
     id: stored.id,
-    slug,
+    slug: stored.slug,
     status: input.operation === 'publish' ? 'PUBLISHED' : 'DRAFT',
     url: input.operation === 'publish' ? publicPath : null,
     // A plain public URL cannot preview drafts; use the authenticated editor.
