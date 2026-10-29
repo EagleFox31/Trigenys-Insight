@@ -147,7 +147,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_list_categories',
     {
       _meta: oauth(['editorial:read']),
-      description: 'List available editorial category IDs and names.',
+      description: 'List category IDs, localized titles, stable slugs and updatedAt timestamps. Use updatedAt as the expectedUpdatedAt guard for insight_rename_category.',
       inputSchema: referenceSchema.shape,
       annotations: read,
     },
