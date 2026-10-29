@@ -163,7 +163,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     {
       _meta: oauth(['editorial:read']),
       description:
-        'Read an existing article, including draft content. Provide exactly one identifier: postId for any CMS article, or idempotencyKey for an automation article.',
+        'Read an article by postId or idempotencyKey. version=latest (default) returns the latest saved revision, which may be a draft; version=published returns the actual published Payload snapshot rendered by the public site, even when a newer draft exists. The response identifies the version and returns publicPath for the published snapshot. Returns published_post_not_found if never published; does not fetch the page over HTTP. Read-only: never republishes or changes an article.',
       inputSchema: getPostSchema.shape,
       annotations: read,
     },
