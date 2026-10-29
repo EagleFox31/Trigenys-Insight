@@ -63,7 +63,7 @@ describe('hosted MCP route', () => {
     expect((await response.json()).result.serverInfo.name).toBe('trigenys-insight')
     const tools = await POST(request({ jsonrpc: '2.0', id: 2, method: 'tools/list' }))
     const listed = (await tools.json()).result.tools
-    expect(listed).toHaveLength(23)
+    expect(listed).toHaveLength(25)
     expect(listed.find((tool: { name: string }) => tool.name === 'insight_publish')._meta.securitySchemes).toEqual([{ type: 'oauth2', scopes: ['editorial:write', 'editorial:publish'] }])
     expect(getPayload).not.toHaveBeenCalled()
   })
