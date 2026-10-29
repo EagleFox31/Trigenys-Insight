@@ -37,6 +37,7 @@ function persistence() {
     users: [{ id: 1, name: 'Editor', email: 'private@example.com', hash: 'secret' }],
     categories: [{ id: 2, title: 'Technologie', slug: 'technology' }],
     'research-sources': sources,
+    redirects: [],
   }
   const find = vi.fn(
     async (args: {
