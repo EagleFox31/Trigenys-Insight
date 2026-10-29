@@ -1158,6 +1158,56 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
+      "description": "Pure read-only preview of merging two category IDs. Reports affected latest and published articles, duplicate relationships, nested child categories and editorial rubric conflicts. A legacy category may only be auto-merged into its matching canonical rubric; cross-rubric changes require editorial review. NEVER modifies article categories or deletes a category.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "sourceId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "targetId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sourceId",
+          "targetId"
+        ],
+        "type": "object"
+      },
+      "name": "insight_plan_category_merge"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
       "description": "Read-only preview of renaming a post slug, including FR/EN/legacy URLs and any conflicts. A live article with a newer unpublished draft is BLOCKED to avoid publishing draft content. Never changes an article or URL. Use this before requesting explicit human approval.",
       "execution": {
         "taskSupport": "forbidden"
