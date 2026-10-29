@@ -494,7 +494,7 @@ export type PublicationResult = {
 export type MediaResult = { ok: true; id: number; url: string | null; reused: boolean }
 export type ReferenceResult = {
   ok: true
-  docs: Array<{ id: number; title?: string; slug?: string; name?: string }>
+  docs: Array<{ id: number; title?: string; slug?: string; name?: string; updatedAt?: string }>
 }
 export type PostResult = { ok: true; version: 'latest' | 'published'; publicPath: string | null; post: Record<string, unknown> }
 
