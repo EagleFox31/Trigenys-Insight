@@ -43,6 +43,7 @@ function persistence() {
       collection: string
       where?: Record<string, { equals?: unknown; in?: unknown[] }>
       locale?: string
+      draft?: boolean
     }) => {
       const docs = tables[args.collection].filter(
         (doc) =>
