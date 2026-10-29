@@ -32,6 +32,9 @@ import { slugField } from 'payload'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
+  // Native Payload soft-delete preserves versions, translations and relations.
+  // API reads exclude trashed posts by default; restoration uses deletedAt: null.
+  trash: true,
   indexes: [{ fields: ['_status', 'publishedAt'] }],
   access: {
     create: authenticated,

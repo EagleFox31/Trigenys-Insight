@@ -232,6 +232,8 @@ export interface Page {
  */
 export interface Post {
   id: number;
+  /** Native Payload soft-delete timestamp; the original document is recoverable. */
+  deletedAt?: string | null;
   title: string;
   excerpt: string;
   heroImage?: (number | null) | Media;

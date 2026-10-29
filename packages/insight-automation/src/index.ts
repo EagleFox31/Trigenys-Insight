@@ -13,6 +13,11 @@ import {
   type SlugApplyInput,
   type SlugPlanResult,
   type SlugApplyResult,
+  type ArchivePlanInput,
+  type ArchivePostInput,
+  type RestorePostInput,
+  type ArchivePlanResult,
+  type ArchiveResult,
   type UpdatePostInput,
   type UpdatePostResult,
   type SchedulePostInput,
@@ -135,6 +140,15 @@ export class InsightClient {
   }
   applySlugChange(input: SlugApplyInput) {
     return this.request<SlugApplyResult>({ ...input, operation: 'apply-slug-change' })
+  }
+  planPostArchive(input: ArchivePlanInput) {
+    return this.request<ArchivePlanResult>({ ...input, operation: 'plan-post-archive' })
+  }
+  archivePost(input: ArchivePostInput) {
+    return this.request<ArchiveResult>({ ...input, operation: 'archive-post' })
+  }
+  restorePost(input: RestorePostInput) {
+    return this.request<ArchiveResult>({ ...input, operation: 'restore-post' })
   }
   updatePost(input: UpdatePostInput) {
     return this.request<UpdatePostResult>({ ...input, operation: 'update-post' })

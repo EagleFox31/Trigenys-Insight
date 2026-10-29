@@ -167,6 +167,37 @@ export type SlugPlanResult = {
   newPaths: string[]
 }
 export type SlugApplyResult = SlugPlanResult & { changed: boolean }
+// Archive uses Payload's built-in trash rather than overwriting a published snapshot.
+export const archivePlanSchema = z.object({ postId: id }).strict()
+export const archivePostSchema = archivePlanSchema.extend({
+  expectedUpdatedAt: z.string().datetime({ offset: true }),
+  confirm: z.literal(true),
+}).strict()
+export const restorePostSchema = archivePlanSchema.extend({
+  expectedDeletedAt: z.string().datetime({ offset: true }),
+  confirm: z.literal(true),
+  // A published article becomes public again on native trash restore.
+  allowPublicRestore: z.boolean().default(false),
+}).strict()
+export type ArchivePlanInput = z.input<typeof archivePlanSchema>
+export type ArchivePostInput = z.input<typeof archivePostSchema>
+export type RestorePostInput = z.input<typeof restorePostSchema>
+export type ArchivePlanResult = {
+  ok: true
+  postId: number
+  title: string
+  slug: string
+  status: 'DRAFT' | 'PUBLISHED'
+  isPublic: boolean
+  archived: boolean
+  deletedAt: string | null
+  expectedUpdatedAt: string
+  hasPendingDraft: boolean
+  pendingPublications: number
+  canArchive: boolean
+  reason: string | null
+}
+export type ArchiveResult = ArchivePlanResult & { changed: boolean }
 export const updatePostSchema = postSelectorSchema
   .extend({
     title: text.max(500).optional(),
@@ -415,6 +446,9 @@ export const operationSchema = z.discriminatedUnion('operation', [
   getPostSchema.extend({ operation: z.literal('get-post') }),
   slugPlanSchema.extend({ operation: z.literal('plan-slug-change') }),
   slugApplySchema.extend({ operation: z.literal('apply-slug-change') }),
+  archivePlanSchema.extend({ operation: z.literal('plan-post-archive') }),
+  archivePostSchema.extend({ operation: z.literal('archive-post') }),
+  restorePostSchema.extend({ operation: z.literal('restore-post') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
   schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
   postSelectorSchema.extend({ operation: z.literal('cancel-schedule') }),

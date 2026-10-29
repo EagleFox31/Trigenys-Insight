@@ -10,6 +10,9 @@ import {
   getPostSchema,
   slugPlanSchema,
   slugApplySchema,
+  archivePlanSchema,
+  archivePostSchema,
+  restorePostSchema,
   postSelectorSchema,
   referenceSchema,
   sourceSchema,
@@ -193,6 +196,39 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       annotations: write,
     },
     (input) => execute({ ...input, operation: 'apply-slug-change' }),
+  )
+  server.registerTool(
+    'insight_plan_post_archive',
+    {
+      _meta: oauth(['editorial:read']),
+      description:
+        'Preview an article archive or restoration without changing anything. Shows original published/draft state, any newer draft, pending publication jobs, deletedAt and expectedUpdatedAt. Uses native Payload trash; do not confuse draft revisions with public withdrawal.',
+      inputSchema: archivePlanSchema.shape,
+      annotations: read,
+    },
+    (input) => execute({ ...input, operation: 'plan-post-archive' }),
+  )
+  server.registerTool(
+    'insight_archive_post',
+    {
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+      description:
+        'Move ONE post into native Payload trash; retain translations, media relations, content versions and ID. Run plan_post_archive first, obtain explicit user approval for this specific post, then pass fresh expectedUpdatedAt and confirm=true. Blocks pending publication jobs. Never permanently deletes.',
+      inputSchema: archivePostSchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'archive-post' }),
+  )
+  server.registerTool(
+    'insight_restore_post',
+    {
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+      description:
+        'Restore ONE trashed post by id after explicit user approval. Requires exact expectedDeletedAt from plan_post_archive and confirm=true. A previously public post WOULD become public again: requires allowPublicRestore=true explicitly. Never changes the article text, translations, slug or history.',
+      inputSchema: restorePostSchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'restore-post' }),
   )
   server.registerTool(
     'insight_update_post',

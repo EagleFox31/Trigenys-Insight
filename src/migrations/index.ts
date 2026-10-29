@@ -13,6 +13,8 @@ import * as migration_20261011_232139_add_post_answer_fields from './20261011_23
 import * as migration_20261011_232733_add_author_public_profile from './20261011_232733_add_author_public_profile'
 import * as migration_20261014_121500_add_mcp_oauth from './20261014_121500_add_mcp_oauth'
 
+import * as migration_20261029_104000_enable_post_trash from './20261029_104000_enable_post_trash'
+
 export const migrations = [
   // Keep migrations in chronological order.
   {
@@ -53,4 +55,5 @@ export const migrations = [
   { up: migration_20261016_062000_add_linkedin_hashtags.up, down: migration_20261016_062000_add_linkedin_hashtags.down, name: '20261016_062000_add_linkedin_hashtags' },
   { up: migration_20261016_185500_recreate_agenstudio_drafts.up, down: migration_20261016_185500_recreate_agenstudio_drafts.down, name: '20261016_185500_recreate_agenstudio_drafts' },
   { up: migration_20261016_230000_bind_agenstudio_linkedin_channel.up, down: migration_20261016_230000_bind_agenstudio_linkedin_channel.down, name: '20261016_230000_bind_agenstudio_linkedin_channel' },
+  { up: migration_20261029_104000_enable_post_trash.up, down: migration_20261029_104000_enable_post_trash.down, name: '20261029_104000_enable_post_trash' },
 ]
