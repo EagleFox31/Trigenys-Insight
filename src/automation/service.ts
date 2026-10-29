@@ -57,7 +57,7 @@ export async function executeEditorialOperation(
       overrideAccess: true,
       req,
     })
-    return { ok: true, docs: result.docs.map(({ id, title, slug }) => ({ id, title, slug })) }
+    return { ok: true, docs: result.docs.map(({ id, title, slug, updatedAt }) => ({ id, title, slug, updatedAt })) }
   }
   if (input.operation === 'list-authors') {
     const result = await payload.find({
