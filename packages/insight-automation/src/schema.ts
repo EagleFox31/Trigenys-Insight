@@ -221,7 +221,8 @@ export type CategoryWriteResult = {
   changed: boolean
   created: boolean
 }
-export type CategoryMergeApplyResult = CategoryMergePlanResult & {
+export type CategoryMergeApplyResult = Omit<CategoryMergePlanResult, 'dryRun'> & {
+  dryRun: false
   changed: boolean
   updatedPostIds: number[]
   retainedSourceCategory: true
