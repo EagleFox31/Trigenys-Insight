@@ -172,9 +172,7 @@ export const categoryMergePlanSchema = z.object({
   sourceId: id,
   targetId: id,
   locale: locale.default('fr'),
-}).strict().refine(({ sourceId, targetId }) => sourceId !== targetId, {
-  message: 'Source and target category must be different',
-})
+}).strict()
 export type CategoryMergePlanInput = z.input<typeof categoryMergePlanSchema>
 export type CategoryMergePlanResult = {
   ok: true
