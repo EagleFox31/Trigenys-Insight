@@ -11,7 +11,7 @@ export const consentPageHeaders = {
   ...privateHeaders,
   'Content-Type': 'text/html; charset=utf-8',
   // Chromium also checks the callback redirect against form-action.
-  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://chatgpt.com; frame-ancestors 'none'; base-uri 'none'",
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://chatgpt.com https://claude.ai; frame-ancestors 'none'; base-uri 'none'",
 }
 export function oauthFailure(error: unknown) {
   return Response.json({ error: error instanceof OAuthError ? error.code : 'server_error' }, { status: error instanceof OAuthError ? error.status : 500, headers: privateHeaders })

@@ -25,8 +25,10 @@ export function oauthURLs() {
 export function allowedRedirect(value: string): boolean {
   try {
     const url = new URL(value)
-    return url.origin === 'https://chatgpt.com' && !url.username && !url.password && !url.search && !url.hash &&
+    const chatgpt = url.origin === 'https://chatgpt.com' &&
       (url.pathname === '/connector_platform_oauth_redirect' || /^\/connector\/oauth\/[A-Za-z0-9_-]+$/.test(url.pathname))
+    const claude = url.origin === 'https://claude.ai' && url.pathname === '/api/mcp/auth_callback'
+    return !url.username && !url.password && !url.search && !url.hash && (chatgpt || claude)
   } catch { return false }
 }
 export function parseScopes(value: unknown): string[] {
@@ -52,8 +54,8 @@ export class InsightOAuth {
     if (body.grant_types && (!Array.isArray(body.grant_types) || body.grant_types.some((grant) => !['authorization_code', 'refresh_token'].includes(String(grant))))) throw new OAuthError('invalid_client_metadata')
     if (body.response_types && (!Array.isArray(body.response_types) || body.response_types.some((type) => type !== 'code'))) throw new OAuthError('invalid_client_metadata')
     const client_id = `insight_${opaque()}`
-    const data = { client_id, client_name: typeof body.client_name === 'string' ? body.client_name.slice(0, 120) : 'ChatGPT', redirect_uris: body.redirect_uris, token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'], response_types: ['code'] }
-    // Client registrations outlive rotating tokens; never expire an active ChatGPT client.
+    const data = { client_id, client_name: typeof body.client_name === 'string' ? body.client_name.slice(0, 120) : 'Client MCP', redirect_uris: body.redirect_uris, token_endpoint_auth_method: 'none', grant_types: ['authorization_code', 'refresh_token'], response_types: ['code'] }
+    // Client registrations outlive rotating tokens; never expire an active MCP client.
     await this.store.put(record(`client:${client_id}`, 'client', data, 100 * 365 * 86400))
     return { ...data, client_id_issued_at: Math.floor(Date.now() / 1000) }
   }

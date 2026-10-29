@@ -19,6 +19,7 @@ class MemoryStore implements OAuthStore {
   async rateLimit() { return true }
 }
 const callback = 'https://chatgpt.com/connector_platform_oauth_redirect'
+const claudeCallback = 'https://claude.ai/api/mcp/auth_callback'
 const verifier = 'a'.repeat(64)
 const pkce = createHash('sha256').update(verifier).digest('base64url')
 async function setup(scope = 'editorial:read editorial:write editorial:publish') {
@@ -48,9 +49,30 @@ describe('MCP OAuth authorization-code flow', () => {
     await expect(s.oauth.exchange(s.tokenRequest)).rejects.toMatchObject({ code: 'invalid_grant' })
     await expect(s.oauth.approve(s.consent.nonce, 1, true)).rejects.toMatchObject({ code: 'invalid_request' })
   })
+  it('accepts Claude exact callback with user consent, PKCE and one-time token exchange', async () => {
+    const store = new MemoryStore()
+    const oauth = new InsightOAuth(store, async () => true)
+    const client = await oauth.register({ redirect_uris: [claudeCallback], client_name: 'Claude', token_endpoint_auth_method: 'none' })
+    const request = new URLSearchParams({
+      client_id: client.client_id, redirect_uri: claudeCallback, response_type: 'code',
+      resource: oauthURLs().resource, code_challenge: pkce, code_challenge_method: 'S256',
+      state: 'claude-state', scope: 'editorial:read',
+    })
+    const consent = await oauth.consent(request, 1)
+    const destination = new URL(await oauth.approve(consent.nonce, 1, true))
+    expect(destination.origin + destination.pathname).toBe(claudeCallback)
+    expect(destination.searchParams.get('state')).toBe('claude-state')
+    const tokenRequest = new URLSearchParams({
+      client_id: client.client_id, redirect_uri: claudeCallback, grant_type: 'authorization_code',
+      resource: oauthURLs().resource, code: destination.searchParams.get('code')!, code_verifier: verifier,
+    })
+    const tokens = await oauth.exchange(tokenRequest)
+    expect(await oauth.verify(tokens.access_token)).toEqual({ userId: 1, scopes: ['editorial:read'] })
+    await expect(oauth.exchange(tokenRequest)).rejects.toMatchObject({ code: 'invalid_grant' })
+  })
   it('rejects unregistered and off-domain redirects without creating a grant', async () => {
     const { oauth, request } = await setup()
-    for (const uri of ['https://evil.example/callback', 'https://chatgpt.com.evil.example/connector_platform_oauth_redirect', 'https://chatgpt.com/connector/oauth/id?next=evil', 'http://chatgpt.com/connector_platform_oauth_redirect', 'https://chatgpt.com/other']) {
+    for (const uri of ['https://evil.example/callback', 'https://chatgpt.com.evil.example/connector_platform_oauth_redirect', 'https://chatgpt.com/connector/oauth/id?next=evil', 'http://chatgpt.com/connector_platform_oauth_redirect', 'https://chatgpt.com/other', 'https://claude.ai.evil.example/api/mcp/auth_callback', 'http://claude.ai/api/mcp/auth_callback', 'https://claude.ai/api/mcp/auth_callback?next=evil', 'https://claude.ai/api/mcp/auth_callback/', 'https://claude.ai/other']) {
       await expect(oauth.register({ redirect_uris: [uri] })).rejects.toMatchObject({ code: 'invalid_redirect_uri' })
     }
     request.set('redirect_uri', 'https://chatgpt.com/connector/oauth/different')
