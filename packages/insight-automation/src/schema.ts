@@ -230,6 +230,51 @@ export type CategoryMergeApplyResult = Omit<CategoryMergePlanResult, 'dryRun'> &
   updatedPostIds: number[]
   retainedSourceCategory: true
 }
+// A two-step, reversible retirement. Unlike deletion, historical revisions and
+// relationships stay intact. A live article or child category blocks retirement.
+export const categoryRetirePlanSchema = z.object({
+  categoryId: id,
+  locale: locale.default('fr'),
+}).strict()
+export const categoryRetireApplySchema = categoryRetirePlanSchema.extend({
+  expectedFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  confirm: z.literal(true),
+}).strict()
+export const categoryRestoreSchema = z.object({
+  categoryId: id,
+  expectedUpdatedAt: z.string().datetime({ offset: true }),
+  confirm: z.literal(true),
+}).strict()
+export const listCategoriesSchema = z.object({
+  locale: locale.default('fr'),
+  includeRetired: z.boolean().default(false),
+}).strict()
+export type CategoryRetirePlanInput = z.input<typeof categoryRetirePlanSchema>
+export type CategoryRetireApplyInput = z.input<typeof categoryRetireApplySchema>
+export type CategoryRestoreInput = z.input<typeof categoryRestoreSchema>
+export type CategoryRetirePlanResult = {
+  ok: true
+  dryRun: true
+  category: { id: number; slug: string; title: string; updatedAt: string; retiredAt: string | null }
+  replacement: { id: number; slug: string } | null
+  activePostIds: number[]
+  publishedPostIds: number[]
+  childCategoryIds: number[]
+  pageReferenceCount: number
+  historicalVersionCount: number
+  fingerprint: string
+  canRetire: boolean
+  reason: string | null
+}
+export type CategoryRetirementResult = {
+  ok: true
+  id: number
+  slug: string
+  retiredAt: string | null
+  changed: boolean
+  historyPreserved: true
+  updatedAt: string
+}
 export const updatePostSchema = postSelectorSchema
   .extend({
     title: text.max(500).optional(),
@@ -482,6 +527,9 @@ export const operationSchema = z.discriminatedUnion('operation', [
   categoryMergeApplySchema.extend({ operation: z.literal('apply-category-merge') }),
   categoryCreateSchema.extend({ operation: z.literal('create-category') }),
   categoryRenameSchema.extend({ operation: z.literal('rename-category') }),
+  categoryRetirePlanSchema.extend({ operation: z.literal('plan-category-retirement') }),
+  categoryRetireApplySchema.extend({ operation: z.literal('retire-category') }),
+  categoryRestoreSchema.extend({ operation: z.literal('restore-category') }),
   updatePostSchema.extend({ operation: z.literal('update-post') }),
   schedulePostSchema.extend({ operation: z.literal('schedule-post') }),
   postSelectorSchema.extend({ operation: z.literal('cancel-schedule') }),
@@ -489,7 +537,7 @@ export const operationSchema = z.discriminatedUnion('operation', [
   listPostsSchema.extend({ operation: z.literal('list-posts') }),
   updateContentSchema.extend({ operation: z.literal('update-content') }),
   auditPostsSchema.extend({ operation: z.literal('audit-posts') }),
-  referenceSchema.extend({ operation: z.literal('list-categories') }),
+  listCategoriesSchema.extend({ operation: z.literal('list-categories') }),
   referenceSchema.extend({ operation: z.literal('list-authors') }),
 ])
 export type ArticleInput = z.input<typeof articleSchema>
@@ -510,7 +558,7 @@ export type PublicationResult = {
 export type MediaResult = { ok: true; id: number; url: string | null; reused: boolean }
 export type ReferenceResult = {
   ok: true
-  docs: Array<{ id: number; title?: string; slug?: string; name?: string; updatedAt?: string }>
+  docs: Array<{ id: number; title?: string; slug?: string; name?: string; updatedAt?: string; retiredAt?: string | null }>
 }
 export type PostResult = { ok: true; version: 'latest' | 'published'; publicPath: string | null; post: Record<string, unknown> }
 
