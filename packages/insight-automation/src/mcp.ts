@@ -14,6 +14,10 @@ import {
   categoryMergeApplySchema,
   categoryCreateSchema,
   categoryRenameSchema,
+  categoryRetirePlanSchema,
+  categoryRetireApplySchema,
+  categoryRestoreSchema,
+  listCategoriesSchema,
   postSelectorSchema,
   referenceSchema,
   sourceSchema,
@@ -148,8 +152,8 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_list_categories',
     {
       _meta: oauth(['editorial:read']),
-      description: 'List category IDs, localized titles, stable slugs and updatedAt timestamps. Use updatedAt as the expectedUpdatedAt guard for insight_rename_category.',
-      inputSchema: referenceSchema.shape,
+      description: 'List category IDs, localized titles, stable slugs, updatedAt and retiredAt. Excludes retired categories by default; set includeRetired=true to review historical categories and restore them. Use updatedAt for concurrency guards.',
+      inputSchema: listCategoriesSchema.shape,
       annotations: read,
     },
     (input) => execute({ ...input, operation: 'list-categories' }),
@@ -241,6 +245,39 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
       annotations: write,
     },
     (input) => execute({ ...input, operation: 'apply-category-merge' }),
+  )
+  server.registerTool(
+    'insight_plan_category_retirement',
+    {
+      _meta: oauth(['editorial:read']),
+      description:
+        'Read-only safety preview of retiring ONE old category after completed canonical reclassification. Reports all active draft/public post IDs, page references, nested categories, surviving historical version counts, and fingerprint. Canonical categories cannot be retired. Does not modify any category.',
+      inputSchema: categoryRetirePlanSchema.shape,
+      annotations: read,
+    },
+    (input) => execute({ ...input, operation: 'plan-category-retirement' }),
+  )
+  server.registerTool(
+    'insight_retire_category',
+    {
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+      description:
+        'Retire ONE legacy category after explicit approval for that category ID and a fresh matching retirement preview fingerprint. Refuses any active post/page references or child categories, retains historical version references, and never hard-deletes the category. Restore with insight_restore_category.',
+      inputSchema: categoryRetireApplySchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'retire-category' }),
+  )
+  server.registerTool(
+    'insight_restore_category',
+    {
+      _meta: oauth(['editorial:write', 'editorial:publish']),
+      description:
+        'Restore ONE retired category to active use after explicit user approval. Requires its current updatedAt from insight_list_categories(includeRetired=true) and confirm=true. Retains slug, titles, and historical article relations.',
+      inputSchema: categoryRestoreSchema.shape,
+      annotations: write,
+    },
+    (input) => execute({ ...input, operation: 'restore-category' }),
   )
   server.registerTool(
     'insight_update_post',

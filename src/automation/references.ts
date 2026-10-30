@@ -9,7 +9,9 @@ export async function requireReferences(
   if (!ids.length) return
   const result = await req.payload.find({
     collection,
-    where: { id: { in: [...new Set(ids)] } },
+    where: collection === 'categories'
+      ? { and: [{ id: { in: [...new Set(ids)] } }, { retiredAt: { exists: false } }] }
+      : { id: { in: [...new Set(ids)] } },
     limit: ids.length,
     depth: 0,
     overrideAccess: true,

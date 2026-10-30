@@ -430,6 +430,7 @@ export interface FolderInterface {
  */
 export interface Category {
   id: number;
+  retiredAt?: string | null;
   title: string;
   manifesto?: string | null;
   /**

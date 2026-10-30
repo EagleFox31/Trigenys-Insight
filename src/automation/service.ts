@@ -13,6 +13,7 @@ import { listEditorialPosts } from './postInventory'
 import { planCategoryMerge } from './categoryMergePreview'
 import { applyCategoryMerge } from './categoryMergeApply'
 import { createCategory, renameCategory } from './categoryManagement'
+import { planCategoryRetirement, retireCategory, restoreCategory } from './categoryRetirement'
 import { auditEditorialPosts } from './postAudit'
 import { updateEditorialContent } from './updateContent'
 import {
@@ -49,6 +50,9 @@ export async function executeEditorialOperation(
   if (input.operation === 'apply-category-merge') return applyCategoryMerge(req, input)
   if (input.operation === 'create-category') return createCategory(req, input)
   if (input.operation === 'rename-category') return renameCategory(req, input)
+  if (input.operation === 'plan-category-retirement') return planCategoryRetirement(req, input)
+  if (input.operation === 'retire-category') return retireCategory(req, input)
+  if (input.operation === 'restore-category') return restoreCategory(req, input)
   if (input.operation === 'list-categories') {
     const result = await payload.find({
       collection: 'categories',
@@ -56,10 +60,11 @@ export async function executeEditorialOperation(
       sort: 'title',
       depth: 0,
       locale: input.locale,
+      where: input.includeRetired ? {} : { retiredAt: { exists: false } },
       overrideAccess: true,
       req,
     })
-    return { ok: true, docs: result.docs.map(({ id, title, slug, updatedAt }) => ({ id, title, slug, updatedAt })) }
+    return { ok: true, docs: result.docs.map(({ id, title, slug, updatedAt, retiredAt }) => ({ id, title, slug, updatedAt, retiredAt: retiredAt ?? null })) }
   }
   if (input.operation === 'list-authors') {
     const result = await payload.find({

@@ -191,6 +191,9 @@ export const Posts: CollectionConfig<'posts'> = {
             {
               name: 'categories',
               type: 'relationship',
+              // Prevent choosing retired categories in the editor. Historical
+              // versions still resolve by ID; this only filters new choices.
+              filterOptions: { retiredAt: { exists: false } },
               admin: {
                 position: 'sidebar',
               },

@@ -1103,7 +1103,7 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "List category IDs, localized titles, stable slugs and updatedAt timestamps. Use updatedAt as the expectedUpdatedAt guard for insight_rename_category.",
+      "description": "List category IDs, localized titles, stable slugs, updatedAt and retiredAt. Excludes retired categories by default; set includeRetired=true to review historical categories and restore them. Use updatedAt for concurrency guards.",
       "execution": {
         "taskSupport": "forbidden"
       },
@@ -1111,6 +1111,10 @@
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
+          "includeRetired": {
+            "default": false,
+            "type": "boolean"
+          },
           "locale": {
             "default": "fr",
             "enum": [
@@ -1317,6 +1321,51 @@
         "type": "object"
       },
       "name": "insight_plan_category_merge"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read-only safety preview of retiring ONE old category after completed canonical reclassification. Reports all active draft/public post IDs, page references, nested categories, surviving historical version counts, and fingerprint. Canonical categories cannot be retired. Does not modify any category.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "categoryId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId"
+        ],
+        "type": "object"
+      },
+      "name": "insight_plan_category_retirement"
     },
     {
       "_meta": {
@@ -1751,6 +1800,110 @@
         "type": "object"
       },
       "name": "insight_rename_category"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Restore ONE retired category to active use after explicit user approval. Requires its current updatedAt from insight_list_categories(includeRetired=true) and confirm=true. Retains slug, titles, and historical article relations.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "categoryId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "confirm": {
+            "const": true,
+            "type": "boolean"
+          },
+          "expectedUpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "expectedUpdatedAt",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "insight_restore_category"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:write",
+              "editorial:publish"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Retire ONE legacy category after explicit approval for that category ID and a fresh matching retirement preview fingerprint. Refuses any active post/page references or child categories, retains historical version references, and never hard-deletes the category. Restore with insight_restore_category.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "categoryId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "confirm": {
+            "const": true,
+            "type": "boolean"
+          },
+          "expectedFingerprint": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "expectedFingerprint",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "insight_retire_category"
     },
     {
       "_meta": {

@@ -20,6 +20,11 @@ import {
   type CategoryCreateInput,
   type CategoryRenameInput,
   type CategoryWriteResult,
+  type CategoryRetirePlanInput,
+  type CategoryRetireApplyInput,
+  type CategoryRestoreInput,
+  type CategoryRetirePlanResult,
+  type CategoryRetirementResult,
   type UpdatePostInput,
   type UpdatePostResult,
   type SchedulePostInput,
@@ -149,6 +154,15 @@ export class InsightClient {
   applyCategoryMerge(input: CategoryMergeApplyInput) {
     return this.request<CategoryMergeApplyResult>({ ...input, operation: 'apply-category-merge' })
   }
+  planCategoryRetirement(input: CategoryRetirePlanInput) {
+    return this.request<CategoryRetirePlanResult>({ ...input, operation: 'plan-category-retirement' })
+  }
+  retireCategory(input: CategoryRetireApplyInput) {
+    return this.request<CategoryRetirementResult>({ ...input, operation: 'retire-category' })
+  }
+  restoreCategory(input: CategoryRestoreInput) {
+    return this.request<CategoryRetirementResult>({ ...input, operation: 'restore-category' })
+  }
   createCategory(input: CategoryCreateInput) {
     return this.request<CategoryWriteResult>({ ...input, operation: 'create-category' })
   }
@@ -179,8 +193,8 @@ export class InsightClient {
   bufferCancelSchedule(input: BufferCancelInput) {
     return this.request({ ...input, operation: 'buffer-cancel-schedule' })
   }
-  listCategories(locale: 'fr' | 'en' = 'fr') {
-    return this.request<ReferenceResult>({ operation: 'list-categories', locale })
+  listCategories(locale: 'fr' | 'en' = 'fr', includeRetired = false) {
+    return this.request<ReferenceResult>({ operation: 'list-categories', locale, includeRetired })
   }
   listAuthors() {
     return this.request<ReferenceResult>({ operation: 'list-authors' })
