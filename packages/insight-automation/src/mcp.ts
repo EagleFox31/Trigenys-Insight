@@ -152,7 +152,7 @@ export function createInsightMCPServer(backend: EditorialBackend): McpServer {
     'insight_list_categories',
     {
       _meta: oauth(['editorial:read']),
-      description: 'List category IDs, localized titles, stable slugs and updatedAt timestamps. Use updatedAt as the expectedUpdatedAt guard for insight_rename_category.',
+      description: 'List category IDs, localized titles, stable slugs, updatedAt and retiredAt. Excludes retired categories by default; set includeRetired=true to review historical categories and restore them. Use updatedAt for concurrency guards.',
       inputSchema: listCategoriesSchema.shape,
       annotations: read,
     },
