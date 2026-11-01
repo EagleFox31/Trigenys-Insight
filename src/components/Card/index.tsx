@@ -43,11 +43,13 @@ export const Card: React.FC<{
 
   const { slug, categories, meta, title, heroImage } = doc || {}
   const { description, image: metaImage } = meta || {}
+  // Article covers are the canonical card artwork. SEO metadata images are a
+  // fallback only; some legacy generated OG derivatives no longer exist.
   const cover =
-    metaImage && typeof metaImage === 'object'
-      ? metaImage
-      : heroImage && typeof heroImage === 'object'
-        ? heroImage
+    heroImage && typeof heroImage === 'object' && heroImage.url
+      ? heroImage
+      : metaImage && typeof metaImage === 'object' && metaImage.url
+        ? metaImage
         : null
 
   const hasCategories = categories && Array.isArray(categories) && categories.length > 0

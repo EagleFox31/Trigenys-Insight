@@ -216,8 +216,10 @@ export async function localizedPostMetadata({
   const seoDescription = post.meta?.description || post.excerpt
   const editorialVisuals = getEditorialVisuals(decodedSlug)
   const socialImage =
-    mediaURL(post.meta?.image, 'og') ||
+    // The generated 1200x630 derivatives are missing for many legacy media.
+    // Prefer the same verified original Hero used by the public article.
     mediaURL(post.heroImage) ||
+    mediaURL(post.meta?.image) ||
     (editorialVisuals?.hero ? absoluteCanonicalURL(editorialVisuals.hero.src) : null) ||
     absoluteCanonicalURL('/api/og')
 
