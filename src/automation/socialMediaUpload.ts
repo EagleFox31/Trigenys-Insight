@@ -7,7 +7,7 @@ import { publicMediaURL } from '@/integrations/buffer/socialAsset'
 // Payload's current cloud-storage hook uploads sizes in parallel using the same
 // metadata object. With random Blob suffixes, a size can overwrite the main
 // filename. Preserve a canonical original for the 1080x1350 social contract.
-export async function uploadOriginalSocialMedia(
+export async function uploadOriginalEditorialMedia(
   req: PayloadRequest,
   input: {
     name: string
@@ -15,8 +15,12 @@ export async function uploadOriginalSocialMedia(
     alt: string
     mimeType: 'image/png' | 'image/jpeg' | 'image/webp'
   },
+  dimensions: { width: number; height: number },
 ) {
   const { name, data, alt, mimeType } = input
+  const { width, height } = dimensions
+  if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width < 1 || height < 1)
+    throw new EditorialError(422, 'invalid_image_dimensions')
   const stem = name.slice(0, name.lastIndexOf('.'))
   const found = await req.payload.find({
     collection: 'media',
@@ -81,8 +85,8 @@ export async function uploadOriginalSocialMedia(
   const originalSize = {
     url,
     filename: originalFilename,
-    width: 1080,
-    height: 1350,
+    width,
+    height,
     mimeType,
     filesize: data.length,
   }
@@ -96,8 +100,8 @@ export async function uploadOriginalSocialMedia(
       prefix: 'media',
       mimeType,
       filesize: data.length,
-      width: 1080,
-      height: 1350,
+      width,
+      height,
       sizes: {
         thumbnail: originalSize,
         square: originalSize,
@@ -113,4 +117,14 @@ export async function uploadOriginalSocialMedia(
     req,
   })
   return { ok: true, id: media.id, url, reused: Boolean(found.docs[0]) }
+}
+
+// Backward-compatible social-banner entry point. Hero covers pass their actual
+// dimensions to the same durable Blob upload path instead of relying on
+// Payload's concurrent derivative-upload metadata (which can point to 404s).
+export function uploadOriginalSocialMedia(
+  req: PayloadRequest,
+  input: Parameters<typeof uploadOriginalEditorialMedia>[1],
+) {
+  return uploadOriginalEditorialMedia(req, input, { width: 1080, height: 1350 })
 }
