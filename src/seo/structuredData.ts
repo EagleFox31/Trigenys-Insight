@@ -147,7 +147,7 @@ export function buildArticleJsonLd({
 }) {
   const canonicalURL = absoluteCanonicalURL(`/${locale}/posts/${slug}`)
   const heroImage = mediaURL(post.heroImage)
-  const fallbackImage = mediaURL(post.meta?.image, 'og')
+  const fallbackImage = mediaURL(post.meta?.image)
   const image = heroImage || fallbackImage
 
   const authors =
