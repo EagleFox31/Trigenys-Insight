@@ -15,7 +15,7 @@
   justify-content: space-between;
   margin-bottom: 18px;
 }
-.toolbar h1 {
+.toolbar .heading {
   margin: 0;
   font-size: 12px;
   font-weight: 800;
@@ -98,7 +98,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.copy h2 {
+.copy .storyTitle {
   max-width: 30ch;
   margin: 0 0 12px;
   color: #102f52;
@@ -109,7 +109,7 @@
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
-.copy h2 a:hover,
+.copy .storyTitle a:hover,
 .read:hover {
   color: #a84b07;
 }
@@ -240,7 +240,7 @@
   .choiceTitle {
     font-size: 17px;
   }
-  .copy h2 {
+  .copy .storyTitle {
     font-size: 32px;
   }
 }
@@ -251,7 +251,7 @@
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  .copy h2 {
+  .copy .storyTitle {
     font-size: clamp(29px, 7.5vw, 40px);
   }
   .picker {
@@ -327,11 +327,11 @@
   .copy a {
     pointer-events: auto;
   }
-  .copy h2 {
+  .copy .storyTitle {
     color: #fff;
     font-size: clamp(29px, 2.8vw, 42px);
   }
-  .copy h2 a:hover,
+  .copy .storyTitle a:hover,
   .read:hover {
     color: #ffc68e;
   }
@@ -347,4 +347,13 @@
   .read {
     color: #fff;
   }
+  .deskHero .slide {
+    min-height: 460px;
+  }
+}
+
+.deskHero {
+  background: transparent;
+  border-bottom: 0;
+  padding: 0 0 36px;
 }

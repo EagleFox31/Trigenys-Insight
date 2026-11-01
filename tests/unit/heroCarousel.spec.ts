@@ -195,6 +195,19 @@ describe('homepage carousel behaviour', () => {
     advance(24000)
     active(1)
   })
+  it('reuses the carousel within a rubric without a second H1 or homepage tracking', () => {
+    render(createElement(HeroCarousel, {
+      stories, locale: 'fr', variant: 'desk', headingLevel: 2,
+      heading: 'À la une dans cette rubrique',
+    }))
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('À la une dans cette rubrique')
+    expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Article 1')
+    advance(400)
+    expect(trackEditorialEvent).toHaveBeenCalledWith('article_card_impression', expect.objectContaining({ placement: 'desk_hero_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Article suivant' }))
+    expect(screen.getByRole('heading', { level: 3 }).textContent).toBe('Article 2')
+  })
 })
 
 describe('hero editorial selection', () => {

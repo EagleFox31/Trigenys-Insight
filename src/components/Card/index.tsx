@@ -16,6 +16,7 @@ import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 export type CardPostData = {
   categories?: null | Array<number | { slug?: null | string; title?: null | string }>
   meta?: Post['meta']
+  heroImage?: Post['heroImage']
   slug?: null | string
   title?: null | string
 }
@@ -40,8 +41,14 @@ export const Card: React.FC<{
     title: titleFromProps,
   } = props
 
-  const { slug, categories, meta, title } = doc || {}
+  const { slug, categories, meta, title, heroImage } = doc || {}
   const { description, image: metaImage } = meta || {}
+  const cover =
+    metaImage && typeof metaImage === 'object'
+      ? metaImage
+      : heroImage && typeof heroImage === 'object'
+        ? heroImage
+        : null
 
   const hasCategories = categories && Array.isArray(categories) && categories.length > 0
   const titleToUse = titleFromProps || title
@@ -96,8 +103,8 @@ export const Card: React.FC<{
           </Link>
         ))}
       <div className="insights-card__media relative w-full">
-        {!metaImage && <div className="insights-card__placeholder">TI</div>}
-        {metaImage && typeof metaImage !== 'string' && <Media resource={metaImage} size="33vw" />}
+        {!cover && <div className="insights-card__placeholder">TI</div>}
+        {cover && <Media resource={cover} size="33vw" />}
       </div>
       <div className="insights-card__body">
         {showCategories && hasCategories && (

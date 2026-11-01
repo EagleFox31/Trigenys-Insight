@@ -11,6 +11,7 @@ import React from 'react'
 import { NewsletterForm } from './NewsletterForm'
 import { HeroCarousel } from './HeroCarousel'
 import { selectHeroPosts } from './heroSelection'
+import { toHeroStory } from './heroStories'
 import {
   editorialRubrics,
   localizedRubricPath,
@@ -28,10 +29,8 @@ function asMedia(value: Post['heroImage'] | NonNullable<Post['meta']>['image']) 
 
 function authorNames(post: Post) {
   return (
-    post.populatedAuthors
-      ?.map((author) => author.name)
-      .filter(Boolean)
-      .join(', ') || 'Trigenys Insights'
+    post.populatedAuthors?.map(author => author.name).filter(Boolean).join(', ') ||
+    'Trigenys Insights'
   )
 }
 
@@ -230,25 +229,7 @@ export function InsightsHome({ locale, posts }: { locale: SiteLocale; posts: Pos
 
       <HeroCarousel
         locale={locale}
-        stories={heroPosts.map((post) => {
-          const media = asMedia(post.heroImage) || asMedia(post.meta?.image)
-          return {
-            id: post.id,
-            slug: post.slug!,
-            href: withLocale(locale, `/posts/${post.slug}`),
-            title: post.title!,
-            excerpt:
-              (post.excerpt || post.meta?.description || '').split(/\s+/).slice(0, 12).join(' ') +
-              ((post.excerpt || '').split(/\s+/).length > 12 ? '…' : ''),
-            category: categorySlug(post),
-            categoryLabel: primaryCategoryLabel(post, locale),
-            kindLabel: postKindLabel(post, locale),
-            author: authorNames(post),
-            date: formatPostDate(post.publishedAt, locale, true),
-            minutes: post.readingTime || 8,
-            image: media?.url ? { url: media.url, alt: media.alt || '' } : null,
-          }
-        })}
+        stories={heroPosts.map(post => toHeroStory(post, locale))}
       />
 
       {compactStories.length > 0 && (
