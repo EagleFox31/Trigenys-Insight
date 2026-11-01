@@ -1,0 +1,120 @@
+.page {
+  padding: 32px 0 64px;
+}
+.header {
+  padding-bottom: 28px;
+}
+.headingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.title {
+  margin: 12px 0 0;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(36px, 4.6vw, 64px);
+  font-weight: 650;
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  color: #102f52;
+  text-wrap: balance;
+}
+.description {
+  max-width: 76ch;
+  margin: 18px 0 0;
+  color: #59636b;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.count {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  border: 1px solid #deded8;
+  border-radius: 4px;
+  background: #fff;
+  color: #102f52;
+  text-decoration: none;
+}
+.count strong {
+  font-size: 32px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.count span {
+  max-width: 12ch;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.count svg {
+  color: #c45d12;
+}
+.count:hover {
+  border-color: #c45d12;
+}
+.count:focus-visible {
+  outline: 3px solid #d76b19;
+  outline-offset: 4px;
+}
+.archiveHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 0 22px;
+  border-top: 1px solid #deded8;
+  scroll-margin-top: 100px;
+}
+.articles {
+  scroll-margin-top: 100px;
+}
+.archiveHeading h2 {
+  margin: 0;
+  color: #102f52;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 600;
+}
+.archiveHeading p {
+  margin: 0;
+  color: #68727a;
+  font-size: 13px;
+}
+.articles .archive {
+  max-width: none;
+  padding-inline: 0;
+}
+@media (max-width: 760px) {
+  .page {
+    padding-top: 24px;
+  }
+  .header {
+    padding-bottom: 20px;
+  }
+  .headingRow {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .count {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .count strong {
+    font-size: 25px;
+  }
+  .count span {
+    max-width: none;
+  }
+  .description {
+    margin-top: 16px;
+    font-size: 15px;
+  }
+  .archiveHeading {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 22px;
+  }
+}

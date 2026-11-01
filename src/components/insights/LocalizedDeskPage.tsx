@@ -1,13 +1,22 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { ArrowDown } from 'lucide-react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
 import type { CardPostData } from '@/components/Card'
 import type { SiteLocale } from '@/i18n/config'
-import { getEditorialRubric, localizedRubricPath, postBelongsToRubric, type EditorialRubricId } from '@/editorial/rubrics'
+import {
+  getEditorialRubric,
+  localizedRubricPath,
+  type EditorialRubricId,
+} from '@/editorial/rubrics'
 import { absoluteCanonicalURL, buildBreadcrumbJsonLd, serializeJsonLd } from '@/seo/structuredData'
+import { HeroCarousel } from './HeroCarousel'
+import { toHeroStory } from './heroStories'
+import { queryDeskPosts, selectDeskHighlights } from './deskData'
+import styles from './DeskPage.module.css'
 
 export async function LocalizedDeskPage({
   locale,
@@ -21,49 +30,33 @@ export async function LocalizedDeskPage({
   const path = localizedRubricPath(rubric, locale)
   const payload = await getPayload({ config: configPromise })
 
-  // Query the new CMS category and original category IDs at the same time.
-  // Legacy post relationships survive this navigation change without a DB migration.
-  const categoryResult = await payload.find({
-    collection: 'categories',
-    depth: 0,
-    fallbackLocale: false,
-    locale,
-    limit: 50,
-    pagination: false,
-    overrideAccess: false,
-    where: { slug: { in: [rubric.id, ...rubric.legacySlugs] } },
-  })
-
-  const categoryIds = categoryResult.docs.map((category) => category.id)
-  let posts: CardPostData[] = []
-
-  if (categoryIds.length > 0) {
-    const result = await payload.find({
-      collection: 'posts',
-      depth: 1,
-      fallbackLocale: false,
-      locale,
-      limit: 24,
-      pagination: false,
-      overrideAccess: false,
-      sort: '-publishedAt',
-      where: {
-        and: [
-          { _status: { equals: 'published' } },
-          { categories: { in: categoryIds } },
-        ],
-      },
-      select: { title: true, slug: true, categories: true, meta: true },
-    })
-    posts = result.docs.filter((post) => {
-      if (!post.title || !post.slug) return false
-      const slugs = (post.categories || [])
-        .filter((cat) => cat && typeof cat === 'object')
-        .map((cat) => (typeof cat === 'object' && cat ? cat.slug : ''))
-        .filter((slug): slug is string => Boolean(slug))
-      return postBelongsToRubric(desk, slugs)
-    })
-  }
+  const posts = await queryDeskPosts(payload, desk, locale)
+  const highlights = await selectDeskHighlights(payload, posts, locale)
+  const fr = locale === 'fr'
+  const count = new Intl.NumberFormat(fr ? 'fr-CM' : 'en-GB').format(posts.length)
+  const countLabel = fr
+    ? posts.length === 1
+      ? 'article disponible'
+      : 'articles disponibles'
+    : posts.length === 1
+      ? 'article available'
+      : 'articles available'
+  const highlightHeading =
+    highlights.kind === 'popular'
+      ? fr
+        ? 'Les plus lus sur 7 jours'
+        : 'Most read in the past 7 days'
+      : fr
+        ? 'À la une dans cette rubrique'
+        : 'Featured in this section'
+  // Only send the small card presentation to the grid, never the article bodies.
+  const cards: CardPostData[] = posts.map((post) => ({
+    title: post.title,
+    slug: post.slug,
+    categories: post.categories,
+    heroImage: post.heroImage,
+    meta: { ...post.meta, description: post.meta?.description || post.excerpt || '' },
+  }))
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: locale === 'fr' ? 'Accueil' : 'Home', path: `/${locale}` },
@@ -71,38 +64,77 @@ export async function LocalizedDeskPage({
   ])
 
   return (
-    <main className="py-16 md:py-24">
-      <script dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} type="application/ld+json" />
-      <div className="insights-shell mb-12 border-b border-[#dfded7] pb-10">
-        <p className="eyebrow">{locale === 'fr' ? 'Rubrique' : 'Section'}</p>
-        <h1 className="mt-4 font-[var(--font-fraunces)] text-[clamp(3rem,7vw,6.2rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#102f52]">
-          {copy.title}
-        </h1>
-        <p className="mt-7 max-w-[66ch] text-lg leading-8 text-[#59636b]">{copy.description}</p>
-      </div>
+    <main className={styles.page}>
+      <script
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+        type="application/ld+json"
+      />
+      <header className={'insights-shell ' + styles.header}>
+        <div className={styles.headingRow}>
+          <div>
+            <p className="eyebrow">{fr ? 'Rubrique' : 'Section'}</p>
+            <h1 className={styles.title}>{copy.title}</h1>
+          </div>
+          <a
+            className={styles.count}
+            href="#articles"
+            aria-label={`${fr ? 'Voir' : 'View'} ${count} ${countLabel}`}
+          >
+            <strong>{count}</strong>
+            <span>{countLabel}</span>
+            <ArrowDown aria-hidden="true" size={18} />
+          </a>
+        </div>
+        <p className={styles.description}>{copy.description}</p>
+      </header>
+
+      <HeroCarousel
+        locale={locale}
+        variant="desk"
+        headingLevel={2}
+        heading={highlightHeading}
+        stories={highlights.posts.map((post) => toHeroStory(post, locale))}
+      />
 
       {desk === 'made-in-africa' && (
         <div className="insights-shell mb-12 grid gap-4 sm:grid-cols-2">
-          <Link href={`/${locale}/consommer-local/cameroun`} className="rounded-lg border border-[#dfded7] bg-white px-6 py-5 font-semibold text-[#102f52] hover:border-[#e07520]">
+          <Link
+            href={`/${locale}/consommer-local/cameroun`}
+            className="rounded-lg border border-[#dfded7] bg-white px-6 py-5 font-semibold text-[#102f52] hover:border-[#e07520]"
+          >
             {locale === 'fr' ? 'Consommer camerounais' : 'Buy Cameroonian'} ↗
           </Link>
-          <Link href={`/${locale}/consommer-local/afrique`} className="rounded-lg border border-[#dfded7] bg-white px-6 py-5 font-semibold text-[#102f52] hover:border-[#e07520]">
+          <Link
+            href={`/${locale}/consommer-local/afrique`}
+            className="rounded-lg border border-[#dfded7] bg-white px-6 py-5 font-semibold text-[#102f52] hover:border-[#e07520]"
+          >
             {locale === 'fr' ? 'Consommer africain' : 'Buy African'} ↗
           </Link>
         </div>
       )}
 
-      {posts.length > 0 ? (
-        <CollectionArchive locale={locale} placement="archive" posts={posts} />
-      ) : (
-        <div className="insights-shell">
-          <p className="max-w-[62ch] text-[16px] leading-7 text-[#68727a]">
-            {locale === 'fr'
-              ? 'Les premiers dossiers de cette rubrique sont en préparation.'
-              : 'The first stories for this section are in preparation.'}
-          </p>
+      <section id="articles" className={styles.articles} aria-labelledby="desk-archive-title">
+        <div className={'insights-shell ' + styles.archiveHeading}>
+          <h2 id="desk-archive-title">{fr ? 'Tous les articles' : 'All articles'}</h2>
+          {posts.length > 0 && <p>{fr ? 'Du plus récent au plus ancien' : 'Newest first'}</p>}
         </div>
-      )}
+        {posts.length > 0 ? (
+          <CollectionArchive
+            className={'insights-shell ' + styles.archive}
+            locale={locale}
+            placement="archive"
+            posts={cards}
+          />
+        ) : (
+          <div className="insights-shell">
+            <p className="max-w-[62ch] text-[16px] leading-7 text-[#68727a]">
+              {fr
+                ? 'Les premiers dossiers de cette rubrique sont en préparation.'
+                : 'The first stories for this section are in preparation.'}
+            </p>
+          </div>
+        )}
+      </section>
     </main>
   )
 }

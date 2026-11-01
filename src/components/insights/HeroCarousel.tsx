@@ -25,8 +25,23 @@ export type HeroStory = {
 }
 const ROTATION_MS = 8000
 
-export function HeroCarousel({ stories, locale }: { stories: HeroStory[]; locale: SiteLocale }) {
+export function HeroCarousel({
+  stories,
+  locale,
+  heading,
+  headingLevel = 1,
+  variant = 'home',
+}: {
+  stories: HeroStory[]
+  locale: SiteLocale
+  heading?: string
+  headingLevel?: 1 | 2
+  variant?: 'home' | 'desk'
+}) {
   const fr = locale === 'fr'
+  const label = heading || (fr ? 'À la une' : 'In focus')
+  const Heading = headingLevel === 1 ? 'h1' : 'h2'
+  const StoryHeading = headingLevel === 1 ? 'h2' : 'h3'
   const id = useId()
   const root = useRef<HTMLElement>(null)
   const touch = useRef<{ x: number; y: number } | null>(null)
@@ -87,8 +102,8 @@ export function HeroCarousel({ stories, locale }: { stories: HeroStory[]; locale
   return (
     <section
       ref={root}
-      className={styles.hero}
-      aria-label={fr ? 'À la une' : 'Featured stories'}
+      className={[styles.hero, variant === 'desk' ? styles.deskHero : ''].filter(Boolean).join(' ')}
+      aria-label={heading || (fr ? 'À la une' : 'Featured stories')}
       aria-roledescription={fr ? 'carrousel' : 'carousel'}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -96,7 +111,7 @@ export function HeroCarousel({ stories, locale }: { stories: HeroStory[]; locale
     >
       <div className={'insights-shell ' + styles.layout}>
         <div className={styles.toolbar}>
-          <h1>{fr ? 'À la une' : 'In focus'}</h1>
+          <Heading className={styles.heading}>{label}</Heading>
           {count > 1 && (
             <div className={styles.controls}>
               {desktop && !reducedMotion && (
@@ -167,7 +182,8 @@ export function HeroCarousel({ stories, locale }: { stories: HeroStory[]; locale
           }}
         >
           {stories.map((story, position) => {
-            const placement = `home_hero_${position + 1}` as ArticlePlacement
+            const placement =
+              `${variant === 'desk' ? 'desk' : 'home'}_hero_${position + 1}` as ArticlePlacement
             const tracking = { slug: story.slug, category: story.category, locale, placement }
             return (
               <div
@@ -205,11 +221,11 @@ export function HeroCarousel({ stories, locale }: { stories: HeroStory[]; locale
                         <p className={styles.kicker}>
                           {story.categoryLabel} · {story.kindLabel}
                         </p>
-                        <h2>
+                        <StoryHeading className={styles.storyTitle}>
                           <TrackedArticleLink {...tracking} href={story.href}>
                             {story.title}
                           </TrackedArticleLink>
-                        </h2>
+                        </StoryHeading>
                         {story.excerpt && <p className={styles.excerpt}>{story.excerpt}</p>}
                         <p className={styles.meta}>
                           {story.author} · {story.date} · {story.minutes} min
