@@ -1020,7 +1020,57 @@
         "openWorldHint": false,
         "readOnlyHint": true
       },
-      "description": "Read an article by postId or idempotencyKey. version=latest (default) returns the latest saved revision, which may be a draft; version=published returns the actual published Payload snapshot rendered by the public site, even when a newer draft exists. The response identifies the version and returns publicPath for the published snapshot. Returns published_post_not_found if never published; does not fetch the page over HTTP. Read-only: never republishes or changes an article.",
+      "description": "Read recorded article openings over 1–365 calendar days (default 30, Africa/Douala). One view per article/IP per rolling 24h across FR/EN; not unique people. Optional locale filters the first counted language. Returns trackingSince: no historical visits are invented. Read only; no IPs or fingerprints exposed. get_post also includes total/7-day/30-day articleViews.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "default": 30,
+            "maximum": 365,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "postId": {
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "postId"
+        ],
+        "type": "object"
+      },
+      "name": "insight_get_article_views"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read an article by postId or idempotencyKey. version=latest (default) returns the latest saved revision, which may be a draft; version=published returns the actual published Payload snapshot rendered by the public site, even when a newer draft exists. The response identifies the version and returns publicPath for the published snapshot. articleViews includes total, last7Days, last30Days and trackingSince when available: IP-deduplicated 24-hour openings, not unique readers. Returns published_post_not_found if never published; does not fetch the page over HTTP. Read-only: never republishes or changes an article.",
       "execution": {
         "taskSupport": "forbidden"
       },
@@ -1969,6 +2019,55 @@
         "type": "object"
       },
       "name": "insight_schedule_post"
+    },
+    {
+      "_meta": {
+        "securitySchemes": [
+          {
+            "scopes": [
+              "editorial:read"
+            ],
+            "type": "oauth2"
+          }
+        ]
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Rank up to 50 articles by recorded IP-deduplicated views in the last 1–365 calendar days (default 30, Africa/Douala). Not unique readers. Optional locale filter; ties ordered by post ID. Includes first collection date and language counts. Read only; never exposes IPs or fingerprints.",
+      "execution": {
+        "taskSupport": "forbidden"
+      },
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "days": {
+            "default": 30,
+            "maximum": 365,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "limit": {
+            "default": 10,
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "insight_top_articles"
     },
     {
       "_meta": {

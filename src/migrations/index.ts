@@ -14,6 +14,7 @@ import * as migration_20261011_232733_add_author_public_profile from './20261011
 import * as migration_20261014_121500_add_mcp_oauth from './20261014_121500_add_mcp_oauth'
 
 import * as migration_20261030_093000_retire_categories from './20261030_093000_retire_categories'
+import * as migration_20261101_160000_article_views from './20261101_160000_article_views'
 
 export const migrations = [
   // Keep migrations in chronological order.
@@ -59,5 +60,10 @@ export const migrations = [
     up: migration_20261030_093000_retire_categories.up,
     down: migration_20261030_093000_retire_categories.down,
     name: '20261030_093000_retire_categories',
+  },
+  {
+    up: migration_20261101_160000_article_views.up,
+    down: migration_20261101_160000_article_views.down,
+    name: '20261101_160000_article_views',
   },
 ]

@@ -18,6 +18,7 @@ import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { editorialOSEndpoint } from './endpoints/editorialOS'
+import { articleViewsEndpoint } from './endpoints/articleViews'
 import { wakeQueuedPublication } from './automation/publicationScheduler'
 
 const filename = fileURLToPath(import.meta.url)
@@ -78,7 +79,7 @@ export default buildConfig({
       connectionTimeoutMillis: 20000,
     },
   }),
-  endpoints: [editorialOSEndpoint],
+  endpoints: [editorialOSEndpoint, articleViewsEndpoint],
   collections: [
     Pages,
     Posts,

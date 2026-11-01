@@ -1,5 +1,7 @@
 import { executeBufferOperation } from '@/integrations/buffer/service'
 import { socialArticleStatus } from '@/integrations/buffer/store'
+import { articleViewSummary } from '@/lib/articleViews/store'
+import { getArticleViews } from './articleViews'
 import { createHash } from 'node:crypto'
 import sharp from 'sharp'
 import { uploadOriginalSocialMedia } from './socialMediaUpload'
@@ -40,6 +42,13 @@ export async function executeEditorialOperation(
   )
     return executeBufferOperation(req, input)
   const payload = req.payload
+  if (input.operation === 'article-views' || input.operation === 'top-articles') {
+    try { return await getArticleViews(req, input) }
+    catch (error) {
+      if (error instanceof EditorialError) throw error
+      throw new EditorialError(503, 'article_views_unavailable')
+    }
+  }
   if (input.operation === 'list-posts') return listEditorialPosts(req, input)
   if (input.operation === 'plan-slug-change') return planSlugChange(req, input)
   if (input.operation === 'apply-slug-change') return applySlugChange(req, input)
@@ -187,12 +196,20 @@ export async function executeEditorialOperation(
     if (!post || (input.version === 'published' && post._status !== 'published'))
       throw new EditorialError(404, input.version === 'published' ? 'published_post_not_found' : 'post_not_found')
     const socialDistribution = await socialArticleStatus(req, post.id)
+    // Existing installed app versions can read the counter without new tool discovery.
+    const articleViews = payload.db?.pool
+      ? await articleViewSummary(payload.db.pool, post.id).catch(() => {
+          payload.logger.warn('Article view statistics unavailable')
+          return undefined
+        })
+      : undefined
     return {
       ok: true,
       version: input.version,
       publicPath: input.version === 'published' ? `/${input.locale}/posts/${encodeURIComponent(post.slug)}` : null,
       post,
       ...(socialDistribution ? { socialDistribution } : {}),
+      ...(articleViews ? { articleViews } : {}),
     }
   }
   if (input.operation === 'schedule-post' || input.operation === 'cancel-schedule') {
