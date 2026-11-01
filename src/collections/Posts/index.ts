@@ -20,6 +20,7 @@ import { PaymentFinderBlockConfig } from '../../blocks/PaymentFinder/config'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidateDelete, revalidatePost } from './hooks/revalidatePost'
+import { guardRetiredCategories } from './hooks/guardRetiredCategories'
 
 import {
   MetaDescriptionField,
@@ -327,6 +328,7 @@ export const Posts: CollectionConfig<'posts'> = {
     slugField(),
   ],
   hooks: {
+    beforeChange: [guardRetiredCategories],
     afterChange: [revalidatePost],
     afterRead: [populateAuthors],
     afterDelete: [revalidateDelete],
