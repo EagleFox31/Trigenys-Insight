@@ -2,7 +2,7 @@ import { executeBufferOperation } from '@/integrations/buffer/service'
 import { socialArticleStatus } from '@/integrations/buffer/store'
 import { createHash } from 'node:crypto'
 import sharp from 'sharp'
-import { uploadOriginalSocialMedia } from './socialMediaUpload'
+import { uploadOriginalEditorialMedia, uploadOriginalSocialMedia } from './socialMediaUpload'
 import { changePublicationSchedule, listPublicationSchedules } from './scheduling'
 import { applySlugChange, planSlugChange, resolveAutomationSlugAlias } from './slugManagement'
 import type { PayloadRequest } from 'payload'
@@ -119,20 +119,27 @@ export async function executeEditorialOperation(
     }
     const extension = input.mimeType === 'image/jpeg' ? 'jpg' : formats[input.mimeType]
     const name = `automation-${createHash('sha256').update(data).update(input.alt).digest('hex')}.${extension}`
-    if (
-      metadata.width === 1080 &&
-      metadata.height === 1350 &&
-      process.env.BLOB_READ_WRITE_TOKEN?.trim()
-    ) {
-      if (/archive/i.test(input.filename))
-        throw new EditorialError(422, 'social_asset_archived_or_missing')
-      return uploadOriginalSocialMedia(req, {
-        name,
-        data,
-        alt: input.alt,
-        mimeType: input.mimeType,
-      })
+    // Use one canonical, durable Blob original for both Hero and social media.
+    // Payload's parallel derivative hooks may otherwise persist a 404 as media.url.
+    if (process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
+      if (metadata.width === 1080 && metadata.height === 1350) {
+        if (/archive/i.test(input.filename))
+          throw new EditorialError(422, 'social_asset_archived_or_missing')
+        return uploadOriginalSocialMedia(req, {
+          name,
+          data,
+          alt: input.alt,
+          mimeType: input.mimeType,
+        })
+      }
+      return uploadOriginalEditorialMedia(
+        req,
+        { name, data, alt: input.alt, mimeType: input.mimeType },
+        { width: metadata.width, height: metadata.height },
+      )
     }
+    if (process.env.NODE_ENV === 'production')
+      throw new EditorialError(503, 'durable_media_storage_unavailable')
     const existing = await payload.find({
       collection: 'media',
       where: { filename: { equals: name } },
