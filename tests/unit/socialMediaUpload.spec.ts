@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PayloadRequest } from 'payload'
 import { put } from '@vercel/blob'
-import { uploadOriginalSocialMedia } from '@/automation/socialMediaUpload'
+import { uploadOriginalEditorialMedia, uploadOriginalSocialMedia } from '@/automation/socialMediaUpload'
 vi.mock('@vercel/blob', () => ({ put: vi.fn() }))
 const name = `automation-${'a'.repeat(64)}.webp`
 const filename = `${name.slice(0, -5)}-original.webp`
@@ -29,6 +29,45 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 describe('original social media upload', () => {
+  it('repairs a stale landscape Hero Blob URL on the same CMS media ID', async () => {
+    const f = fixture({
+      id: 75,
+      filename: name,
+      url: 'https://example.public.blob.vercel-storage.com/missing-original.webp',
+      mimeType: 'image/webp',
+      filesize: input.data.length,
+    })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 404 })))
+    expect(
+      await uploadOriginalEditorialMedia(f.req, input, { width: 1280, height: 720 }),
+    ).toMatchObject({ id: 75, url, reused: true })
+    expect(put).toHaveBeenCalledOnce()
+    expect(f.payload.create).not.toHaveBeenCalled()
+    expect(f.payload.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'media',
+        id: 75,
+        context: { skipCloudStorage: true },
+        data: expect.objectContaining({
+          url,
+          width: 1280,
+          height: 720,
+          sizes: expect.objectContaining({
+            large: expect.objectContaining({ width: 1280, height: 720, url }),
+            og: expect.objectContaining({ width: 1280, height: 720, url }),
+          }),
+        }),
+      }),
+    )
+  })
+  it('refuses invalid dimensions before changing a Hero record', async () => {
+    const f = fixture(null)
+    await expect(
+      uploadOriginalEditorialMedia(f.req, input, { width: 0, height: 720 }),
+    ).rejects.toMatchObject({ code: 'invalid_image_dimensions' })
+    expect(f.payload.find).not.toHaveBeenCalled()
+    expect(put).not.toHaveBeenCalled()
+  })
   it('repairs a thumbnail filename on the same media record using the original bytes', async () => {
     const f = fixture({
       id: 69,
