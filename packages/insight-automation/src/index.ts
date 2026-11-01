@@ -9,6 +9,8 @@ import {
   type MediaResult,
   type ReferenceResult,
   type PostResult,
+  type ArticleViewsInput,
+  type ArticleViewsResult,
   type SlugPlanInput,
   type SlugApplyInput,
   type SlugPlanResult,
@@ -174,6 +176,13 @@ export class InsightClient {
   }
   getPostById(postId: number, locale: 'fr' | 'en' = 'fr', version: 'latest' | 'published' = 'latest') {
     return this.request<PostResult>({ operation: 'get-post', postId, locale, version })
+  }
+  getArticleViews(input: ArticleViewsInput & { postId: number }) {
+    const { postId, days, locale } = input
+    return this.request<ArticleViewsResult>({ operation: 'article-views', postId, days, locale })
+  }
+  topArticles(input: Omit<ArticleViewsInput, 'postId'> = {}) {
+    return this.request<ArticleViewsResult>({ operation: 'top-articles', ...input })
   }
   bufferUpdateDraft(input: BufferUpdateDraftInput) {
     return this.request({ ...input, operation: 'buffer-update-draft' })

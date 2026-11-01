@@ -1,5 +1,9 @@
 # Editorial analytics — Trigenys Insights
 
+The complementary [first-party article opening counter](./article-view-counter.md)
+provides IP-deduplicated 24-hour views through the editorial app. Its counts and
+collection start are distinct from PostHog `article_view` events and reading rates.
+
 ## Decision
 
 **Adopt PostHog Cloud EU for editorial/product analytics; keep Vercel Analytics for basic hosting-level web analytics.**

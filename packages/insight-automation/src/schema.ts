@@ -137,6 +137,35 @@ export const postSelectorSchema = z
 export const getPostSchema = postSelectorSchema
   .extend({ version: z.enum(['latest', 'published']).default('latest') })
   .strict()
+export const articleViewsSchema = z.object({
+  postId: id,
+  days: z.number().int().min(1).max(365).default(30),
+  locale: locale.optional(),
+}).strict()
+export const topArticlesSchema = articleViewsSchema.omit({ postId: true }).extend({
+  limit: z.number().int().min(1).max(50).default(10),
+}).strict()
+export type ArticleViewsInput = { postId?: number; days?: number; locale?: 'fr' | 'en'; limit?: number }
+export type ArticleViewsResult = {
+  ok: true
+  metric: string
+  timezone: string
+  countingRule: string
+  trackingSince: string
+  fromDate: string
+  toDate: string
+  days: number
+  locale: 'fr' | 'en' | null
+  docs: Array<{ postId: number; title: string | null; slug: string | null; views: number; byLocale: { fr: number; en: number } }>
+}
+export type ArticleViewSummaryResult = {
+  metric: string
+  timezone: string
+  trackingSince: string | null
+  total: number
+  last7Days: number
+  last30Days: number
+}
 export const slugPlanSchema = z
   .object({
     postId: id,
@@ -510,6 +539,8 @@ export type BufferScheduleInput = z.input<typeof bufferScheduleSchema>
 export type BufferCancelInput = z.input<typeof bufferCancelSchema>
 
 export const operationSchema = z.discriminatedUnion('operation', [
+  articleViewsSchema.extend({ operation: z.literal('article-views') }),
+  topArticlesSchema.extend({ operation: z.literal('top-articles') }),
   bufferUpdateDraftSchema.extend({ operation: z.literal('buffer-update-draft') }),
   bufferStatusSchema.extend({ operation: z.literal('buffer-status') }),
   bufferDraftSchema.extend({ operation: z.literal('buffer-create-draft') }),
@@ -560,6 +591,6 @@ export type ReferenceResult = {
   ok: true
   docs: Array<{ id: number; title?: string; slug?: string; name?: string; updatedAt?: string; retiredAt?: string | null }>
 }
-export type PostResult = { ok: true; version: 'latest' | 'published'; publicPath: string | null; post: Record<string, unknown> }
+export type PostResult = { ok: true; version: 'latest' | 'published'; publicPath: string | null; post: Record<string, unknown>; articleViews?: ArticleViewSummaryResult }
 
 export type SourceInput = z.input<typeof sourceSchema>

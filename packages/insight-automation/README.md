@@ -29,6 +29,19 @@ Streamable HTTP server is also available at `/api/mcp` on the CMS, with OAuth/PK
 Node.js 20+ is required. Build with `npm run build`; distribute with `npm pack`.
 The package is not yet published on npm.
 
+Read IP-deduplicated article openings (one per article/IP in a rolling 24 hours):
+
+```ts
+await insight.getArticleViews({ postId: 44, days: 7 })
+await insight.topArticles({ days: 30, limit: 10 })
+```
+
+The matching read-only MCP tools are `insight_get_article_views` and
+`insight_top_articles`. Existing `getPostById` results also include `articleViews`
+with total, 7-day and 30-day counts and the collection start date. These are
+deduplicated openings, not unique people; no old traffic is backfilled.
+See [counter semantics and deployment](../../docs/analytics/article-view-counter.md).
+
 
 Schedule an existing draft with an explicit UTC offset and IANA zone:
 
