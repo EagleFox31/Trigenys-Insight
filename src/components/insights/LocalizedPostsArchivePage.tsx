@@ -36,6 +36,7 @@ export async function LocalizedPostsArchivePage({
       title: true,
       slug: true,
       categories: true,
+      heroImage: true,
       meta: true,
     },
   })
