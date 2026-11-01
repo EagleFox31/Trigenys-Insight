@@ -104,11 +104,13 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = async ({
   if (!context.disableIndexNow) {
     const wasPublished = previousDoc._status === 'published'
     const isPublished = doc._status === 'published'
+    const wasTrashed = Boolean(previousDoc.deletedAt)
+    const isTrashed = Boolean(doc.deletedAt)
     const publicContentChanged =
       indexNowPostFingerprint(doc as unknown as Record<string, unknown>) !==
       indexNowPostFingerprint(previousDoc as unknown as Record<string, unknown>)
 
-    if (isPublished && (!wasPublished || publicContentChanged)) {
+    if (isPublished && !isTrashed && (!wasPublished || wasTrashed || publicContentChanged)) {
       const urls = await getLocalizedPostUrls({
         payload,
         id: doc.id,
@@ -122,10 +124,20 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = async ({
         )
       }
 
-      await notifyIndexNow(payload, urls, wasPublished ? 'published update' : 'publication')
+      await notifyIndexNow(payload, urls, wasTrashed ? 'restore from trash' : wasPublished ? 'published update' : 'publication')
     }
 
-    if (wasPublished && !isPublished) {
+    // Native Payload trash goes through updateByID / afterChange, not the
+    // afterDelete hook. A soft-deleted post is excluded from ordinary queries,
+    // so construct its former public URLs instead of trying to re-read it.
+    if (wasPublished && !wasTrashed && isTrashed && previousDoc.slug) {
+      await notifyIndexNow(payload, [
+        absoluteCanonicalURL(`/fr/posts/${previousDoc.slug}`),
+        absoluteCanonicalURL(`/en/posts/${previousDoc.slug}`),
+      ], 'archive to trash')
+    }
+
+    if (wasPublished && !isPublished && !isTrashed) {
       const urls = await getLocalizedPostUrls({
         payload,
         id: doc.id,
