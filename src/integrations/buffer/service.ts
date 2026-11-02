@@ -214,17 +214,25 @@ async function executeBufferOperationUnlocked(
       row.state === 'failed' &&
       !row.remote_post_id &&
       ['buffer_graphql_error', 'buffer_mutation_rejected'].includes(row.last_error ?? '')
+    // A definitive input rejection did not schedule the post. Re-read and review
+    // that same remote draft before removing the rejected approval/date.
+    const rejectedSchedule =
+      Boolean(row.request.publishAt) &&
+      row.last_error === 'buffer_mutation_rejected' &&
+      row.request.lastFailure?.kind === 'mutation' &&
+      row.request.lastFailure.providerType === 'InvalidInputError'
     const recovering =
       row.state === 'failed' &&
       Boolean(row.remote_post_id) &&
-      [
-        'buffer_post_changed_review_required',
-        'buffer_post_media_changed_review_required',
-        'buffer_media_not_confirmed',
-      ].includes(row.last_error ?? '') &&
+      (rejectedSchedule ||
+        (!row.request.publishAt &&
+          [
+            'buffer_post_changed_review_required',
+            'buffer_post_media_changed_review_required',
+            'buffer_media_not_confirmed',
+          ].includes(row.last_error ?? ''))) &&
       input.expectedRemoteText !== undefined &&
-      input.expectedRemoteImageURL !== undefined &&
-      !row.request.publishAt
+      input.expectedRemoteImageURL !== undefined
     if (
       (!retrying && !recovering && (row.state !== 'draft' || !row.remote_post_id)) ||
       !row.request.channel ||
@@ -600,7 +608,11 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           } else {
             if (remote.status !== 'draft') throw new EditorialError(409, 'buffer_post_not_a_draft')
             mutationAttempted = true
-            remote = await client.schedule(remote.id, request.publishAt!, request.channel.service)
+            remote = await client.schedule(remote.id, request.publishAt!, request.channel.service, {
+              text: request.text,
+              imageURL: request.socialAsset.url,
+              altText: request.socialAsset.alt,
+            })
           }
           if (
             remote.status !== 'scheduled' ||
