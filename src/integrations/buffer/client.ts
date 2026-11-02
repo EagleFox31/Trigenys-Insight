@@ -309,16 +309,25 @@ export class BufferClient {
         : {}),
     })
   }
-  schedule(id: string, dueAt: string): Promise<BufferPost> {
+  schedule(id: string, dueAt: string, service?: string): Promise<BufferPost> {
     return this.mutation('editPost', {
       id,
       schedulingType: 'automatic',
       mode: 'customScheduled',
       dueAt,
       saveToDraft: false,
+      ...(service?.toLowerCase() === 'facebook'
+        ? { metadata: { facebook: { type: 'post' } } }
+        : {}),
     })
   }
-  cancel(id: string): Promise<BufferPost> {
-    return this.mutation('editPost', { id, saveToDraft: true })
+  cancel(id: string, service?: string): Promise<BufferPost> {
+    return this.mutation('editPost', {
+      id,
+      saveToDraft: true,
+      ...(service?.toLowerCase() === 'facebook'
+        ? { metadata: { facebook: { type: 'post' } } }
+        : {}),
+    })
   }
 }

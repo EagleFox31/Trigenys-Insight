@@ -600,7 +600,7 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           } else {
             if (remote.status !== 'draft') throw new EditorialError(409, 'buffer_post_not_a_draft')
             mutationAttempted = true
-            remote = await client.schedule(remote.id, request.publishAt!)
+            remote = await client.schedule(remote.id, request.publishAt!, request.channel.service)
           }
           if (
             remote.status !== 'scheduled' ||
@@ -612,7 +612,7 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
             throw new EditorialError(409, 'buffer_post_already_processed')
           if (remote.status !== 'draft') {
             mutationAttempted = true
-            remote = await client.cancel(remote.id)
+            remote = await client.cancel(remote.id, request.channel.service)
           }
           if (remote.status !== 'draft')
             throw new BufferAPIError('buffer_cancel_state_unexpected', true)
