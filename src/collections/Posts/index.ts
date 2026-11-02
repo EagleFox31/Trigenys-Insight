@@ -10,6 +10,7 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { authenticated } from '../../access/authenticated'
+import { canTrashPost } from '../../access/canTrashPost'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
@@ -33,10 +34,13 @@ import { slugField } from 'payload'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
+  trash: true,
   indexes: [{ fields: ['_status', 'publishedAt'] }],
   access: {
     create: authenticated,
-    delete: authenticated,
+    // Payload passes a deletedAt field for reversible trash/restore, but
+    // data is undefined for permanent deletion. Deny irreversible purges.
+    delete: ({ req: { user }, data }) => canTrashPost({ user, data }),
     read: authenticatedOrPublished,
     update: authenticated,
   },

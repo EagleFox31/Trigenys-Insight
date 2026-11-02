@@ -232,6 +232,8 @@ export interface Page {
  */
 export interface Post {
   id: number;
+  /** Native Payload soft delete timestamp. */
+  deletedAt?: string | null;
   title: string;
   excerpt: string;
   heroImage?: (number | null) | Media;
