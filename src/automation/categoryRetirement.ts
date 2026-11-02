@@ -11,6 +11,7 @@ import type {
 import { EditorialError } from './errors'
 import { withCategoryLock } from './categoryManagement'
 import { withPublicationLock } from './scheduling'
+import { RETIREMENT_CONTEXT_KEY } from '@/collections/categoryRetirementGuard'
 
 // Version references MUST survive retirement. Check active relationships in
 // both Payload snapshots and SQL relation tables: a draft-only query can miss
@@ -145,6 +146,7 @@ export async function retireCategory(
         collection: 'categories', id: input.categoryId,
         data: { retiredAt: new Date().toISOString() },
         depth: 0, overrideAccess: true, req,
+        context: { ...req.context, [RETIREMENT_CONTEXT_KEY]: true },
       })
       if (!stored.retiredAt || stored.slug !== plan.category.slug)
         throw new EditorialError(409, 'category_retirement_verification_failed')
@@ -181,6 +183,7 @@ export async function restoreCategory(
         collection: 'categories', id: input.categoryId,
         data: { retiredAt: null },
         depth: 0, overrideAccess: true, req,
+        context: { ...req.context, [RETIREMENT_CONTEXT_KEY]: true },
       })
       if (stored.retiredAt || stored.slug !== existing.slug)
         throw new EditorialError(409, 'category_restoration_verification_failed')
