@@ -309,9 +309,23 @@ export class BufferClient {
         : {}),
     })
   }
-  schedule(id: string, dueAt: string, service?: string): Promise<BufferPost> {
+  schedule(
+    id: string,
+    dueAt: string,
+    service: string,
+    content: { text: string; imageURL: string; altText?: string },
+  ): Promise<BufferPost> {
     return this.mutation('editPost', {
       id,
+      text: content.text,
+      assets: [
+        {
+          image: {
+            url: content.imageURL,
+            ...(content.altText ? { metadata: { altText: content.altText } } : {}),
+          },
+        },
+      ],
       schedulingType: 'automatic',
       mode: 'customScheduled',
       dueAt,

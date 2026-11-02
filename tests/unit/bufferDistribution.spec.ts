@@ -76,6 +76,11 @@ describe('Buffer API boundary', () => {
     'can %s a Facebook post when the provider requires its post type on edit',
     async (action) => {
       const dueAt = '2026-11-04T11:30:00Z'
+      const content = {
+        text,
+        imageURL: 'https://insight.trigenys.com/media/reviewed.webp',
+        altText: 'Reviewed banner',
+      }
       const result = {
         ...remote,
         status: action === 'schedule' ? 'scheduled' : 'draft',
@@ -89,6 +94,15 @@ describe('Buffer API boundary', () => {
               editPost: { __typename: 'InvalidInputError', message: 'Facebook post type is required' },
             },
           })
+        if (action === 'schedule' && (!input.text || !input.assets?.length))
+          return Response.json({
+            data: {
+              editPost: {
+                __typename: 'InvalidInputError',
+                message: 'The scheduled post requires its image content',
+              },
+            },
+          })
         return Response.json({
           data: { editPost: { __typename: 'PostActionSuccess', post: result } },
         })
@@ -96,16 +110,20 @@ describe('Buffer API boundary', () => {
       const client = new BufferClient('test-secret', fetcher)
       await expect(
         action === 'schedule'
-          ? client.schedule(remote.id, dueAt, 'facebook')
+          ? client.schedule(remote.id, dueAt, 'facebook', content)
           : client.cancel(remote.id, 'facebook'),
       ).resolves.toEqual(result)
       const input = JSON.parse(fetcher.mock.calls[0][1]!.body as string).variables.input
       expect(input).toMatchObject({ id: remote.id, saveToDraft: action === 'cancel' })
-      expect(input.text).toBeUndefined()
-      expect(input.assets).toBeUndefined()
-      if (action === 'schedule')
+      if (action === 'schedule') {
         expect(input).toMatchObject({ mode: 'customScheduled', schedulingType: 'automatic', dueAt })
-      else {
+        expect(input.text).toBe(text)
+        expect(input.assets).toEqual([
+          { image: { url: content.imageURL, metadata: { altText: content.altText } } },
+        ])
+      } else {
+        expect(input.text).toBeUndefined()
+        expect(input.assets).toBeUndefined()
         expect(input.mode).toBeUndefined()
         expect(input.dueAt).toBeUndefined()
       }
@@ -115,7 +133,12 @@ describe('Buffer API boundary', () => {
     const fetcher = vi.fn(async () =>
       Response.json({ data: { editPost: { __typename: 'PostActionSuccess', post: remote } } }),
     )
-    await new BufferClient('test-secret', fetcher).schedule(remote.id, '2026-11-04T11:30:00Z', 'linkedin')
+    await new BufferClient('test-secret', fetcher).schedule(
+      remote.id,
+      '2026-11-04T11:30:00Z',
+      'linkedin',
+      { text, imageURL: 'https://insight.trigenys.com/media/reviewed.webp' },
+    )
     const input = JSON.parse(
       (fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
     ).variables.input

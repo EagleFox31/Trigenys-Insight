@@ -600,7 +600,11 @@ export async function processBufferOutbox(req: PayloadRequest, client = new Buff
           } else {
             if (remote.status !== 'draft') throw new EditorialError(409, 'buffer_post_not_a_draft')
             mutationAttempted = true
-            remote = await client.schedule(remote.id, request.publishAt!, request.channel.service)
+            remote = await client.schedule(remote.id, request.publishAt!, request.channel.service, {
+              text: request.text,
+              imageURL: request.socialAsset.url,
+              altText: request.socialAsset.alt,
+            })
           }
           if (
             remote.status !== 'scheduled' ||
