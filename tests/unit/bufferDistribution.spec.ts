@@ -72,6 +72,55 @@ afterEach(() => {
 })
 
 describe('Buffer API boundary', () => {
+  it.each(['schedule', 'cancel'] as const)(
+    'can %s a Facebook post when the provider requires its post type on edit',
+    async (action) => {
+      const dueAt = '2026-11-04T11:30:00Z'
+      const result = {
+        ...remote,
+        status: action === 'schedule' ? 'scheduled' : 'draft',
+        dueAt: action === 'schedule' ? dueAt : null,
+      }
+      const fetcher = vi.fn(async (_url: string | URL | Request, options?: RequestInit) => {
+        const input = JSON.parse(options!.body as string).variables.input
+        if (input.metadata?.facebook?.type !== 'post')
+          return Response.json({
+            data: {
+              editPost: { __typename: 'InvalidInputError', message: 'Facebook post type is required' },
+            },
+          })
+        return Response.json({
+          data: { editPost: { __typename: 'PostActionSuccess', post: result } },
+        })
+      })
+      const client = new BufferClient('test-secret', fetcher)
+      await expect(
+        action === 'schedule'
+          ? client.schedule(remote.id, dueAt, 'facebook')
+          : client.cancel(remote.id, 'facebook'),
+      ).resolves.toEqual(result)
+      const input = JSON.parse(fetcher.mock.calls[0][1]!.body as string).variables.input
+      expect(input).toMatchObject({ id: remote.id, saveToDraft: action === 'cancel' })
+      expect(input.text).toBeUndefined()
+      expect(input.assets).toBeUndefined()
+      if (action === 'schedule')
+        expect(input).toMatchObject({ mode: 'customScheduled', schedulingType: 'automatic', dueAt })
+      else {
+        expect(input.mode).toBeUndefined()
+        expect(input.dueAt).toBeUndefined()
+      }
+    },
+  )
+  it('does not attach Facebook metadata when scheduling LinkedIn', async () => {
+    const fetcher = vi.fn(async () =>
+      Response.json({ data: { editPost: { __typename: 'PostActionSuccess', post: remote } } }),
+    )
+    await new BufferClient('test-secret', fetcher).schedule(remote.id, '2026-11-04T11:30:00Z', 'linkedin')
+    const input = JSON.parse(
+      (fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].body as string,
+    ).variables.input
+    expect(input.metadata).toBeUndefined()
+  })
   it.each([undefined, 'https://insight.trigenys.com/media/social.webp'])(
     'supplies the mandatory Facebook post type, with or without an image (%s)',
     async (imageURL) => {
@@ -398,7 +447,7 @@ describe('durable social delivery', () => {
       state: 'draft',
     })
     expect(f.find).not.toHaveBeenCalled()
-    expect(f.client.cancel).toHaveBeenCalledWith('buffer-1')
+    expect(f.client.cancel).toHaveBeenCalledWith('buffer-1', 'linkedin')
   })
   it('revises the same remote draft and verifies the resulting text', async () => {
     vi.stubEnv('BUFFER_API_KEY', 'test-secret')
