@@ -15,6 +15,11 @@ import {
   type SlugApplyInput,
   type SlugPlanResult,
   type SlugApplyResult,
+  type ArchivePlanInput,
+  type ArchivePostInput,
+  type RestorePostInput,
+  type ArchivePlanResult,
+  type ArchiveResult,
   type CategoryMergePlanInput,
   type CategoryMergePlanResult,
   type CategoryMergeApplyInput,
@@ -170,6 +175,15 @@ export class InsightClient {
   }
   renameCategory(input: CategoryRenameInput) {
     return this.request<CategoryWriteResult>({ ...input, operation: 'rename-category' })
+  }
+  planPostArchive(input: ArchivePlanInput) {
+    return this.request<ArchivePlanResult>({ ...input, operation: 'plan-post-archive' })
+  }
+  archivePost(input: ArchivePostInput) {
+    return this.request<ArchiveResult>({ ...input, operation: 'archive-post' })
+  }
+  restorePost(input: RestorePostInput) {
+    return this.request<ArchiveResult>({ ...input, operation: 'restore-post' })
   }
   updatePost(input: UpdatePostInput) {
     return this.request<UpdatePostResult>({ ...input, operation: 'update-post' })

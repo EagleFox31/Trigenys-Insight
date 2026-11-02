@@ -7,6 +7,7 @@ import sharp from 'sharp'
 import { uploadOriginalEditorialMedia, uploadOriginalSocialMedia } from './socialMediaUpload'
 import { changePublicationSchedule, listPublicationSchedules } from './scheduling'
 import { applySlugChange, planSlugChange, resolveAutomationSlugAlias } from './slugManagement'
+import { archivePost, planPostArchive, restorePost } from './postArchive'
 import type { PayloadRequest } from 'payload'
 import type { Post } from '@/payload-types'
 import { createAutomationContent } from './content'
@@ -52,6 +53,9 @@ export async function executeEditorialOperation(
   if (input.operation === 'list-posts') return listEditorialPosts(req, input)
   if (input.operation === 'plan-slug-change') return planSlugChange(req, input)
   if (input.operation === 'apply-slug-change') return applySlugChange(req, input)
+  if (input.operation === 'plan-post-archive') return planPostArchive(req, input)
+  if (input.operation === 'archive-post') return archivePost(req, input)
+  if (input.operation === 'restore-post') return restorePost(req, input)
   if (input.operation === 'audit-posts') return auditEditorialPosts(req, input)
   if (input.operation === 'update-content') return updateEditorialContent(req, input)
   if (input.operation === 'list-schedules') return listPublicationSchedules(req, input)
