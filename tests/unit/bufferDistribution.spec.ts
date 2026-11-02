@@ -91,7 +91,10 @@ describe('Buffer API boundary', () => {
         if (input.metadata?.facebook?.type !== 'post')
           return Response.json({
             data: {
-              editPost: { __typename: 'InvalidInputError', message: 'Facebook post type is required' },
+              editPost: {
+                __typename: 'InvalidInputError',
+                message: 'Facebook post type is required',
+              },
             },
           })
         if (action === 'schedule' && (!input.text || !input.assets?.length))
@@ -623,41 +626,85 @@ describe('reviewed social banners', () => {
       code: 'social_asset_requires_public_original_file',
     })
   })
-  it('recovers a reviewed remote draft on the same ID while preserving its current text', async () => {
-    vi.stubEnv('BUFFER_API_KEY', 'test-secret')
-    const f = setup()
-    f.row.remote_post_id = 'buffer-1'
-    Object.assign(f.row, { last_error: 'buffer_post_changed_review_required' })
-    const reviewedText = 'Reviewed current Buffer text #TrigenysInsights'
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string) =>
-        url === 'https://api.buffer.com'
-          ? Response.json({ data: { post: { ...remote, text: reviewedText, assets: [] } } })
-          : new Response(null, {
-              headers: { 'content-type': 'image/webp', 'content-length': '200000' },
-            }),
-      ),
-    )
-    await executeBufferOperation(f.req, {
-      operation: 'buffer-update-draft',
-      exportId: f.row.id,
-      expectedUpdatedAt: f.row.updated_at.toISOString(),
-      postId: 1,
-      locale: 'fr',
-      text: reviewedText,
-      socialMediaId: 9,
-      expectedRemoteText: reviewedText,
-      expectedRemoteImageURL: null,
-    })
-    expect(f.row.state).toBe('pending-revision')
-    const update = f.query.mock.calls.find(([sql]) => sql.includes('SET post_id=$2'))!
-    expect(JSON.parse(update[1]![2] as string)).toMatchObject({
-      text: reviewedText,
-      previousText: reviewedText,
-      previousImageURL: null,
-    })
-  })
+  it.each(['external edit', 'rejected schedule'])(
+    'recovers a reviewed remote draft after %s on the same ID',
+    async (failure) => {
+      vi.stubEnv('BUFFER_API_KEY', 'test-secret')
+      const f = setup()
+      f.row.remote_post_id = 'buffer-1'
+      Object.assign(f.row, {
+        last_error:
+          failure === 'rejected schedule'
+            ? 'buffer_mutation_rejected'
+            : 'buffer_post_changed_review_required',
+      })
+      if (failure === 'rejected schedule')
+        Object.assign(f.row.request, {
+          publishAt: '2026-11-04T11:30:00Z',
+          lastFailure: { kind: 'mutation', providerType: 'InvalidInputError' },
+        })
+      const reviewedText = 'Reviewed current Buffer text #TrigenysInsights'
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) =>
+          url === 'https://api.buffer.com'
+            ? Response.json({ data: { post: { ...remote, text: reviewedText, assets: [] } } })
+            : new Response(null, {
+                headers: { 'content-type': 'image/webp', 'content-length': '200000' },
+              }),
+        ),
+      )
+      await executeBufferOperation(f.req, {
+        operation: 'buffer-update-draft',
+        exportId: f.row.id,
+        expectedUpdatedAt: f.row.updated_at.toISOString(),
+        postId: 1,
+        locale: 'fr',
+        text: reviewedText,
+        socialMediaId: 9,
+        expectedRemoteText: reviewedText,
+        expectedRemoteImageURL: null,
+      })
+      expect(f.row.state).toBe('pending-revision')
+      const update = f.query.mock.calls.find(([sql]) => sql.includes('SET post_id=$2'))!
+      const recovered = JSON.parse(update[1]![2] as string)
+      expect(recovered).toMatchObject({
+        text: reviewedText,
+        previousText: reviewedText,
+        previousImageURL: null,
+      })
+      expect(recovered.publishAt).toBeUndefined()
+      expect(
+        f.query.mock.calls.some(([sql]) => sql.includes('INSERT INTO insight_social_exports')),
+      ).toBe(false)
+    },
+  )
+  it.each(['UnexpectedError', 'UnauthorizedError', undefined])(
+    'keeps a failed schedule blocked without a definitive input rejection (%s)',
+    async (providerType) => {
+      const f = setup()
+      f.row.remote_post_id = 'buffer-1'
+      Object.assign(f.row, { last_error: 'buffer_mutation_rejected' })
+      Object.assign(f.row.request, {
+        publishAt: '2026-11-04T11:30:00Z',
+        lastFailure: { kind: 'mutation', providerType },
+      })
+      await expect(
+        executeBufferOperation(f.req, {
+          operation: 'buffer-update-draft',
+          exportId: f.row.id,
+          expectedUpdatedAt: f.row.updated_at.toISOString(),
+          postId: 1,
+          locale: 'fr',
+          text,
+          socialMediaId: 9,
+          expectedRemoteText: text,
+          expectedRemoteImageURL: null,
+        }),
+      ).rejects.toMatchObject({ code: 'social_export_not_a_draft' })
+      expect(f.query.mock.calls.some(([sql]) => sql.includes('SET post_id=$2'))).toBe(false)
+    },
+  )
   it('refuses recovery when the reviewed remote version has changed again', async () => {
     vi.stubEnv('BUFFER_API_KEY', 'test-secret')
     const f = setup()

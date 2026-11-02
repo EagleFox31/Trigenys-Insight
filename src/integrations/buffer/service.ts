@@ -214,17 +214,25 @@ async function executeBufferOperationUnlocked(
       row.state === 'failed' &&
       !row.remote_post_id &&
       ['buffer_graphql_error', 'buffer_mutation_rejected'].includes(row.last_error ?? '')
+    // A definitive input rejection did not schedule the post. Re-read and review
+    // that same remote draft before removing the rejected approval/date.
+    const rejectedSchedule =
+      Boolean(row.request.publishAt) &&
+      row.last_error === 'buffer_mutation_rejected' &&
+      row.request.lastFailure?.kind === 'mutation' &&
+      row.request.lastFailure.providerType === 'InvalidInputError'
     const recovering =
       row.state === 'failed' &&
       Boolean(row.remote_post_id) &&
-      [
-        'buffer_post_changed_review_required',
-        'buffer_post_media_changed_review_required',
-        'buffer_media_not_confirmed',
-      ].includes(row.last_error ?? '') &&
+      (rejectedSchedule ||
+        (!row.request.publishAt &&
+          [
+            'buffer_post_changed_review_required',
+            'buffer_post_media_changed_review_required',
+            'buffer_media_not_confirmed',
+          ].includes(row.last_error ?? ''))) &&
       input.expectedRemoteText !== undefined &&
-      input.expectedRemoteImageURL !== undefined &&
-      !row.request.publishAt
+      input.expectedRemoteImageURL !== undefined
     if (
       (!retrying && !recovering && (row.state !== 'draft' || !row.remote_post_id)) ||
       !row.request.channel ||
