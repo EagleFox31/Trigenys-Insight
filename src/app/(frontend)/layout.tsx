@@ -11,12 +11,14 @@ import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { SITE_POSITIONING } from '@/seo/positioning'
 import { buildSiteIdentityJsonLd, serializeJsonLd } from '@/seo/structuredData'
 import { draftMode, headers } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
-import { defaultLocale, isSiteLocale } from '@/i18n/config'
+import { defaultLocale, isSiteLocale, siteLocales } from '@/i18n/config'
+import { rssFeedPath, rssFeedTitle } from '@/seo/rss'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces' })
@@ -35,6 +37,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(siteIdentityJsonLd) }}
           type="application/ld+json"
         />
+        {siteLocales.map((feedLocale) => (
+          <link
+            href={rssFeedPath(feedLocale)}
+            hrefLang={feedLocale}
+            key={feedLocale}
+            rel="alternate"
+            title={rssFeedTitle(feedLocale)}
+            type="application/rss+xml"
+          />
+        ))}
       </head>
       <body>
         <Providers>
@@ -51,8 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export const metadata: Metadata = {
-  description:
-    'Actualités, enquêtes et analyses bilingues sur l’IA, le gaming, la finance, l’éducation et l’innovation africaine.',
+  description: SITE_POSITIONING.fr.description,
   metadataBase: new URL(getServerSideURL()),
   title: {
     default: 'Trigenys Insights',

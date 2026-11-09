@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { getServerSideURL } from './getURL'
+import { SITE_POSITIONING } from '@/seo/positioning'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
   type: 'website',
-  description:
-    'Recherche et analyses indépendantes sur la technologie, la cybersécurité, le business et les systèmes numériques.',
+  description: SITE_POSITIONING.fr.description,
   images: [
     {
       url: `${getServerSideURL()}/api/og`,

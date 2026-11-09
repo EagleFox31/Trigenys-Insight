@@ -22,6 +22,7 @@ import { ArticleImpressionBoundary } from '@/components/analytics/ArticleImpress
 import { TrackedArticleLink } from '@/components/analytics/TrackedArticleLink'
 import type { ArticlePlacement } from '@/lib/analytics/events'
 import styles from './NewsroomHome.module.css'
+import { sitePositioning } from '@/seo/positioning'
 
 function asMedia(value: Post['heroImage'] | NonNullable<Post['meta']>['image']) {
   return value && typeof value === 'object' ? value : null
@@ -197,6 +198,7 @@ export function InsightsHome({ locale, posts }: { locale: SiteLocale; posts: Pos
               <span>{t.newsroom.researchMeta}</span>
             </div>
           </div>
+          <h1 className={styles.editionHeadline}>{sitePositioning(locale).headline}</h1>
 
           {trending.length > 0 && (
             <div className={styles.signal}>
@@ -228,6 +230,7 @@ export function InsightsHome({ locale, posts }: { locale: SiteLocale; posts: Pos
       </section>
 
       <HeroCarousel
+        headingLevel={2}
         locale={locale}
         stories={heroPosts.map(post => toHeroStory(post, locale))}
       />
