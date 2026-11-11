@@ -31,12 +31,14 @@ export function HeroCarousel({
   heading,
   headingLevel = 1,
   variant = 'home',
+  sectionId,
 }: {
   stories: HeroStory[]
   locale: SiteLocale
   heading?: string
   headingLevel?: 1 | 2
   variant?: 'home' | 'desk'
+  sectionId?: string
 }) {
   const fr = locale === 'fr'
   const label = heading || (fr ? 'À la une' : 'In focus')
@@ -101,6 +103,7 @@ export function HeroCarousel({
 
   return (
     <section
+      id={sectionId}
       ref={root}
       className={[styles.hero, variant === 'desk' ? styles.deskHero : ''].filter(Boolean).join(' ')}
       aria-label={heading || (fr ? 'À la une' : 'Featured stories')}
@@ -253,11 +256,12 @@ export function HeroCarousel({
                 type="button"
                 className={styles.choice}
                 aria-current={index === position ? 'true' : undefined}
+                aria-label={`${String(position + 1).padStart(2, '0')} · ${story.categoryLabel} · ${story.title}`}
                 aria-controls={`${id}-slides`}
                 onClick={() => select(position)}
               >
                 <span className={styles.number}>{String(position + 1).padStart(2, '0')}</span>
-                <span>
+                <span className={styles.choiceCopy}>
                   <span className={styles.choiceCategory}>{story.categoryLabel}</span>
                   <span className={styles.choiceTitle}>{story.title}</span>
                 </span>

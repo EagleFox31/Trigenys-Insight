@@ -32,6 +32,8 @@ export async function LocalizedDeskPage({
 
   const posts = await queryDeskPosts(payload, desk, locale)
   const highlights = await selectDeskHighlights(payload, posts, locale)
+  const highlightedIds = new Set(highlights.posts.map((post) => post.id))
+  const archivePosts = posts.filter((post) => !highlightedIds.has(post.id))
   const fr = locale === 'fr'
   const count = new Intl.NumberFormat(fr ? 'fr-CM' : 'en-GB').format(posts.length)
   const countLabel = fr
@@ -50,7 +52,7 @@ export async function LocalizedDeskPage({
         ? 'À la une dans cette rubrique'
         : 'Featured in this section'
   // Only send the small card presentation to the grid, never the article bodies.
-  const cards: CardPostData[] = posts.map((post) => ({
+  const cards: CardPostData[] = archivePosts.map((post) => ({
     title: post.title,
     slug: post.slug,
     categories: post.categories,
@@ -77,7 +79,7 @@ export async function LocalizedDeskPage({
           </div>
           <a
             className={styles.count}
-            href="#articles"
+            href={archivePosts.length || !posts.length ? '#articles' : '#desk-highlights'}
             aria-label={`${fr ? 'Voir' : 'View'} ${count} ${countLabel}`}
           >
             <strong>{count}</strong>
@@ -89,6 +91,7 @@ export async function LocalizedDeskPage({
       </header>
 
       <HeroCarousel
+        sectionId="desk-highlights"
         locale={locale}
         variant="desk"
         headingLevel={2}
@@ -113,28 +116,40 @@ export async function LocalizedDeskPage({
         </div>
       )}
 
-      <section id="articles" className={styles.articles} aria-labelledby="desk-archive-title">
-        <div className={'insights-shell ' + styles.archiveHeading}>
-          <h2 id="desk-archive-title">{fr ? 'Tous les articles' : 'All articles'}</h2>
-          {posts.length > 0 && <p>{fr ? 'Du plus récent au plus ancien' : 'Newest first'}</p>}
-        </div>
-        {posts.length > 0 ? (
-          <CollectionArchive
-            className={'insights-shell ' + styles.archive}
-            locale={locale}
-            placement="archive"
-            posts={cards}
-          />
-        ) : (
-          <div className="insights-shell">
-            <p className="max-w-[62ch] text-[16px] leading-7 text-[#68727a]">
-              {fr
-                ? 'Les premiers dossiers de cette rubrique sont en préparation.'
-                : 'The first stories for this section are in preparation.'}
-            </p>
+      {(archivePosts.length > 0 || posts.length === 0) && (
+        <section id="articles" className={styles.articles} aria-labelledby="desk-archive-title">
+          <div className={'insights-shell ' + styles.archiveHeading}>
+            <h2 id="desk-archive-title">
+              {highlightedIds.size > 0
+                ? fr
+                  ? 'Les autres articles'
+                  : 'More stories'
+                : fr
+                  ? 'Tous les articles'
+                  : 'All articles'}
+            </h2>
+            {archivePosts.length > 0 && (
+              <p>{fr ? 'Du plus récent au plus ancien' : 'Newest first'}</p>
+            )}
           </div>
-        )}
-      </section>
+          {archivePosts.length > 0 ? (
+            <CollectionArchive
+              className={'insights-shell ' + styles.archive}
+              locale={locale}
+              placement="archive"
+              posts={cards}
+            />
+          ) : (
+            <div className="insights-shell">
+              <p className="max-w-[62ch] text-[16px] leading-7 text-[#68727a]">
+                {fr
+                  ? 'Les premiers dossiers de cette rubrique sont en préparation.'
+                  : 'The first stories for this section are in preparation.'}
+              </p>
+            </div>
+          )}
+        </section>
+      )}
     </main>
   )
 }
