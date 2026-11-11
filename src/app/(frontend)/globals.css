@@ -792,6 +792,7 @@ a {
 }
 .insights-card__title {
   margin: 0;
+  overflow-wrap: anywhere;
   color: #102f52;
   font-family: var(--font-fraunces), Georgia, serif;
   font-size: 25px;

@@ -10,6 +10,9 @@
   justify-content: space-between;
   gap: 24px;
 }
+.headingRow > div {
+  min-width: 0;
+}
 .title {
   margin: 12px 0 0;
   font-family: var(--font-fraunces), Georgia, serif;
@@ -19,6 +22,7 @@
   letter-spacing: -0.04em;
   color: #102f52;
   text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 .description {
   max-width: 76ch;
@@ -116,5 +120,8 @@
     flex-wrap: wrap;
     gap: 6px;
     padding-top: 22px;
+  }
+  .articles .archive :global(.insights-card__body) {
+    padding: 20px;
   }
 }

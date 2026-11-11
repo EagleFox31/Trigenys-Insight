@@ -5,8 +5,7 @@ import React, { Fragment } from 'react'
 import type { Post } from '@/payload-types'
 import type { SiteLocale } from '@/i18n/config'
 import { withLocale } from '@/i18n/config'
-import { localizedRubricPath, sectionForCategorySlug } from '@/editorial/rubrics'
-import { categoryLabel } from '@/i18n/content'
+import { cardCategoryLinks } from './categoryLinks'
 import type { ArticlePlacement } from '@/lib/analytics/events'
 
 import { Media } from '@/components/Media'
@@ -52,7 +51,7 @@ export const Card: React.FC<{
         ? metaImage
         : null
 
-  const hasCategories = categories && Array.isArray(categories) && categories.length > 0
+  const categoryLinks = cardCategoryLinks(categories, locale)
   const titleToUse = titleFromProps || title
   const sanitizedDescription = description?.replace(/\s/g, ' ')
   const href = withLocale(locale, `/${relationTo}/${slug}`)
@@ -109,40 +108,20 @@ export const Card: React.FC<{
         {cover && <Media resource={cover} size="33vw" />}
       </div>
       <div className="insights-card__body">
-        {showCategories && hasCategories && (
+        {showCategories && categoryLinks.length > 0 && (
           <div className="story-kicker">
-            {categories?.map((category, index) => {
-              if (typeof category === 'object') {
-                const isLast = index === categories.length - 1
-                const rubric = sectionForCategorySlug(category.slug)
-                const categoryPath =
-                  category.slug === 'consommer-camerounais'
-                    ? withLocale(locale, '/consommer-local/cameroun')
-                    : category.slug === 'consommer-africain'
-                      ? withLocale(locale, '/consommer-local/afrique')
-                      : rubric
-                        ? localizedRubricPath(rubric, locale)
-                        : withLocale(locale, `/${category.slug}`)
-                const label = category.slug
-                  ? categoryLabel(category as never, locale)
-                  : category.title || (locale === 'fr' ? 'Analyse' : 'Analysis')
-
-                return (
-                  <Fragment key={index}>
-                    {category.slug ? (
-                      <Link className="relative z-20" href={categoryPath}>
-                        {label}
-                      </Link>
-                    ) : (
-                      label
-                    )}
-                    {!isLast && <Fragment>, &nbsp;</Fragment>}
-                  </Fragment>
-                )
-              }
-
-              return null
-            })}
+            {categoryLinks.map(({ href: categoryPath, label, key }, index) => (
+              <Fragment key={key}>
+                {index > 0 && <Fragment>, &nbsp;</Fragment>}
+                {categoryPath ? (
+                  <Link className="relative z-20" href={categoryPath}>
+                    {label}
+                  </Link>
+                ) : (
+                  label
+                )}
+              </Fragment>
+            ))}
           </div>
         )}
         {titleToUse && (

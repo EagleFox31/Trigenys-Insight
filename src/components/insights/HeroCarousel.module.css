@@ -10,9 +10,11 @@
 }
 .toolbar {
   grid-column: 1 / -1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 18px;
 }
 .toolbar .heading {
@@ -27,6 +29,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 .controls button {
   width: 44px;
@@ -108,6 +111,7 @@
   line-height: 1.08;
   letter-spacing: -0.025em;
   text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 .copy .storyTitle a:hover,
 .read:hover {
@@ -251,21 +255,46 @@
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
+  .toolbar {
+    flex-wrap: wrap;
+  }
+  .toolbar .heading {
+    flex: 1 1 180px;
+    line-height: 1.5;
+  }
   .copy .storyTitle {
-    font-size: clamp(29px, 7.5vw, 40px);
+    font-size: clamp(26px, 6.8vw, 34px);
   }
   .picker {
     border-left: 0;
     padding: 18px 0 0;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
   }
   .choice {
-    padding: 14px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #d9dedf;
+    border-radius: 50%;
   }
-  .choiceTitle {
-    font-size: 16px;
+  .choice[aria-current] {
+    border-color: #102f52;
+    background: #102f52;
   }
-  .choiceCategory {
-    margin-bottom: 4px;
+  .choice[aria-current] .number {
+    color: #fff;
+  }
+  .choiceCopy {
+    display: none;
+  }
+  .number {
+    font-size: 14px;
+    line-height: 1;
   }
   .progress {
     display: none;
@@ -356,4 +385,5 @@
   background: transparent;
   border-bottom: 0;
   padding: 0 0 36px;
+  scroll-margin-top: 100px;
 }
