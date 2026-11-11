@@ -12,7 +12,13 @@ import {
   localizedRubricPath,
   type EditorialRubricId,
 } from '@/editorial/rubrics'
-import { absoluteCanonicalURL, buildBreadcrumbJsonLd, serializeJsonLd } from '@/seo/structuredData'
+import {
+  absoluteCanonicalURL,
+  buildBreadcrumbJsonLd,
+  buildCollectionPageJsonLd,
+  buildJsonLdGraph,
+  serializeJsonLd,
+} from '@/seo/structuredData'
 import { HeroCarousel } from './HeroCarousel'
 import { toHeroStory } from './heroStories'
 import { queryDeskPosts, selectDeskHighlights } from './deskData'
@@ -60,15 +66,24 @@ export async function LocalizedDeskPage({
     meta: { ...post.meta, description: post.meta?.description || post.excerpt || '' },
   }))
 
-  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: locale === 'fr' ? 'Accueil' : 'Home', path: `/${locale}` },
-    { name: copy.title, path },
-  ])
+  const deskJsonLd = buildJsonLdGraph(
+    buildCollectionPageJsonLd({
+      locale,
+      path,
+      name: copy.title,
+      description: copy.description,
+      posts,
+    }),
+    buildBreadcrumbJsonLd([
+      { name: locale === 'fr' ? 'Accueil' : 'Home', path: `/${locale}` },
+      { name: copy.title, path },
+    ]),
+  )
 
   return (
     <main className={styles.page}>
       <script
-        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(deskJsonLd) }}
         type="application/ld+json"
       />
       <header className={'insights-shell ' + styles.header}>

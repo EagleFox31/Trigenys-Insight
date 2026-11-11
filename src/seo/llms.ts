@@ -2,7 +2,9 @@ import type { SiteLocale } from '@/i18n/config'
 import { editorialRubrics, localizedRubricPath } from '@/editorial/rubrics'
 import { getFaqItems, getKeyTakeaways } from '@/seo/answerContent'
 import { isPublicLocalizedPost, type PublicSitemapPost } from '@/seo/postsSitemap'
-import { absoluteCanonicalURL, SITE_IDENTITY } from '@/seo/structuredData'
+import { absoluteCanonicalURL, PARENT_ORGANIZATION, SITE_IDENTITY } from '@/seo/structuredData'
+import { SITE_POSITIONING } from '@/seo/positioning'
+import { rssFeedPath } from '@/seo/rss'
 
 export type LlmsSource = {
   title?: string | null
@@ -152,9 +154,12 @@ const EDITORIAL_DESKS = editorialRubrics
 
 const HEADER = `# ${SITE_IDENTITY.name}
 
-> ${SITE_IDENTITY.name} is an independent bilingual publication covering AI, technology, gaming, finance, education, African-made products and society. We provide sourced analysis, practical guides and original African perspectives in English and French.
+> ${SITE_POSITIONING.en.description}
+
+FR : ${SITE_POSITIONING.fr.description}
 
 Canonical site: ${SITE_IDENTITY.url}
+Publisher: ${PARENT_ORGANIZATION.name} (${PARENT_ORGANIZATION.url})
 
 ## Languages
 
@@ -175,6 +180,8 @@ ${EDITORIAL_DESKS}
 - Pages sitemap: ${absoluteCanonicalURL('/pages-sitemap.xml')}
 - Posts sitemap: ${absoluteCanonicalURL('/posts-sitemap.xml')}
 - News sitemap: ${absoluteCanonicalURL('/news-sitemap.xml')}
+- RSS (French): ${absoluteCanonicalURL(rssFeedPath('fr'))}
+- RSS (English): ${absoluteCanonicalURL(rssFeedPath('en'))}
 - Full text of recent articles: ${absoluteCanonicalURL('/llms-full.txt')}
 
 ## Editorial approach

@@ -3,13 +3,14 @@ import type { SiteLocale } from '@/i18n/config'
 import { authorSlug } from '@/utilities/authorSlug'
 import { getFaqItems, getKeyTakeaways } from '@/seo/answerContent'
 import { socialProfiles } from '@/Footer/socialProfiles'
+import { SITE_POSITIONING } from '@/seo/positioning'
+import { articleDates } from '@/utilities/articleDates'
 
 export const SITE_IDENTITY = {
   name: 'Trigenys Insights',
   url: 'https://insight.trigenys.com',
   logoPath: '/trigenys-insights-logo-512.png',
-  description:
-    'Independent bilingual publication on AI, gaming, business and finance, education and careers, African products and society, published from Douala, Cameroon.',
+  description: SITE_POSITIONING.en.description,
   topics: [
     'Technology', 'Artificial intelligence', 'Cybersecurity', 'Information systems',
     'Gaming', 'Digital culture', 'Business', 'Finance', 'Fintech',
@@ -24,8 +25,36 @@ export const SITE_SAME_AS: readonly string[] = socialProfiles
   .map((profile) => profile.url)
   .filter((url) => !new URL(url).pathname.startsWith('/share/'))
 
+/**
+ * Reference entity for the Trigenys group. The corporate site
+ * (www.trigenys.com) owns this @id; Insight only points to it, so answer
+ * engines merge both properties into one organisation.
+ */
+export const PARENT_ORGANIZATION = {
+  id: 'https://www.trigenys.com/#org',
+  name: 'Trigenys',
+  url: 'https://www.trigenys.com',
+} as const
+
 export const ORGANIZATION_ID = `${SITE_IDENTITY.url}/#organization`
 export const WEBSITE_ID = `${SITE_IDENTITY.url}/#website`
+
+export function parentOrganizationNode() {
+  return {
+    '@type': 'Organization',
+    '@id': PARENT_ORGANIZATION.id,
+    name: PARENT_ORGANIZATION.name,
+    url: PARENT_ORGANIZATION.url,
+  }
+}
+
+/**
+ * Locale-independent Person @id: the FR and EN author pages and every
+ * article byline describe the same entity.
+ */
+export function personId(slug: string) {
+  return `${SITE_IDENTITY.url}/authors/${slug}#person`
+}
 
 export function absoluteCanonicalURL(path = '/') {
   if (/^https?:\/\//i.test(path)) return path
@@ -63,6 +92,7 @@ export function buildSiteIdentityJsonLd() {
           },
         },
         areaServed: { '@type': 'Place', name: 'Africa' },
+        parentOrganization: { '@id': PARENT_ORGANIZATION.id },
         knowsAbout: [...SITE_IDENTITY.topics],
         ...(SITE_SAME_AS.length > 0 ? { sameAs: [...SITE_SAME_AS] } : {}),
         logo: {
@@ -83,6 +113,8 @@ export function buildSiteIdentityJsonLd() {
         },
         inLanguage: ['fr', 'en'],
       },
+      // Appended last so existing consumers of @graph[0] / @graph[1] keep working.
+      parentOrganizationNode(),
     ],
   }
 }
@@ -140,10 +172,13 @@ export function buildArticleJsonLd({
   locale,
   post,
   slug,
+  authorProfiles = {},
 }: {
   locale: SiteLocale
   post: Post
   slug: string
+  /** Public author fields keyed by author slug (see seo/authorProfiles). */
+  authorProfiles?: Record<string, Omit<PublicAuthorProfile, 'name'>>
 }) {
   const canonicalURL = absoluteCanonicalURL(`/${locale}/posts/${slug}`)
   const heroImage = mediaURL(post.heroImage)
@@ -155,16 +190,15 @@ export function buildArticleJsonLd({
       ?.map((author) => author?.name?.trim())
       .filter((name): name is string => Boolean(name))
       .map((name) => {
-        const profileURL = absoluteCanonicalURL(`/${locale}/authors/${authorSlug(name)}`)
-
-        return {
-          '@type': 'Person',
-          '@id': `${profileURL}#person`,
-          name,
-          url: profileURL,
-        }
+        const slug = authorSlug(name)
+        return buildPersonNode({
+          locale,
+          slug,
+          profile: { name, ...authorProfiles[slug] },
+        })
       }) || []
 
+  const dates = articleDates(post)
   const categories = post.categories
     ?.map((category) => (typeof category === 'object' && category ? category.title : null))
     .filter((title): title is string => Boolean(title))
@@ -180,12 +214,11 @@ export function buildArticleJsonLd({
       '@type': 'WebPage',
       '@id': canonicalURL,
     },
-    datePublished: post.publishedAt || post.createdAt,
-    dateModified: post.updatedAt,
+    datePublished: dates.published,
+    dateModified: dates.modified,
     inLanguage: locale === 'fr' ? 'fr-FR' : 'en',
-    publisher: {
-      '@id': ORGANIZATION_ID,
-    },
+    publisher: parentOrganizationNode(),
+    sourceOrganization: { '@id': ORGANIZATION_ID },
     isPartOf: {
       '@id': WEBSITE_ID,
     },
@@ -242,6 +275,52 @@ export function buildFaqJsonLd({
   }
 }
 
+/**
+ * CollectionPage for a thematic pillar (editorial desk): the section's
+ * description plus the ordered list of its articles, so answer engines see
+ * the hub-and-spoke structure, not just a paginated list.
+ */
+export function buildCollectionPageJsonLd({
+  locale,
+  path,
+  name,
+  description,
+  posts,
+  limit = 30,
+}: {
+  locale: SiteLocale
+  path: string
+  name: string
+  description: string
+  posts: ReadonlyArray<{ title?: string | null; slug?: string | null }>
+  limit?: number
+}) {
+  const canonicalURL = absoluteCanonicalURL(path)
+  const items = posts.filter((post) => post.title && post.slug).slice(0, limit)
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${canonicalURL}#collection`,
+    url: canonicalURL,
+    name,
+    description,
+    inLanguage: locale === 'fr' ? 'fr-FR' : 'en',
+    isPartOf: { '@id': WEBSITE_ID },
+    publisher: { '@id': ORGANIZATION_ID },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: items.length,
+      itemListElement: items.map((post, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: absoluteCanonicalURL(`/${locale}/posts/${post.slug}`),
+        name: post.title,
+      })),
+    },
+  }
+}
+
 export type PublicAuthorProfile = {
   name: string
   jobTitle?: string | null
@@ -261,6 +340,29 @@ export function buildAuthorProfileJsonLd({
   profile: PublicAuthorProfile
 }) {
   const canonicalURL = absoluteCanonicalURL(`/${locale}/authors/${slug}`)
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    '@id': `${canonicalURL}#profile`,
+    url: canonicalURL,
+    inLanguage: locale === 'fr' ? 'fr-FR' : 'en',
+    isPartOf: { '@id': WEBSITE_ID },
+    mainEntity: buildPersonNode({ locale, slug, profile }),
+  }
+}
+
+/** Person node shared by author pages and article bylines. */
+export function buildPersonNode({
+  locale,
+  slug,
+  profile,
+}: {
+  locale: SiteLocale
+  slug: string
+  profile: PublicAuthorProfile
+}) {
+  const canonicalURL = absoluteCanonicalURL(`/${locale}/authors/${slug}`)
   const sameAs = (profile.profileLinks || [])
     .map((link) => link?.url?.trim())
     .filter((url): url is string => Boolean(url && /^https:\/\//i.test(url)))
@@ -268,7 +370,7 @@ export function buildAuthorProfileJsonLd({
 
   const person: Record<string, unknown> = {
     '@type': 'Person',
-    '@id': `${canonicalURL}#person`,
+    '@id': personId(slug),
     name: profile.name,
     url: canonicalURL,
     worksFor: { '@id': ORGANIZATION_ID },
@@ -279,15 +381,7 @@ export function buildAuthorProfileJsonLd({
   if (expertise.length > 0) person.knowsAbout = expertise
   if (sameAs.length > 0) person.sameAs = sameAs
 
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'ProfilePage',
-    '@id': `${canonicalURL}#profile`,
-    url: canonicalURL,
-    inLanguage: locale === 'fr' ? 'fr-FR' : 'en',
-    isPartOf: { '@id': WEBSITE_ID },
-    mainEntity: person,
-  }
+  return person
 }
 
 export function buildJsonLdGraph(

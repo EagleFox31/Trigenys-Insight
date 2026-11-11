@@ -3,6 +3,8 @@
 // Zero-dependency HTTP smoke test for search engine accessibility.
 // Usage: node scripts/seo/public-crawl-smoke.mjs [https://insight.trigenys.com]
 // Preview routes must still emit production canonical URLs.
+import { documentWithoutScripts, GENERIC_H1, seoPageFailures, sitemapLocs } from './seoChecks.mjs'
+
 const base = new URL(process.argv[2] || process.env.SEO_SMOKE_BASE_URL || 'https://insight.trigenys.com')
 const canonicalHost = 'insight.trigenys.com'
 const crawlerAgent = 'OAI-SearchBot/1.0 (+https://platform.openai.com/docs/bots)'
@@ -29,13 +31,9 @@ async function request(path, userAgent = crawlerAgent) {
   return { text, response, url }
 }
 
-function documentWithoutScripts(html) {
-  return html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
-}
-
-function sitemapLocs(xml) {
-  return [...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi)]
-    .map((match) => match[1].replace(/&amp;/g, '&'))
+function assertSeoContract(html, label, kind) {
+  const problems = seoPageFailures(html, { kind, forbiddenH1: GENERIC_H1 })
+  assert(problems.length === 0, `${label} SEO contract${problems.length ? ': ' + problems.join('; ') : ''}`)
 }
 
 async function main() {
@@ -69,6 +67,7 @@ async function main() {
     const visibleHome = documentWithoutScripts(homeHTML)
     assert(/<h1\b/i.test(visibleHome), `${locale} homepage has a server-rendered H1`)
     assert(!/class="site-skeleton(?:\s|")/i.test(visibleHome), `${locale} crawler does not receive global placeholder markup`)
+    assertSeoContract(homeHTML, `${locale} homepage`, 'home')
 
     const article = articleURLs.find((url) => new URL(url).pathname.startsWith(`/${locale}/posts/`))
     if (!article) {
@@ -83,6 +82,7 @@ async function main() {
     assert(/<h1\b/i.test(visibleArticle), `${locale} article heading is in the HTML response`)
     assert(!/class="site-skeleton(?:\s|")/i.test(visibleArticle), `${locale} crawler does not receive global placeholder markup`)
     assert(/rel="canonical"/.test(articleHTML) && articleHTML.includes(article), `${locale} article carries its canonical URL`)
+    assertSeoContract(articleHTML, `${locale} article`, 'article')
   }
 }
 
