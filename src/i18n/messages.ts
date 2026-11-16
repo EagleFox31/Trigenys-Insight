@@ -46,7 +46,7 @@ const messages = {
       method2: 'Rendre les hypothèses, limites et méthodes de calcul visibles.',
       method3: "Transformer la donnée en décision concrète, contextualisée pour l'Afrique.",
       brief: 'Trigenys Brief',
-      briefTitle: "Une analyse utile. Pas une avalanche d'e-mails.",
+      briefTitle: 'Recevez nos nouvelles analyses.',
       briefText:
         'Recevez les nouveaux dossiers, comparatifs et notes de terrain. Fréquence maîtrisée, désinscription en un clic.',
       read: "Lire l'analyse",
@@ -174,7 +174,7 @@ const messages = {
       method2: 'Make assumptions, limits and calculation methods visible.',
       method3: 'Turn data into concrete decisions grounded in African realities.',
       brief: 'Trigenys Brief',
-      briefTitle: 'Useful analysis. Not an inbox avalanche.',
+      briefTitle: 'Get our latest analysis.',
       briefText:
         'Get new dossiers, comparisons and field notes. Controlled frequency, one-click unsubscribe.',
       read: 'Read the analysis',
