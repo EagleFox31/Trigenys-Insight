@@ -115,10 +115,15 @@ const messages = {
     post: {
       back: 'Retour aux articles',
       by: 'Par',
+      readNextTitle: 'À lire aussi',
+      productTitle: 'Un outil Trigenys pour aller plus loin',
+      productCta: 'Découvrir',
+      sourcePublished: 'publié le',
       sourcesTitle: 'Sources et méthode',
       sourcesText:
         "Les faits susceptibles d'évoluer ont été revérifiés dans les sources ci-dessous. Les observations et interprétations sont présentées comme telles dans l'article.",
       minutesReading: 'min de lecture',
+      published: 'Publié le',
       updated: 'Mis à jour le',
     },
     newsletter: {
@@ -243,10 +248,15 @@ const messages = {
     post: {
       back: 'Back to articles',
       by: 'By',
+      readNextTitle: 'Read next',
+      productTitle: 'A Trigenys tool to go further',
+      productCta: 'Discover',
+      sourcePublished: 'published',
       sourcesTitle: 'Sources and method',
       sourcesText:
         'Facts that may change over time were checked against the sources below. Observations and interpretations are presented as such in the article.',
       minutesReading: 'min read',
+      published: 'Published',
       updated: 'Updated',
     },
     newsletter: {

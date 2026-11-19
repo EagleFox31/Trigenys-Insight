@@ -17,6 +17,17 @@
   font-size: 11px;
 }
 
+.editionHeadline {
+  margin: 4px 0 14px;
+  max-width: 900px;
+  color: #102f52;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
 .editionTop strong {
   color: #102f52;
   font-weight: 800;

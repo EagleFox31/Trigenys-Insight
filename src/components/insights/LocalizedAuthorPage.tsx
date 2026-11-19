@@ -13,6 +13,7 @@ import {
   type PublicAuthorProfile,
 } from '@/seo/structuredData'
 import { authorSlug } from '@/utilities/authorSlug'
+import { getPublicAuthorProfiles } from '@/seo/authorProfiles'
 
 const queryAuthorProfile = cache(async ({ locale, slug }: { locale: SiteLocale; slug: string }) => {
   const payload = await getPayload({ config: configPromise })
@@ -59,44 +60,16 @@ const queryAuthorProfile = cache(async ({ locale, slug }: { locale: SiteLocale; 
   }
 })
 
-// Users are private; read only the explicit public profile fields, server side.
-const queryPublicAuthorFields = cache(
-  async ({
-    locale,
-    slug,
-  }: {
-    locale: SiteLocale
-    slug: string
-  }): Promise<Omit<PublicAuthorProfile, 'name'> | null> => {
-    const payload = await getPayload({ config: configPromise })
-    const result = await payload.find({
-      collection: 'users',
-      depth: 0,
-      fallbackLocale: false,
-      locale,
-      limit: 200,
-      pagination: false,
-      overrideAccess: true,
-      select: {
-        name: true,
-        jobTitle: true,
-        bio: true,
-        expertise: true,
-        profileLinks: true,
-      },
-    })
-
-    const user = result.docs.find((doc) => doc.name && authorSlug(doc.name) === slug)
-    if (!user) return null
-
-    return {
-      jobTitle: user.jobTitle,
-      bio: user.bio,
-      expertise: user.expertise,
-      profileLinks: user.profileLinks?.map((link) => ({ url: link.url })),
-    }
-  },
-)
+async function queryPublicAuthorFields({
+  locale,
+  slug,
+}: {
+  locale: SiteLocale
+  slug: string
+}): Promise<Omit<PublicAuthorProfile, 'name'> | null> {
+  const profiles = await getPublicAuthorProfiles(locale)
+  return profiles[slug] || null
+}
 
 const KNOWN_PROFILE_HOSTS: Record<string, string> = {
   'linkedin.com': 'LinkedIn',

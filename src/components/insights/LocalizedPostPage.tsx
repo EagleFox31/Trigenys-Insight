@@ -31,6 +31,11 @@ import {
   SITE_IDENTITY,
 } from '@/seo/structuredData'
 import { getFaqItems, getKeyTakeaways } from '@/seo/answerContent'
+import { getPublicAuthorProfiles } from '@/seo/authorProfiles'
+import { selectContextualLinks } from '@/seo/contextualLinks'
+import { matchTrigenysProduct } from '@/seo/trigenysProducts'
+import { formatPostDate } from '@/i18n/content'
+import type { Post } from '@/payload-types'
 
 async function queryPostBySlug({
   locale,
@@ -64,6 +69,29 @@ async function queryPostBySlug({
   return post
 }
 
+async function queryLinkCandidates({ locale, post }: { locale: SiteLocale; post: Post }) {
+  try {
+    const payload = await getPayload({ config: configPromise })
+    const result = await payload.find({
+      collection: 'posts',
+      depth: 1,
+      fallbackLocale: false,
+      limit: 12,
+      locale,
+      overrideAccess: false,
+      pagination: false,
+      sort: '-publishedAt',
+      where: {
+        and: [{ _status: { equals: 'published' } }, { id: { not_equals: post.id } }],
+      },
+    })
+    return result.docs.filter((doc) => Boolean(doc.title && doc.slug))
+  } catch (error) {
+    console.warn('Trigenys Insights: contextual link candidates unavailable.', error)
+    return []
+  }
+}
+
 export async function LocalizedPostPage({
   locale,
   slug,
@@ -85,10 +113,27 @@ export async function LocalizedPostPage({
   const takeaways = getKeyTakeaways(post)
   const faqItems = getFaqItems(post)
   const visibleSources = post.sources?.filter((source) => typeof source === 'object') || []
-  const articleJsonLd =
-    !draft && post._status === 'published'
-      ? buildArticleJsonLd({ locale, post, slug: decodedSlug })
-      : null
+  const published = !draft && post._status === 'published'
+  const authorProfiles = published ? await getPublicAuthorProfiles(locale) : {}
+  const articleJsonLd = published
+    ? buildArticleJsonLd({ locale, post, slug: decodedSlug, authorProfiles })
+    : null
+  const editorPicks = (post.relatedPosts || []).filter(
+    (relatedPost): relatedPost is Post => typeof relatedPost === 'object' && relatedPost !== null,
+  )
+  const contextualLinks = selectContextualLinks(
+    post,
+    editorPicks,
+    await queryLinkCandidates({ locale, post }),
+  )
+  const categoryTitles = (post.categories || []).map((category) =>
+    typeof category === 'object' && category ? category.title : null,
+  )
+  const product = matchTrigenysProduct({
+    title: post.title,
+    excerpt: post.excerpt,
+    categories: categoryTitles,
+  })
   const breadcrumbJsonLd =
     !draft && post._status === 'published'
       ? buildBreadcrumbJsonLd([
@@ -164,18 +209,47 @@ export async function LocalizedPostPage({
                       {source.publisher && (
                         <span className="text-muted-foreground"> — {source.publisher}</span>
                       )}
+                      {source.publishedAt && (
+                        <span className="text-muted-foreground">
+                          {' '}
+                          ({t.sourcePublished}{' '}
+                          <time dateTime={source.publishedAt}>
+                            {formatPostDate(source.publishedAt, locale)}
+                          </time>
+                          )
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ol>
               </section>
             )}
 
-            {post.relatedPosts && post.relatedPosts.length > 0 && (
-              <RelatedPosts
-                className="mt-14"
-                docs={post.relatedPosts.filter((relatedPost) => typeof relatedPost === 'object')}
-                locale={locale}
-              />
+            {product && (
+              <aside aria-labelledby="trigenys-product-title" className="article-product mt-14">
+                <h2 id="trigenys-product-title">{t.productTitle}</h2>
+                <p>
+                  <strong>{product.name}</strong> — {product.pitch[locale]}{' '}
+                  <TrackedOutboundLink
+                    className="font-medium underline underline-offset-4"
+                    context={`product-${product.id}`}
+                    href={product.url}
+                    locale={locale}
+                    rel="noopener"
+                    slug={decodedSlug}
+                    target="_blank"
+                  >
+                    {t.productCta} {product.name}
+                  </TrackedOutboundLink>
+                </p>
+              </aside>
+            )}
+
+            {contextualLinks.length > 0 && (
+              <section aria-labelledby="read-next-title" className="mt-14">
+                <h2 id="read-next-title">{t.readNextTitle}</h2>
+                <RelatedPosts className="mt-6" docs={contextualLinks} locale={locale} />
+              </section>
             )}
           </main>
         </div>

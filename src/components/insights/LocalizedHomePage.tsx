@@ -4,6 +4,9 @@ import { getPayload } from 'payload'
 
 import type { SiteLocale } from '@/i18n/config'
 import { InsightsHome } from './InsightsHome'
+import { sitePositioning } from '@/seo/positioning'
+import { SITE_IDENTITY } from '@/seo/structuredData'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
 async function queryLocalizedHomePosts(locale: SiteLocale) {
   try {
@@ -33,13 +36,19 @@ export async function LocalizedHomePage({ locale }: { locale: SiteLocale }) {
 }
 
 export function localizedHomeMetadata(locale: SiteLocale): Metadata {
-  const french = locale === 'fr'
+  const { description } = sitePositioning(locale)
+  const title = 'Trigenys Insights — Research for better decisions'
 
   return {
-    title: 'Trigenys Insights — Research for better decisions',
-    description: french
-      ? 'Actualités et analyses sur l’IA, le gaming, la finance, les études, les carrières et les innovations africaines.'
-      : 'Original African perspectives on AI, gaming, digital culture, money, education, tech careers and innovation.',
+    title,
+    description,
+    openGraph: mergeOpenGraph({
+      title,
+      description,
+      url: `${SITE_IDENTITY.url}/${locale}`,
+      locale: locale === 'fr' ? 'fr_FR' : 'en_GB',
+    }),
+    twitter: { card: 'summary_large_image', title, description },
     alternates: {
       canonical: `/${locale}`,
       languages: {

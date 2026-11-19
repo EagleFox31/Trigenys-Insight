@@ -110,3 +110,28 @@ For user-visible fixes, report separately: coded → CI green → merged → pro
 
 **Generalized lesson**  
 A correct patch is not a production fix until the deployed revision contains it.
+
+---
+
+## 2026-11-09 — Fresh database cannot run the full migration chain
+
+**Classification**  
+Near miss / data migrations
+
+**Context**  
+Local verification of the SEO/GEO changes needed an empty Postgres with all migrations applied.
+
+**Symptom / impact**  
+`pnpm db:migrate` stops on production-specific content migrations (`20261015_161000_repair_article_translations`, `20261015_162000_archive_ecommerce_duplicate`, `20261016_*` LinkedIn/AgenStudio drafts) whose guards throw when the expected production rows are absent. A new environment (CI, preview database, disaster recovery) cannot be provisioned without manual intervention.
+
+**Root cause**  
+Content repair migrations treat "target rows absent" as a failed precondition instead of a no-op.
+
+**Resolution**  
+For the throwaway verification database only, those migrations were marked as applied by hand. No migration was changed in this PR.
+
+**Prevention**  
+Content migrations must be idempotent: when none of their target rows exist they log and return; they throw only when targets exist in an unexpected state. Track the fix in a dedicated issue and add a CI job that migrates an empty database.
+
+**Generalized lesson**  
+A migration chain that only succeeds on one specific database is not a migration chain; empty-database convergence is part of the contract.

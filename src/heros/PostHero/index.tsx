@@ -11,6 +11,7 @@ import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
 import { authorSlug } from '@/utilities/authorSlug'
+import { articleDates } from '@/utilities/articleDates'
 import { ArticleShareButtons } from '@/components/insights/ArticleShareButtons'
 import { ArticleViewTracker } from '@/components/analytics/ArticleViewTracker'
 import { ArticleBackLink } from '@/components/insights/ArticleBackLink'
@@ -27,7 +28,6 @@ export const PostHero: React.FC<{
     excerpt,
     heroImage,
     populatedAuthors,
-    publishedAt,
     readingTime,
     title,
     updatedAt,
@@ -36,9 +36,7 @@ export const PostHero: React.FC<{
   const editorialVisuals = getEditorialVisuals(post.slug)
   const publicAuthors = populatedAuthors?.filter((author) => Boolean(author?.name)) || []
 
-  const showUpdatedAt =
-    Boolean(publishedAt && updatedAt) &&
-    new Date(updatedAt).getTime() - new Date(publishedAt as string).getTime() >= 24 * 60 * 60 * 1000
+  const { published, showModified: showUpdatedAt } = articleDates(post)
 
   return (
     <header className="post-hero">
@@ -94,8 +92,11 @@ export const PostHero: React.FC<{
               })}
             </span>
           )}
-          {publishedAt && (
-            <time dateTime={publishedAt}>{formatPostDate(publishedAt, locale, true)}</time>
+          {published && (
+            <span>
+              <span className="sr-only">{t.published} </span>
+              <time dateTime={published}>{formatPostDate(published, locale, true)}</time>
+            </span>
           )}
           {showUpdatedAt && (
             <span>

@@ -144,15 +144,20 @@ describe('structured data', () => {
       description: 'Résumé test',
       url: 'https://insight.trigenys.com/fr/posts/titre-test',
       datePublished: '2026-09-22T18:00:00.000Z',
-      dateModified: '2026-09-22T19:00:00.000Z',
+      // Edits within 24h of publication are not surfaced as a modification.
+      dateModified: '2026-09-22T18:00:00.000Z',
       inLanguage: 'fr-FR',
-      publisher: { '@id': ORGANIZATION_ID },
+      publisher: {
+        '@type': 'Organization',
+        '@id': 'https://www.trigenys.com/#org',
+        url: 'https://www.trigenys.com',
+      },
+      sourceOrganization: { '@id': ORGANIZATION_ID },
       image: ['https://insight.trigenys.com/media/article.png'],
       author: [
         {
           '@type': 'Person',
-          '@id':
-            'https://insight.trigenys.com/fr/authors/trigenys-editorial#person',
+          '@id': 'https://insight.trigenys.com/authors/trigenys-editorial#person',
           name: 'Trigenys Editorial',
           url: 'https://insight.trigenys.com/fr/authors/trigenys-editorial',
         },
@@ -252,7 +257,7 @@ describe('author profile structured data', () => {
       inLanguage: 'fr-FR',
       mainEntity: {
         '@type': 'Person',
-        '@id': 'https://insight.trigenys.com/fr/authors/jane-doe#person',
+        '@id': 'https://insight.trigenys.com/authors/jane-doe#person',
         name: 'Jane Doe',
         jobTitle: 'Rédactrice en chef',
         description: 'Analyste des paiements.',
